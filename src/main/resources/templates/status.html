@@ -11,6 +11,9 @@
     <link rel="stylesheet" href="/css/status.css"/>
 </head>
 <body>
+    <span th:fragment="colorify(value, green)">
+        <span th:if="${green}" th:text="${value}" style="color:green"/><span th:if="${!green}" th:text="${value}"/>
+    </span>
     <div layout:fragment="main">
         <h1 class="h2">Status
             <svg width="20px" height="20px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid" class="lds-eclipse">
@@ -46,9 +49,9 @@
                     </div>
                 </td>
                 <td>
-                    <strong><span th:text="${pool.nbInputs}"/> / <span th:text="${pool.anonymitySet}"/> confirmed</strong><br/>
-                    <span th:text="${pool.nbInputsMustMix}" style="font-weight:bold"/> / <span th:text="${pool.minMustMix}"/> mustMix, <strong><span th:text="${pool.minerFeeAccumulated}" style="font-weight:bold"/></strong> / <span th:text="${minerFees.minerFeeMix}"/> sat<br/>
-                    <span th:text="${pool.nbInputsLiquidities}" style="font-weight:bold"/> / <span th:text="${pool.minLiquidity}"/> liquidities + <span th:text="${pool.liquiditiesQueued}" style="font-weight:bold"/> queued
+                    <strong><span th:replace="status.html::colorify(value=${pool.nbInputs}, green=${pool.nbInputs>=pool.anonymitySet})"/> / <span th:text="${pool.anonymitySet}"/> confirmed</strong><br/>
+                    <strong th:replace="status.html::colorify(value=${pool.nbInputsMustMix}, green=${pool.nbInputsMustMix>=pool.minMustMix})"/> / <span th:text="${pool.minMustMix}"/> mustMix, <strong th:replace="status.html::colorify(value=${pool.minerFeeAccumulated}, green=${pool.minerFeeAccumulated>=minerFees.minerFeeMix})"/> / <span th:text="${minerFees.minerFeeMix}"/> sat<br/>
+                    <strong th:replace="status.html::colorify(value=${pool.nbInputsLiquidities}, green=${pool.nbInputsLiquidities>=pool.minLiquidity})"/> / <span th:text="${pool.minLiquidity}"/> liquidities + <span th:text="${pool.liquiditiesQueued}" style="font-weight:bold"/> queued
                 </td>
                 <td><span th:text="${@templateUtil.duration(pool.elapsedTime/1000)}"/></td>
                 <td>
@@ -86,7 +89,7 @@
             </tbody>
         </table>
         <p>
-            Miner fee: <span th:text="${minerFees.minerFeeMin}" title="minerFeeMin"/>-<span th:text="${minerFees.minerFeeMax}" title="minerFeeMax"/> (cap <span th:text="${minerFees.minerFeeCap}" title="minerFeeMaxCap"/>)<br/>
+            Miner fee: <span th:text="${minerFees.minerFeeMin}" title="minerFeeMin"/>-<span th:text="${minerFees.minerFeeCap}" title="minerFeeCap"/> (max <span th:text="${minerFees.minerFeeMax}" title="minerFeeMax"/>)<br/>
         </p>
     </div>
 </body>

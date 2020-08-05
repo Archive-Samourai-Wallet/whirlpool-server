@@ -618,9 +618,9 @@ public class WhirlpoolServerConfig extends ServerConfig {
         "["
             + minerFees.getMinerFeeMin()
             + "-"
-            + minerFees.getMinerFeeMax()
-            + ", cap="
             + minerFees.getMinerFeeCap()
+            + ", max="
+            + minerFees.getMinerFeeMax()
             + "], mix="
             + minerFees.getMinerFeeMix());
 
