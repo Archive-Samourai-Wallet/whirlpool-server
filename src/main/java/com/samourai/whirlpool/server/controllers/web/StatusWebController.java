@@ -92,6 +92,7 @@ public class StatusWebController {
 
               poolAttributes.put("mustMixQueued", mix.getPool().getMustMixQueue().getSize());
               poolAttributes.put("liquiditiesQueued", mix.getPool().getLiquidityQueue().getSize());
+              poolAttributes.put("mustMixQueued", mix.getPool().getMustMixQueue().getSize());
 
               Map<MixStatus, Timestamp> timeStatus = mix.getTimeStatus();
               List<StatusStep> steps = new ArrayList<>();

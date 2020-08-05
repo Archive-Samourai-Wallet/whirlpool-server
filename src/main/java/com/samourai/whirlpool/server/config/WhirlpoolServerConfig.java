@@ -473,7 +473,6 @@ public class WhirlpoolServerConfig extends ServerConfig {
     private long minerFeeMin; // in satoshis
     private long minerFeeCap; // in satoshis
     private long minerFeeMax; // in satoshis
-    private long minerFeeMix; // in satoshis
 
     public void validate() throws Exception {
       if (minerFeeMin <= 0) {
@@ -484,9 +483,6 @@ public class WhirlpoolServerConfig extends ServerConfig {
       }
       if (minerFeeMax <= 0) {
         throw new Exception("Invalid minerFeeMax");
-      }
-      if (minerFeeMix <= 0) {
-        throw new Exception("Invalid minerFeeMix");
       }
     }
 
@@ -515,11 +511,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
     }
 
     public long getMinerFeeMix() {
-      return minerFeeMix;
-    }
-
-    public void setMinerFeeMix(long minerFeeMix) {
-      this.minerFeeMix = minerFeeMix;
+      return minerFeeCap * 2;
     }
   }
 
