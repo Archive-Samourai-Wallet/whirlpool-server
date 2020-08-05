@@ -5,6 +5,7 @@ import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.protocol.beans.Utxo;
 import com.samourai.whirlpool.protocol.websocket.notifications.MixStatus;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
+import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import com.samourai.whirlpool.server.persistence.to.MixTO;
 import com.samourai.whirlpool.server.services.CryptoService;
@@ -34,6 +35,7 @@ public class Mix {
   private ScheduledFuture scheduleRegisterOutput;
 
   private Pool pool;
+  private WhirlpoolServerConfig.MinerFeeConfig minerFeeConfig;
 
   private MixStatus mixStatus;
   private InputPool confirmingInputs;
@@ -47,7 +49,11 @@ public class Mix {
   private FailReason failReason;
   private String failInfo;
 
-  public Mix(String mixId, Pool pool, CryptoService cryptoService) {
+  public Mix(
+      String mixId,
+      Pool pool,
+      WhirlpoolServerConfig.MinerFeeConfig minerFeeConfig,
+      CryptoService cryptoService) {
     this.mixTO = null;
     this.created = null;
     this.mixId = mixId;
@@ -62,6 +68,7 @@ public class Mix {
     this.scheduleRegisterOutput = null;
 
     this.pool = pool;
+    this.minerFeeConfig = minerFeeConfig;
 
     this.mixStatus = MixStatus.CONFIRM_INPUT;
     this.confirmingInputs = new InputPool();
@@ -101,7 +108,7 @@ public class Mix {
     }
 
     // verify minerFeeMix
-    if (computeMinerFeeAccumulated() < pool.getMinerFeeMix()) {
+    if (computeMinerFeeAccumulated() < minerFeeConfig.getMinerFeeMix()) {
       return false;
     }
     return true;

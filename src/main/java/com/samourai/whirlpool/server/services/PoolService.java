@@ -58,20 +58,19 @@ public class PoolService {
 
   public void __reset() {
     WhirlpoolServerConfig.PoolConfig[] poolConfigs = whirlpoolServerConfig.getPools();
-    __reset(poolConfigs);
+    WhirlpoolServerConfig.MinerFeeConfig minerFeeConfig = whirlpoolServerConfig.getMinerFees();
+    __reset(poolConfigs, minerFeeConfig);
   }
 
-  public void __reset(WhirlpoolServerConfig.PoolConfig[] poolConfigs) {
+  public void __reset(
+      WhirlpoolServerConfig.PoolConfig[] poolConfigs,
+      WhirlpoolServerConfig.MinerFeeConfig minerFeeConfig) {
     pools = new ConcurrentHashMap<>();
     for (WhirlpoolServerConfig.PoolConfig poolConfig : poolConfigs) {
       String poolId = poolConfig.getId();
       long denomination = poolConfig.getDenomination();
       long feeValue = poolConfig.getFeeValue();
       Map<Long, Long> feeAccept = poolConfig.getFeeAccept();
-      long minerFeeMin = poolConfig.getMinerFeeMin();
-      long minerFeeCap = poolConfig.getMinerFeeCap();
-      long minerFeeMax = poolConfig.getMinerFeeMax();
-      long minerFeeMix = poolConfig.getMinerFeeMix();
       int minMustMix = poolConfig.getMustMixMin();
       int minLiquidity = poolConfig.getLiquidityMin();
       int anonymitySet = poolConfig.getAnonymitySet();
@@ -84,13 +83,10 @@ public class PoolService {
               poolId,
               denomination,
               poolFee,
-              minerFeeMin,
-              minerFeeCap,
-              minerFeeMax,
-              minerFeeMix,
               minMustMix,
               minLiquidity,
-              anonymitySet);
+              anonymitySet,
+              minerFeeConfig);
       pools.put(poolId, pool);
     }
   }

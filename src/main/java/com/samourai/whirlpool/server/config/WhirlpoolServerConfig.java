@@ -19,6 +19,7 @@ import org.springframework.context.annotation.Configuration;
 public class WhirlpoolServerConfig extends ServerConfig {
 
   private SamouraiFeeConfig samouraiFees;
+  private MinerFeeConfig minerFees;
   private boolean testMode;
   private boolean testnet;
   private boolean mixEnabled;
@@ -39,6 +40,14 @@ public class WhirlpoolServerConfig extends ServerConfig {
 
   public void setSamouraiFees(SamouraiFeeConfig samouraiFees) {
     this.samouraiFees = samouraiFees;
+  }
+
+  public MinerFeeConfig getMinerFees() {
+    return minerFees;
+  }
+
+  public void setMinerFees(MinerFeeConfig minerFees) {
+    this.minerFees = minerFees;
   }
 
   public boolean isTestMode() {
@@ -304,10 +313,6 @@ public class WhirlpoolServerConfig extends ServerConfig {
     private long denomination;
     private long feeValue;
     private Map<Long, Long> feeAccept;
-    private long minerFeeMin;
-    private long minerFeeCap;
-    private long minerFeeMax;
-    private long minerFeeMix;
     private int mustMixMin;
     private int liquidityMin;
     private int anonymitySet;
@@ -342,38 +347,6 @@ public class WhirlpoolServerConfig extends ServerConfig {
 
     public void setFeeAccept(Map<Long, Long> feeAccept) {
       this.feeAccept = feeAccept;
-    }
-
-    public long getMinerFeeMin() {
-      return minerFeeMin;
-    }
-
-    public void setMinerFeeMin(long minerFeeMin) {
-      this.minerFeeMin = minerFeeMin;
-    }
-
-    public long getMinerFeeCap() {
-      return minerFeeCap;
-    }
-
-    public void setMinerFeeCap(long minerFeeCap) {
-      this.minerFeeCap = minerFeeCap;
-    }
-
-    public long getMinerFeeMax() {
-      return minerFeeMax;
-    }
-
-    public void setMinerFeeMax(long minerFeeMax) {
-      this.minerFeeMax = minerFeeMax;
-    }
-
-    public long getMinerFeeMix() {
-      return minerFeeMix;
-    }
-
-    public void setMinerFeeMix(long minerFeeMix) {
-      this.minerFeeMix = minerFeeMix;
     }
 
     public int getMustMixMin() {
@@ -496,6 +469,60 @@ public class WhirlpoolServerConfig extends ServerConfig {
     }
   }
 
+  public static class MinerFeeConfig {
+    private long minerFeeMin; // in satoshis
+    private long minerFeeCap; // in satoshis
+    private long minerFeeMax; // in satoshis
+    private long minerFeeMix; // in satoshis
+
+    public void validate() throws Exception {
+      if (minerFeeMin <= 0) {
+        throw new Exception("Invalid minerFeeMin");
+      }
+      if (minerFeeCap <= 0) {
+        throw new Exception("Invalid minerFeeCap");
+      }
+      if (minerFeeMax <= 0) {
+        throw new Exception("Invalid minerFeeMax");
+      }
+      if (minerFeeMix <= 0) {
+        throw new Exception("Invalid minerFeeMix");
+      }
+    }
+
+    public long getMinerFeeMin() {
+      return minerFeeMin;
+    }
+
+    public void setMinerFeeMin(long minerFeeMin) {
+      this.minerFeeMin = minerFeeMin;
+    }
+
+    public long getMinerFeeCap() {
+      return minerFeeCap;
+    }
+
+    public void setMinerFeeCap(long minerFeeCap) {
+      this.minerFeeCap = minerFeeCap;
+    }
+
+    public long getMinerFeeMax() {
+      return minerFeeMax;
+    }
+
+    public void setMinerFeeMax(long minerFeeMax) {
+      this.minerFeeMax = minerFeeMax;
+    }
+
+    public long getMinerFeeMix() {
+      return minerFeeMix;
+    }
+
+    public void setMinerFeeMix(long minerFeeMix) {
+      this.minerFeeMix = minerFeeMix;
+    }
+  }
+
   public static class ScodeSamouraiFeeConfig {
     @NotEmpty private Short payload;
     @NotEmpty private Integer feeValuePercent; // 0-100
@@ -572,6 +599,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
   public void validate() throws Exception {
     super.validate();
     samouraiFees.validate();
+    minerFees.validate();
   }
 
   @Override
@@ -585,6 +613,16 @@ public class WhirlpoolServerConfig extends ServerConfig {
 
     int nbSeedWords = samouraiFees.getSecretWallet().getWords().split(" ").length;
     configInfo.put("samouraiFees", "secretWallet=(" + nbSeedWords + " seed words)");
+    configInfo.put(
+        "minerFees",
+        "["
+            + minerFees.getMinerFeeMin()
+            + "-"
+            + minerFees.getMinerFeeMax()
+            + ", cap="
+            + minerFees.getMinerFeeCap()
+            + "], mix="
+            + minerFees.getMinerFeeMix());
 
     configInfo.put(
         "registerInput.maxInputsSameHash", String.valueOf(registerInput.maxInputsSameHash));
@@ -631,16 +669,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
           ", mustMixMin="
               + poolConfig.getMustMixMin()
               + ", liquidityMin="
-              + poolConfig.getLiquidityMin();
-      poolInfo +=
-          ", minerFee="
-              + poolConfig.getMinerFeeMix()
-              + "["
-              + poolConfig.minerFeeMin
-              + "-"
-              + poolConfig.getMinerFeeMax()
-              + ", cap="
-              + poolConfig.getMinerFeeCap()
+              + poolConfig.getLiquidityMin()
               + "]";
       configInfo.put("pools[" + poolConfig.id + "]", poolInfo);
     }

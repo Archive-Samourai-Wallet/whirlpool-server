@@ -382,7 +382,7 @@ public class MixService {
             + " anonymitySet, "
             + mix.computeMinerFeeAccumulated()
             + "/"
-            + mix.getPool().getMinerFeeMix()
+            + whirlpoolServerConfig.getMinerFees().getMinerFeeMix()
             + "sat (pool: "
             + liquiditiesQueued
             + " liquidities + "
@@ -815,7 +815,7 @@ public class MixService {
 
   public Mix __nextMix(Pool pool) {
     String mixId = Utils.generateUniqueString();
-    Mix mix = new Mix(mixId, pool, cryptoService);
+    Mix mix = new Mix(mixId, pool, whirlpoolServerConfig.getMinerFees(), cryptoService);
     startMix(mix);
     return mix;
   }

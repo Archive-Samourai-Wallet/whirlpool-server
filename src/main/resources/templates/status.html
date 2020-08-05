@@ -47,13 +47,12 @@
                 </td>
                 <td>
                     <strong><span th:text="${pool.nbInputs}"/> / <span th:text="${pool.anonymitySet}"/> confirmed</strong><br/>
-                    <span th:text="${pool.nbInputsMustMix}" style="font-weight:bold"/> / <span th:text="${pool.minMustMix}"/> mustMix, <strong><span th:text="${pool.minerFeeAccumulated}" style="font-weight:bold"/></strong> / <span th:text="${pool.minerFeeMix}"/> sat<br/>
+                    <span th:text="${pool.nbInputsMustMix}" style="font-weight:bold"/> / <span th:text="${pool.minMustMix}"/> mustMix, <strong><span th:text="${pool.minerFeeAccumulated}" style="font-weight:bold"/></strong> / <span th:text="${minerFees.minerFeeMix}"/> sat<br/>
                     <span th:text="${pool.nbInputsLiquidities}" style="font-weight:bold"/> / <span th:text="${pool.minLiquidity}"/> liquidities + <span th:text="${pool.liquiditiesQueued}" style="font-weight:bold"/> queued
                 </td>
                 <td><span th:text="${@templateUtil.duration(pool.elapsedTime/1000)}"/></td>
                 <td>
                     Pool fee: <span th:text="${@templateUtil.satoshisToBtc(pool.feeValue)}"/><br/>
-                    Miner fee: <span th:text="${pool.minerFeeMin}" title="minerFeeMin"/>-<span th:text="${pool.minerFeeMax}" title="minerFeeMax"/> (cap <span th:text="${pool.minerFeeCap}" title="minerFeeMaxCap"/>)<br/>
                 </td>
                 </tr>
                 <tr>
@@ -86,7 +85,9 @@
             </div>
             </tbody>
         </table>
-        <p><small>whirlpool-protocol <span th:text="${protocolVersion}" style="font-weight:bold"/></small></p>
+        <p>
+            Miner fee: <span th:text="${minerFees.minerFeeMin}" title="minerFeeMin"/>-<span th:text="${minerFees.minerFeeMax}" title="minerFeeMax"/> (cap <span th:text="${minerFees.minerFeeCap}" title="minerFeeMaxCap"/>)<br/>
+        </p>
     </div>
 </body>
 </html>

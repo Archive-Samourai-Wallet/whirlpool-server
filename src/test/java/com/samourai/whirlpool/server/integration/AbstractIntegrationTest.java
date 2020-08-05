@@ -187,13 +187,10 @@ public abstract class AbstractIntegrationTest {
     return __nextMix(minerFeeConfig, poolConfig);
   }
 
-  protected Mix __nextMix(
-          int mustMixMin,
-          int liquidityMin,
-          int anonymitySet,
-          Pool copyPool)
-          throws IllegalInputException {
-    return __nextMix(mustMixMin, liquidityMin, anonymitySet, copyPool, copyPool._getMinerFeeConfig());
+  protected Mix __nextMix(int mustMixMin, int liquidityMin, int anonymitySet, Pool copyPool)
+      throws IllegalInputException {
+    return __nextMix(
+        mustMixMin, liquidityMin, anonymitySet, copyPool, copyPool._getMinerFeeConfig());
   }
 
   protected Mix __getCurrentMix() {

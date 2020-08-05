@@ -1,18 +1,16 @@
 package com.samourai.whirlpool.server.beans;
 
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
+import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 
 public class Pool {
   private String poolId;
   private long denomination; // in satoshis
   private PoolFee poolFee;
-  private long minerFeeMin; // in satoshis
-  private long minerFeeCap; // in satoshis
-  private long minerFeeMax; // in satoshis
-  private long minerFeeMix; // in satoshis
   private int minMustMix;
   private int minLiquidity;
   private int anonymitySet;
+  private WhirlpoolServerConfig.MinerFeeConfig minerFeeConfig;
 
   private Mix currentMix;
   private InputPool mustMixQueue;
@@ -22,23 +20,18 @@ public class Pool {
       String poolId,
       long denomination,
       PoolFee poolFee,
-      long minerFeeMin,
-      long minerFeeCap,
-      long minerFeeMax,
-      long minerFeeMix,
       int minMustMix,
       int minLiquidity,
-      int anonymitySet) {
+      int anonymitySet,
+      WhirlpoolServerConfig.MinerFeeConfig minerFeeConfig) {
     this.poolId = poolId;
     this.denomination = denomination;
     this.poolFee = poolFee;
-    this.minerFeeMin = minerFeeMin;
-    this.minerFeeCap = minerFeeCap;
-    this.minerFeeMax = minerFeeMax;
-    this.minerFeeMix = minerFeeMix;
     this.minMustMix = minMustMix;
     this.minLiquidity = minLiquidity;
     this.anonymitySet = anonymitySet;
+    this.minerFeeConfig = minerFeeConfig;
+
     this.mustMixQueue = new InputPool();
     this.liquidityQueue = new InputPool();
   }
@@ -65,15 +58,15 @@ public class Pool {
   }
 
   public long computeMustMixBalanceMin() {
-    return denomination + minerFeeMin;
+    return denomination + minerFeeConfig.getMinerFeeMin();
   }
 
   public long computeMustMixBalanceCap() {
-    return denomination + minerFeeCap;
+    return denomination + minerFeeConfig.getMinerFeeCap();
   }
 
   public long computeMustMixBalanceMax() {
-    return denomination + minerFeeMax;
+    return denomination + minerFeeConfig.getMinerFeeMax();
   }
 
   public String getPoolId() {
@@ -86,22 +79,6 @@ public class Pool {
 
   public PoolFee getPoolFee() {
     return poolFee;
-  }
-
-  public long getMinerFeeMin() {
-    return minerFeeMin;
-  }
-
-  public long getMinerFeeCap() {
-    return minerFeeCap;
-  }
-
-  public long getMinerFeeMax() {
-    return minerFeeMax;
-  }
-
-  public long getMinerFeeMix() {
-    return minerFeeMix;
   }
 
   public int getMinMustMix() {
@@ -130,5 +107,10 @@ public class Pool {
 
   public InputPool getLiquidityQueue() {
     return liquidityQueue;
+  }
+
+  // for tests
+  public WhirlpoolServerConfig.MinerFeeConfig _getMinerFeeConfig() {
+    return minerFeeConfig;
   }
 }

@@ -1,6 +1,5 @@
 package com.samourai.whirlpool.server.controllers.web;
 
-import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.protocol.websocket.notifications.MixStatus;
 import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
@@ -63,10 +62,6 @@ public class StatusWebController {
               poolAttributes.put("anonymitySet", pool.getAnonymitySet());
               poolAttributes.put("minMustMix", pool.getMinMustMix());
               poolAttributes.put("minLiquidity", pool.getMinLiquidity());
-              poolAttributes.put("minerFeeMin", pool.getMinerFeeMin());
-              poolAttributes.put("minerFeeCap", pool.getMinerFeeCap());
-              poolAttributes.put("minerFeeMax", pool.getMinerFeeMax());
-              poolAttributes.put("minerFeeMix", pool.getMinerFeeMix());
               poolAttributes.put("minerFeeAccumulated", mix.computeMinerFeeAccumulated());
               poolAttributes.put("nbInputs", mix.getNbInputs());
               poolAttributes.put("nbInputsMustMix", mix.getNbInputsMustMix());
@@ -128,7 +123,13 @@ public class StatusWebController {
               pools.add(poolAttributes);
             });
     model.addAttribute("pools", pools);
-    model.addAttribute("protocolVersion", WhirlpoolProtocol.PROTOCOL_VERSION);
+
+    Map<String, Object> minerFees = new HashMap<>();
+    minerFees.put("minerFeeMin", serverConfig.getMinerFees().getMinerFeeMin());
+    minerFees.put("minerFeeCap", serverConfig.getMinerFees().getMinerFeeCap());
+    minerFees.put("minerFeeMax", serverConfig.getMinerFees().getMinerFeeMax());
+    minerFees.put("minerFeeMix", serverConfig.getMinerFees().getMinerFeeMix());
+    model.addAttribute("minerFees", minerFees);
     return "status";
   }
 
