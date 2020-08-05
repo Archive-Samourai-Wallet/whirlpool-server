@@ -18,6 +18,10 @@ public class RegisteredInput {
     this.lastUserHash = lastUserHash;
   }
 
+  public long computeMinerFees(Pool pool) {
+    return getOutPoint().getValue() - pool.getDenomination();
+  }
+
   public String getUsername() {
     return username;
   }

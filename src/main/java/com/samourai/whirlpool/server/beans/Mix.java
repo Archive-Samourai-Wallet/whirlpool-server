@@ -251,7 +251,7 @@ public class Mix {
     return getInputs()
         .parallelStream()
         .filter(input -> !input.getRegisteredInput().isLiquidity())
-        .map(input -> input.getRegisteredInput().getOutPoint().getValue() - pool.getDenomination())
+        .map(input -> input.getRegisteredInput().computeMinerFees(pool))
         .reduce(0L, Long::sum);
   }
 

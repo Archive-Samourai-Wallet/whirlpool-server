@@ -130,6 +130,37 @@ public class MixService {
         throw new QueueInputException(
             "Current mix is full for mustMix", registeredInput, pool.getPoolId());
       }
+
+      // last mustMix: verify enough miner-fees to pay the mix
+      if (liquiditySlotsAvailable == pool.getMinLiquidity()) {
+        long inputMinerFees = registeredInput.computeMinerFees(pool);
+        long minerFeeAccumulated = mix.computeMinerFeeAccumulated();
+        long missingMinerFees =
+            whirlpoolServerConfig.getMinerFees().getMinerFeeMix()
+                - (minerFeeAccumulated + inputMinerFees);
+        if (missingMinerFees > 0) {
+          logMixStatus(mix);
+          log.warn(
+              "["
+                  + pool.getPoolId()
+                  + "] Queueing last mustMix: insufficient minerFees, "
+                  + missingMinerFees
+                  + " sats missing. "
+                  + registeredInput);
+          throw new QueueInputException(
+              "Not enough minerFee for last mustMix slot", registeredInput, pool.getPoolId());
+        } else {
+          if (log.isDebugEnabled()) {
+            log.debug(
+                "["
+                    + pool.getPoolId()
+                    + "] Accepting last mustMix: sufficient minerFees, "
+                    + (-1 * missingMinerFees)
+                    + " sats excess. "
+                    + registeredInput);
+          }
+        }
+      }
     }
 
     // verify unique userHash
