@@ -8,16 +8,19 @@ import com.samourai.whirlpool.cli.services.JavaHttpClientService;
 import com.samourai.whirlpool.cli.services.JavaStompClientService;
 import com.samourai.whirlpool.client.WhirlpoolClient;
 import com.samourai.whirlpool.client.mix.MixParams;
-import com.samourai.whirlpool.client.mix.handler.*;
+import com.samourai.whirlpool.client.mix.handler.IPostmixHandler;
+import com.samourai.whirlpool.client.mix.handler.IPremixHandler;
+import com.samourai.whirlpool.client.mix.handler.PremixHandler;
+import com.samourai.whirlpool.client.mix.handler.UtxoWithBalance;
 import com.samourai.whirlpool.client.mix.listener.MixFailReason;
 import com.samourai.whirlpool.client.wallet.beans.WhirlpoolServer;
-import com.samourai.whirlpool.client.wallet.persist.WhirlpoolWalletPersistHandler;
+import com.samourai.whirlpool.client.whirlpool.ServerApi;
 import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientConfig;
+import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientImpl;
 import com.samourai.whirlpool.client.whirlpool.listener.AbstractWhirlpoolClientListener;
 import com.samourai.whirlpool.client.whirlpool.listener.WhirlpoolClientListener;
 import com.samourai.whirlpool.protocol.beans.Utxo;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
-import com.samourai.whirlpool.server.utils.MemoryWalletPersistHandler;
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import org.apache.commons.lang3.StringUtils;
@@ -50,7 +53,8 @@ public class HealthService {
   @Scheduled(fixedDelay = 120000)
   public void scheduleConnectCheck() {
     try {
-      WhirlpoolClient whirlpoolClient = computeWhirlpoolClientConfig().newClient();
+      WhirlpoolClientConfig config = computeWhirlpoolClientConfig();
+      WhirlpoolClient whirlpoolClient = new WhirlpoolClientImpl(config);
       MixParams mixParams = computeMixParams();
       WhirlpoolClientListener listener =
           new AbstractWhirlpoolClientListener() {
@@ -102,16 +106,15 @@ public class HealthService {
       CliTorClientService cliTorClientService = new CliTorClientService(cliConfig);
       JavaHttpClientService httpClientService =
           new JavaHttpClientService(cliTorClientService, cliConfig);
-      IStompClientService stompClientService =
-          new JavaStompClientService(cliTorClientService, cliConfig, httpClientService);
-      WhirlpoolWalletPersistHandler persistHandler = new MemoryWalletPersistHandler();
+      IStompClientService stompClientService = new JavaStompClientService(httpClientService);
 
       String serverUrl = cliConfig.getServer().getServerUrlClear();
       NetworkParameters params = whirlpoolServerConfig.getNetworkParameters();
       boolean mobile = false;
+      ServerApi serverApi = new ServerApi(serverUrl, httpClientService);
       whirlpoolClientConfig =
           new WhirlpoolClientConfig(
-              httpClientService, stompClientService, persistHandler, serverUrl, params, mobile);
+              httpClientService, stompClientService, serverApi, params, mobile);
     }
     return whirlpoolClientConfig;
   }

@@ -2,6 +2,7 @@ package com.samourai.whirlpool.server.api.backend;
 
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
+import com.samourai.http.client.HttpUsage;
 import com.samourai.wallet.api.backend.BackendApi;
 import com.samourai.wallet.api.backend.BackendServer;
 import com.samourai.wallet.api.backend.beans.MultiAddrResponse;
@@ -27,7 +28,7 @@ public class BackendApiTest extends AbstractIntegrationTest {
 
     backendApi =
         new BackendApi(
-            new JavaHttpClientService(serverConfig),
+            new JavaHttpClientService(serverConfig).getHttpClient(HttpUsage.BACKEND),
             BackendServer.TESTNET.getBackendUrlClear(),
             Optional.empty());
   }

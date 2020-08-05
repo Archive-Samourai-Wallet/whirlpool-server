@@ -114,18 +114,22 @@ public abstract class AbstractIntegrationTest {
     mixLimitsService = mixService.__getMixLimitsService();
     rpcClientService.resetMock();
 
-    configurePools(serverConfig.getPools());
+    configurePools(serverConfig.getMinerFees(), serverConfig.getPools());
     cacheService._reset();
   }
 
-  protected void configurePools(WhirlpoolServerConfig.PoolConfig... poolConfigs) {
-    poolService.__reset(poolConfigs);
+  protected void configurePools(
+      WhirlpoolServerConfig.MinerFeeConfig minerFeeConfig,
+      WhirlpoolServerConfig.PoolConfig... poolConfigs) {
+    poolService.__reset(poolConfigs, minerFeeConfig);
     mixService.__reset();
   }
 
-  protected Mix __nextMix(WhirlpoolServerConfig.PoolConfig poolConfig)
+  protected Mix __nextMix(
+      WhirlpoolServerConfig.MinerFeeConfig minerFeeConfig,
+      WhirlpoolServerConfig.PoolConfig poolConfig)
       throws IllegalInputException {
-    configurePools(poolConfig);
+    configurePools(minerFeeConfig, poolConfig);
     Pool pool = poolService.getPool(poolConfig.getId());
     Mix mix = mixService.__nextMix(pool);
     return mix;
@@ -147,19 +151,27 @@ public abstract class AbstractIntegrationTest {
     poolConfig.setId(Utils.generateUniqueString());
     poolConfig.setFeeValue(feeValue);
     poolConfig.setDenomination(denomination);
-    poolConfig.setMinerFeeMin(minerFeeMin);
-    poolConfig.setMinerFeeCap(minerFeeCap);
-    poolConfig.setMinerFeeMax(minerFeeMax);
-    poolConfig.setMinerFeeMix(minerFeeMix);
     poolConfig.setMustMixMin(mustMixMin);
     poolConfig.setLiquidityMin(liquidityMin);
     poolConfig.setAnonymitySet(anonymitySet);
 
+    WhirlpoolServerConfig.MinerFeeConfig minerFeeConfig =
+        new WhirlpoolServerConfig.MinerFeeConfig();
+    minerFeeConfig.setMinerFeeMin(minerFeeMin);
+    minerFeeConfig.setMinerFeeCap(minerFeeCap);
+    minerFeeConfig.setMinerFeeMax(minerFeeMax);
+    minerFeeConfig.setMinerFeeMix(minerFeeMix);
+
     // run new mix for the pool
-    return __nextMix(poolConfig);
+    return __nextMix(minerFeeConfig, poolConfig);
   }
 
-  protected Mix __nextMix(int mustMixMin, int liquidityMin, int anonymitySet, Pool copyPool)
+  protected Mix __nextMix(
+      int mustMixMin,
+      int liquidityMin,
+      int anonymitySet,
+      Pool copyPool,
+      WhirlpoolServerConfig.MinerFeeConfig minerFeeConfig)
       throws IllegalInputException {
     // create new pool
     WhirlpoolServerConfig.PoolConfig poolConfig = new WhirlpoolServerConfig.PoolConfig();
@@ -167,15 +179,21 @@ public abstract class AbstractIntegrationTest {
     poolConfig.setDenomination(copyPool.getDenomination());
     poolConfig.setFeeValue(copyPool.getPoolFee().getFeeValue());
     poolConfig.setFeeAccept(copyPool.getPoolFee().getFeeAccept());
-    poolConfig.setMinerFeeMin(copyPool.getMinerFeeMin());
-    poolConfig.setMinerFeeCap(copyPool.getMinerFeeCap());
-    poolConfig.setMinerFeeMax(copyPool.getMinerFeeMax());
     poolConfig.setMustMixMin(mustMixMin);
     poolConfig.setLiquidityMin(liquidityMin);
     poolConfig.setAnonymitySet(anonymitySet);
 
     // run new mix for the pool
-    return __nextMix(poolConfig);
+    return __nextMix(minerFeeConfig, poolConfig);
+  }
+
+  protected Mix __nextMix(
+          int mustMixMin,
+          int liquidityMin,
+          int anonymitySet,
+          Pool copyPool)
+          throws IllegalInputException {
+    return __nextMix(mustMixMin, liquidityMin, anonymitySet, copyPool, copyPool._getMinerFeeConfig());
   }
 
   protected Mix __getCurrentMix() {
@@ -198,7 +216,6 @@ public abstract class AbstractIntegrationTest {
             testUtils,
             cryptoService,
             rpcClientService,
-            mixLimitsService,
             blockchainDataService,
             port);
     return multiClientManager;

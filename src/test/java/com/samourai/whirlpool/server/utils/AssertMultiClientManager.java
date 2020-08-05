@@ -9,6 +9,7 @@ import com.samourai.whirlpool.cli.services.JavaStompClientService;
 import com.samourai.whirlpool.client.WhirlpoolClient;
 import com.samourai.whirlpool.client.mix.MixParams;
 import com.samourai.whirlpool.client.mix.handler.*;
+import com.samourai.whirlpool.client.whirlpool.ServerApi;
 import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientConfig;
 import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientImpl;
 import com.samourai.whirlpool.protocol.websocket.notifications.MixStatus;
@@ -19,7 +20,6 @@ import com.samourai.whirlpool.server.beans.rpc.RpcTransaction;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.services.BlockchainDataService;
 import com.samourai.whirlpool.server.services.CryptoService;
-import com.samourai.whirlpool.server.services.MixLimitsService;
 import com.samourai.whirlpool.server.services.rpc.MockRpcClientServiceImpl;
 import java.lang.invoke.MethodHandles;
 import org.bitcoinj.core.ECKey;
@@ -35,7 +35,6 @@ public class AssertMultiClientManager extends MultiClientManager {
   private TestUtils testUtils;
   private CryptoService cryptoService;
   private MockRpcClientServiceImpl rpcClientService;
-  private MixLimitsService mixLimitsService;
   private BlockchainDataService blockchainDataService;
   private int port;
 
@@ -51,14 +50,12 @@ public class AssertMultiClientManager extends MultiClientManager {
       TestUtils testUtils,
       CryptoService cryptoService,
       MockRpcClientServiceImpl rpcClientService,
-      MixLimitsService mixLimitsService,
       BlockchainDataService blockchainDataService,
       int port) {
     this.mix = mix;
     this.testUtils = testUtils;
     this.cryptoService = cryptoService;
     this.rpcClientService = rpcClientService;
-    this.mixLimitsService = mixLimitsService;
     this.blockchainDataService = blockchainDataService;
     this.port = port;
 
@@ -75,12 +72,11 @@ public class AssertMultiClientManager extends MultiClientManager {
     WhirlpoolClientConfig config =
         new WhirlpoolClientConfig(
             httpClientService,
-            new JavaStompClientService(cliTorClientService, cliConfig, httpClientService),
-            new MemoryWalletPersistHandler(),
-            server,
+            new JavaStompClientService(httpClientService),
+            new ServerApi(server, httpClientService),
             cryptoService.getNetworkParameters(),
             false);
-    return WhirlpoolClientImpl.newClient(config);
+    return new WhirlpoolClientImpl(config);
   }
 
   private int prepareClientWithMock(long inputBalance, CliConfig cliConfig) throws Exception {
