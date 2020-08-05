@@ -31,9 +31,8 @@ public class Whirlpool10ClientsIntegrationTest extends AbstractIntegrationTest {
     long denomination = 200000000;
     long feeValue = 10000000;
     long minerFeeMin = 100;
-    long minerFeeCap = 9500;
+    long minerFeeCap = 255;
     long minerFeeMax = 10000;
-    long minerFeeMix = 510;
     int mustMixMin = NB_CLIENTS;
     int liquidityMin = 0;
     int anonymitySet = NB_CLIENTS;
@@ -44,7 +43,6 @@ public class Whirlpool10ClientsIntegrationTest extends AbstractIntegrationTest {
             minerFeeMin,
             minerFeeCap,
             minerFeeMax,
-            minerFeeMix,
             mustMixMin,
             liquidityMin,
             anonymitySet);
@@ -78,9 +76,8 @@ public class Whirlpool10ClientsIntegrationTest extends AbstractIntegrationTest {
     long denomination = 1000000;
     long feeValue = 50000;
     long minerFeeMin = 100;
-    long minerFeeCap = 9500;
+    long minerFeeCap = 255;
     long minerFeeMax = 10000;
-    long minerFeeMix = 510;
     int mustMixMin = NB_CLIENTS;
     int liquidityMin = 0;
     int anonymitySet = NB_CLIENTS;
@@ -91,7 +88,6 @@ public class Whirlpool10ClientsIntegrationTest extends AbstractIntegrationTest {
             minerFeeMin,
             minerFeeCap,
             minerFeeMax,
-            minerFeeMix,
             mustMixMin,
             liquidityMin,
             anonymitySet);
@@ -133,9 +129,8 @@ public class Whirlpool10ClientsIntegrationTest extends AbstractIntegrationTest {
     long denomination = 1000000;
     long feeValue = 50000;
     long minerFeeMin = 100;
-    long minerFeeCap = 9500;
+    long minerFeeCap = 255;
     long minerFeeMax = 10000;
-    long minerFeeMix = 510;
     int mustMixMin = 3;
     int liquidityMin = 0;
     int anonymitySet = NB_CLIENTS;
@@ -146,7 +141,6 @@ public class Whirlpool10ClientsIntegrationTest extends AbstractIntegrationTest {
             minerFeeMin,
             minerFeeCap,
             minerFeeMax,
-            minerFeeMix,
             mustMixMin,
             liquidityMin,
             anonymitySet);
