@@ -804,7 +804,7 @@ public class MixService {
     Map<String, String> clientDetails = ImmutableMap.of("u", username);
 
     for (Mix mix : getCurrentMixs()) {
-      Collection<ConfirmedInput> confirmedInputsToBlame = mix.onDisconnect(username);
+      Collection<ConfirmedInput> confirmedInputsToBlame = mix.onDisconnect(username, this);
       if (!confirmedInputsToBlame.isEmpty()) {
         confirmedInputsToBlame.forEach(
             confirmedInput -> {
@@ -827,6 +827,11 @@ public class MixService {
         goFail(mix, FailReason.DISCONNECT, outpointKeysToBlame);
       }
     }
+  }
+
+  public void inviteQueuedMustMixs(Mix mix) {
+    // add queued mustMixs if any
+    poolService.inviteToMixAll(mix, false, this);
   }
 
   private Collection<Mix> getCurrentMixs() {

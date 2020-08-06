@@ -9,6 +9,7 @@ import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import com.samourai.whirlpool.server.persistence.to.MixTO;
 import com.samourai.whirlpool.server.services.CryptoService;
+import com.samourai.whirlpool.server.services.MixService;
 import com.samourai.whirlpool.server.utils.Utils;
 import java.lang.invoke.MethodHandles;
 import java.sql.Timestamp;
@@ -388,7 +389,7 @@ public class Mix {
         && !MixStatus.SUCCESS.equals(getMixStatus());
   }
 
-  public Collection<ConfirmedInput> onDisconnect(String username) {
+  public Collection<ConfirmedInput> onDisconnect(String username, MixService mixService) {
     // remove from confirming inputs
     removeConfirmingInputByUsername(username);
 
@@ -402,10 +403,27 @@ public class Mix {
             .collect(Collectors.toList());
     if (!confirmedInputs.isEmpty()) {
       boolean mixAlreadyStarted = this.isAlreadyStarted();
-      confirmedInputs.forEach(
-          confirmedInput -> {
-            unregisterInput(confirmedInput);
-          });
+      boolean hasConfirmedMustMix = false;
+      for (ConfirmedInput confirmedInput : confirmedInputs) {
+        unregisterInput(confirmedInput);
+
+        // did we free a confirmed mustMix slot?
+        if (!confirmedInput.getRegisteredInput().isLiquidity()) {
+          hasConfirmedMustMix = true;
+        }
+      }
+
+      // invite queued mustMixs when free slot liberated
+      if (!mixAlreadyStarted && hasConfirmedMustMix) {
+        if (getPool().getMustMixQueue().hasInputs()) {
+          if (log.isDebugEnabled()) {
+            log.debug(
+                confirmedInputs.size()
+                    + " confirmed mustMix disconnected and mix not started => inviting more queued mustMix");
+          }
+          mixService.inviteQueuedMustMixs(this);
+        }
+      }
 
       if (mixAlreadyStarted) {
         // blame confirmed inputs & restart mix
