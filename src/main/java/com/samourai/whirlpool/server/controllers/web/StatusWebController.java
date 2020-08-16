@@ -62,6 +62,7 @@ public class StatusWebController {
               poolAttributes.put("anonymitySet", pool.getAnonymitySet());
               poolAttributes.put("minMustMix", pool.getMinMustMix());
               poolAttributes.put("minLiquidity", pool.getMinLiquidity());
+              poolAttributes.put("minerFeeMix", pool.getMinerFeeMix());
               poolAttributes.put("minerFeeAccumulated", mix.computeMinerFeeAccumulated());
               poolAttributes.put("nbInputs", mix.getNbInputs());
               poolAttributes.put("nbInputsMustMix", mix.getNbInputsMustMix());
@@ -129,7 +130,6 @@ public class StatusWebController {
     minerFees.put("minerFeeMin", serverConfig.getMinerFees().getMinerFeeMin());
     minerFees.put("minerFeeCap", serverConfig.getMinerFees().getMinerFeeCap());
     minerFees.put("minerFeeMax", serverConfig.getMinerFees().getMinerFeeMax());
-    minerFees.put("minerFeeMix", serverConfig.getMinerFees().getMinerFeeMix());
     model.addAttribute("minerFees", minerFees);
     return "status";
   }

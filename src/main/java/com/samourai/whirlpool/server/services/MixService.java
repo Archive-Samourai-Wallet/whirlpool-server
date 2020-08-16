@@ -135,9 +135,7 @@ public class MixService {
       if (liquiditySlotsAvailable == pool.getMinLiquidity()) {
         long inputMinerFees = registeredInput.computeMinerFees(pool);
         long minerFeeAccumulated = mix.computeMinerFeeAccumulated();
-        long missingMinerFees =
-            whirlpoolServerConfig.getMinerFees().getMinerFeeMix()
-                - (minerFeeAccumulated + inputMinerFees);
+        long missingMinerFees = pool.getMinerFeeMix() - (minerFeeAccumulated + inputMinerFees);
         if (missingMinerFees > 0) {
           logMixStatus(mix);
           log.warn(
@@ -413,7 +411,7 @@ public class MixService {
             + " anonymitySet, "
             + mix.computeMinerFeeAccumulated()
             + "/"
-            + whirlpoolServerConfig.getMinerFees().getMinerFeeMix()
+            + mix.getPool().getMinerFeeMix()
             + "sat (pool: "
             + liquiditiesQueued
             + " liquidities + "

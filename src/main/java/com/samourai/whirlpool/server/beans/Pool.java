@@ -11,6 +11,7 @@ public class Pool {
   private int minLiquidity;
   private int anonymitySet;
   private WhirlpoolServerConfig.MinerFeeConfig minerFeeConfig;
+  private long minerFeeMix;
 
   private Mix currentMix;
   private InputPool mustMixQueue;
@@ -23,7 +24,8 @@ public class Pool {
       int minMustMix,
       int minLiquidity,
       int anonymitySet,
-      WhirlpoolServerConfig.MinerFeeConfig minerFeeConfig) {
+      WhirlpoolServerConfig.MinerFeeConfig minerFeeConfig,
+      long minerFeeMix) {
     this.poolId = poolId;
     this.denomination = denomination;
     this.poolFee = poolFee;
@@ -31,6 +33,7 @@ public class Pool {
     this.minLiquidity = minLiquidity;
     this.anonymitySet = anonymitySet;
     this.minerFeeConfig = minerFeeConfig;
+    this.minerFeeMix = minerFeeMix;
 
     this.mustMixQueue = new InputPool();
     this.liquidityQueue = new InputPool();
@@ -91,6 +94,10 @@ public class Pool {
 
   public int getAnonymitySet() {
     return anonymitySet;
+  }
+
+  public long getMinerFeeMix() {
+    return minerFeeMix;
   }
 
   public Mix getCurrentMix() {

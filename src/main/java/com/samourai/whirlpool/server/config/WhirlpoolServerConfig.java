@@ -372,6 +372,10 @@ public class WhirlpoolServerConfig extends ServerConfig {
     public void setAnonymitySet(int anonymitySet) {
       this.anonymitySet = anonymitySet;
     }
+
+    public long getMinerFeeMix(MinerFeeConfig minerFeeConfig) {
+      return mustMixMin * minerFeeConfig.getMinerFeeMin();
+    }
   }
 
   public static class RpcClientConfig {
@@ -509,10 +513,6 @@ public class WhirlpoolServerConfig extends ServerConfig {
     public void setMinerFeeMax(long minerFeeMax) {
       this.minerFeeMax = minerFeeMax;
     }
-
-    public long getMinerFeeMix() {
-      return minerFeeMin * 2;
-    }
   }
 
   public static class ScodeSamouraiFeeConfig {
@@ -613,8 +613,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
             + minerFees.getMinerFeeCap()
             + ", max="
             + minerFees.getMinerFeeMax()
-            + "], mix="
-            + minerFees.getMinerFeeMix());
+            + "]");
 
     configInfo.put(
         "registerInput.maxInputsSameHash", String.valueOf(registerInput.maxInputsSameHash));
@@ -662,7 +661,8 @@ public class WhirlpoolServerConfig extends ServerConfig {
               + poolConfig.getMustMixMin()
               + ", liquidityMin="
               + poolConfig.getLiquidityMin()
-              + "]";
+              + "], minerFeeMix="
+              + poolConfig.getMinerFeeMix(minerFees);
       configInfo.put("pools[" + poolConfig.id + "]", poolInfo);
     }
     int i = 0;

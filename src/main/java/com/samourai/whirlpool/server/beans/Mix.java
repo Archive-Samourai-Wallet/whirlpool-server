@@ -109,7 +109,7 @@ public class Mix {
     }
 
     // verify minerFeeMix
-    if (computeMinerFeeAccumulated() < minerFeeConfig.getMinerFeeMix()) {
+    if (computeMinerFeeAccumulated() < pool.getMinerFeeMix()) {
       return false;
     }
     return true;
