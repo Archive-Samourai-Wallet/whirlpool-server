@@ -47,7 +47,7 @@
                 </td>
                 <td>
                     <strong><span th:text="${pool.nbInputs}"/> / <span th:text="${pool.anonymitySet}"/> confirmed</span><br/>
-                    <strong th:text="${pool.nbInputsMustMix}"/> / <span th:text="${pool.minMustMix}"/> mustMix<span th:if="${pool.mustMixQueued>0}"> + <strong th:text="${pool.mustMixQueued}"/> queued</span>, <strong th:text="${pool.minerFeeAccumulated}"/></strong> / <span th:text="${minerFees.minerFeeMix}"/> sat<br/>
+                    <strong th:text="${pool.nbInputsMustMix}"/> / <span th:text="${pool.minMustMix}"/> mustMix<span th:if="${pool.mustMixQueued>0}"> + <strong th:text="${pool.mustMixQueued}"/> queued</span>, <strong th:text="${pool.minerFeeAccumulated}"/></strong> / <span th:text="${pool.minerFeeMix}"/> sat<br/>
                     <strong th:text="${pool.nbInputsLiquidities}"/> / <span th:text="${pool.minLiquidity}"/> liquidities<span th:if="${pool.liquiditiesQueued>0}"> + <strong th:text="${pool.liquiditiesQueued}"/> queued</span>
                 </td>
                 <td><span th:text="${@templateUtil.duration(pool.elapsedTime/1000)}"/></td>
