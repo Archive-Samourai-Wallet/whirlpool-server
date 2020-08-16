@@ -511,7 +511,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
     }
 
     public long getMinerFeeMix() {
-      return minerFeeCap * 2;
+      return minerFeeMin * 2;
     }
   }
 
