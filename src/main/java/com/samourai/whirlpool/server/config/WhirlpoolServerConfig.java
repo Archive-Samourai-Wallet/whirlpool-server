@@ -374,7 +374,8 @@ public class WhirlpoolServerConfig extends ServerConfig {
     }
 
     public long getMinerFeeMix(MinerFeeConfig minerFeeConfig) {
-      return mustMixMin * minerFeeConfig.getMinerFeeMin();
+      return Math.max(
+          minerFeeConfig.getMinRelayFee(), mustMixMin * minerFeeConfig.getMinerFeeMin());
     }
   }
 
@@ -477,6 +478,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
     private long minerFeeMin; // in satoshis
     private long minerFeeCap; // in satoshis
     private long minerFeeMax; // in satoshis
+    private long minRelayFee; // in satoshis
 
     public void validate() throws Exception {
       if (minerFeeMin <= 0) {
@@ -487,6 +489,9 @@ public class WhirlpoolServerConfig extends ServerConfig {
       }
       if (minerFeeMax <= 0) {
         throw new Exception("Invalid minerFeeMax");
+      }
+      if (minRelayFee <= 0) {
+        throw new Exception("Invalid minRelayFee");
       }
     }
 
@@ -512,6 +517,14 @@ public class WhirlpoolServerConfig extends ServerConfig {
 
     public void setMinerFeeMax(long minerFeeMax) {
       this.minerFeeMax = minerFeeMax;
+    }
+
+    public long getMinRelayFee() {
+      return minRelayFee;
+    }
+
+    public void setMinRelayFee(long minRelayFee) {
+      this.minRelayFee = minRelayFee;
     }
   }
 
@@ -613,7 +626,8 @@ public class WhirlpoolServerConfig extends ServerConfig {
             + minerFees.getMinerFeeCap()
             + ", max="
             + minerFees.getMinerFeeMax()
-            + "]");
+            + "], minRelayFee="
+            + minerFees.getMinRelayFee());
 
     configInfo.put(
         "registerInput.maxInputsSameHash", String.valueOf(registerInput.maxInputsSameHash));

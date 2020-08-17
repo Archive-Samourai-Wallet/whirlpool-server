@@ -73,11 +73,13 @@ SCode can expire for tx0s confirmed after a specified time.
 server.pools[x].anonymity-set = 5
 server.pools[x].must-mix-min = 1
 server.pools[x].liquidity-min = 1
+server.miner-fees.min-relay-fee = 550
 ```
 Mix will start when *anonymity-set* (mustMix + liquidities) are registered.<br/>
 
 At the beginning of the mix, only mustMix can register up, to *anonymity-set - liquidity-min*. Meanwhile, liquidities are placed on a waiting pool.<br/>
-Liquidities are added as soon as *must-mix-min* and *miner-fee-mix=(2x)miner-fee-cap* are reached, up to *anonymity-set* inputs for the mix.
+Liquidities are added as soon as *must-mix-min* are reached, up to *anonymity-set* inputs for the mix.<br/>
+MustMixs are selected such as accumulated miner-fees >= *min-relay-fee* and >= *must-mix-min x miner-fee-cap* 
 
 ### Exports
 Mixs are exported to a CSV file:
