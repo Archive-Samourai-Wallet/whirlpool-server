@@ -73,7 +73,7 @@ SCode can expire for tx0s confirmed after a specified time.
 server.pools[x].anonymity-set = 5
 server.pools[x].must-mix-min = 1
 server.pools[x].liquidity-min = 1
-server.miner-fees.min-relay-fee = 550
+server.miner-fees.min-relay-fee = 510
 ```
 Mix will start when *anonymity-set* (mustMix + liquidities) are registered.<br/>
 
