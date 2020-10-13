@@ -83,7 +83,7 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
         new SegwitAddress(ecKey.getPubKey(), cryptoService.getNetworkParameters());
     String signature = ecKey.signMessage(poolId);
 
-    long inputBalance = mix.getPool().computePremixBalanceMin(false);
+    long inputBalance = mix.getPool().computePremixBalanceMin(false)+mix.getPool().getMinerFeeMix();
 
     // same hash
     RpcTransaction rpcTransaction =
@@ -144,7 +144,7 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
         new SegwitAddress(ecKey.getPubKey(), cryptoService.getNetworkParameters());
     String signature = ecKey.signMessage(poolId);
 
-    long inputBalance = mix.getPool().computePremixBalanceMin(false);
+    long inputBalance = mix.getPool().computePremixBalanceMin(false)+mix.getPool().getMinerFeeMix();
 
     // different hashs
     RpcTransaction rpcTransaction =

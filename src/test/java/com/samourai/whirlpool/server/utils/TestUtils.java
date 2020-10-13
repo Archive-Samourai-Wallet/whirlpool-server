@@ -1,6 +1,6 @@
 package com.samourai.whirlpool.server.utils;
 
-import com.samourai.wallet.api.backend.beans.UnspentResponse;
+import com.samourai.wallet.api.backend.beans.UnspentOutput;
 import com.samourai.wallet.bip47.rpc.BIP47Wallet;
 import com.samourai.wallet.hd.HD_Wallet;
 import com.samourai.wallet.hd.java.HD_WalletFactoryJava;
@@ -129,20 +129,20 @@ public class TestUtils {
     return confirmedInput;
   }
 
-  public UnspentResponse.UnspentOutput computeUnspentOutput(String hash, int index, long value) {
-    UnspentResponse.UnspentOutput spendFrom = new UnspentResponse.UnspentOutput();
+  public UnspentOutput computeUnspentOutput(String hash, int index, long value) {
+    UnspentOutput spendFrom = new UnspentOutput();
     spendFrom.tx_hash = hash;
     spendFrom.tx_output_n = index;
     spendFrom.value = value;
     spendFrom.script = "foo";
     spendFrom.addr = "foo";
     spendFrom.confirmations = 1234;
-    spendFrom.xpub = new UnspentResponse.UnspentOutput.Xpub();
+    spendFrom.xpub = new UnspentOutput.Xpub();
     spendFrom.xpub.path = "foo";
     return spendFrom;
   }
 
-  public UnspentResponse.UnspentOutput computeUnspentOutput(TransactionOutPoint outPoint) {
+  public UnspentOutput computeUnspentOutput(TransactionOutPoint outPoint) {
     return computeUnspentOutput(
         outPoint.getHash().toString(), (int) outPoint.getIndex(), outPoint.getValue().value);
   }
@@ -153,7 +153,7 @@ public class TestUtils {
     String input0OutPointAddress = new SegwitAddress(input0Key, params).getBech32AsString();
     TransactionOutPoint input0OutPoint =
         cryptoTestUtil.generateTransactionOutPoint(input0OutPointAddress, value, params);
-    UnspentResponse.UnspentOutput utxo = computeUnspentOutput(input0OutPoint);
+    UnspentOutput utxo = computeUnspentOutput(input0OutPoint);
     return new UnspentOutputWithKey(utxo, input0Key.getPrivKeyBytes());
   }
 }

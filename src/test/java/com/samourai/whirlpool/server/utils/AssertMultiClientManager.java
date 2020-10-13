@@ -120,6 +120,9 @@ public class AssertMultiClientManager extends MultiClientManager {
 
   private long computePremixBalanceMin(boolean liquidity) {
     long premixBalanceMin = mix.getPool().computePremixBalanceMin(liquidity);
+    if (liquidity) {
+      premixBalanceMin += mix.getPool().getMinerFeeMix();
+    }
     return premixBalanceMin;
   }
 

@@ -22,6 +22,7 @@ import org.bouncycastle.crypto.params.RSABlindingParameters;
 import org.bouncycastle.crypto.params.RSAKeyParameters;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +55,7 @@ public class SigningServiceTest extends AbstractIntegrationTest {
     // prepare input
     ECKey ecKey = new ECKey();
     boolean liquidity = false;
-    long inputBalance = mix.getPool().computePremixBalanceMin(liquidity);
+    long inputBalance = mix.getPool().computePremixBalanceMin(liquidity)+mix.getPool().getMinerFeeMix();
     TxOutPoint txOutPoint =
         createAndMockTxOutPoint(new SegwitAddress(ecKey.getPubKey(), params), inputBalance, 10);
 
@@ -80,7 +81,7 @@ public class SigningServiceTest extends AbstractIntegrationTest {
     // prepare input
     ECKey ecKey = new ECKey();
     boolean liquidity = false;
-    long inputBalance = mix.getPool().computePremixBalanceMin(liquidity);
+    long inputBalance = mix.getPool().computePremixBalanceMin(liquidity)+mix.getPool().getMinerFeeMix();
     TxOutPoint txOutPoint =
         createAndMockTxOutPoint(new SegwitAddress(ecKey.getPubKey(), params), inputBalance, 10);
 
@@ -94,6 +95,7 @@ public class SigningServiceTest extends AbstractIntegrationTest {
       String username = "user1";
       String[] witness64 = doSigning(mix, premixHandler, liquidity, txOutPoint, username);
       mixService.registerSignature(mix.getMixId(), "dummy", witness64); // invalid user
+      Assertions.assertTrue(false);
     } catch (IllegalInputException e) {
       // verify
       Assert.assertEquals("Input not found for signing username=dummy", e.getMessage());
@@ -108,7 +110,7 @@ public class SigningServiceTest extends AbstractIntegrationTest {
     // mix config
     Mix mix = __nextMix(2, 0, 2, __getCurrentMix().getPool()); // 2 users
     boolean liquidity = false;
-    long inputBalance = mix.getPool().computePremixBalanceMin(liquidity);
+    long inputBalance = mix.getPool().computePremixBalanceMin(liquidity)+mix.getPool().getMinerFeeMix();
 
     // trick to simulate one first user registered
     String firstUsername = "firstUser";
@@ -136,6 +138,7 @@ public class SigningServiceTest extends AbstractIntegrationTest {
     mixService.registerSignature(mix.getMixId(), username, witness64); // valid
     try {
       mixService.registerSignature(mix.getMixId(), username, witness64); // duplicate signing
+      Assertions.assertTrue(false);
     } catch (IllegalInputException e) {
       // verify
       Assert.assertEquals("User already signed, username=" + username, e.getMessage());
@@ -153,7 +156,7 @@ public class SigningServiceTest extends AbstractIntegrationTest {
     // prepare input
     ECKey ecKey = new ECKey();
     boolean liquidity = false;
-    long inputBalance = mix.getPool().computePremixBalanceMin(liquidity);
+    long inputBalance = mix.getPool().computePremixBalanceMin(liquidity)+mix.getPool().getMinerFeeMix();
     TxOutPoint txOutPoint =
         createAndMockTxOutPoint(new SegwitAddress(ecKey.getPubKey(), params), inputBalance, 10);
 
@@ -174,6 +177,7 @@ public class SigningServiceTest extends AbstractIntegrationTest {
       String username = "user1";
       String[] witness64 = doSigning(mix, premixHandler, liquidity, txOutPoint, username);
       mixService.registerSignature(mix.getMixId(), username, witness64);
+      Assertions.assertTrue(false);
     } catch (IllegalInputException e) {
       // verify
       Assert.assertEquals("Invalid signature", e.getMessage());
@@ -191,7 +195,7 @@ public class SigningServiceTest extends AbstractIntegrationTest {
     // prepare input
     ECKey ecKey = new ECKey();
     boolean liquidity = false;
-    long inputBalance = mix.getPool().computePremixBalanceMin(liquidity);
+    long inputBalance = mix.getPool().computePremixBalanceMin(liquidity)+mix.getPool().getMinerFeeMix();
     TxOutPoint txOutPoint =
         createAndMockTxOutPoint(new SegwitAddress(ecKey.getPubKey(), params), inputBalance, 10);
 
@@ -212,6 +216,7 @@ public class SigningServiceTest extends AbstractIntegrationTest {
       String username = "user1";
       String[] witness64 = doSigning(mix, premixHandler, liquidity, txOutPoint, username);
       mixService.registerSignature(mix.getMixId(), username, witness64);
+      Assertions.assertTrue(false);
     } catch (IllegalInputException e) {
       // verify
       Assert.assertEquals("Invalid signature", e.getMessage());

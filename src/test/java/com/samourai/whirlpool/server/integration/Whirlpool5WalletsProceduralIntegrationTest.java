@@ -35,7 +35,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-public class Whirlpool5WalletsProceduralIntegrationTest extends WhirlpoolSimpleIntegrationTest {
+public class Whirlpool5WalletsProceduralIntegrationTest extends AbstractIntegrationTest {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   // Samourai fee %

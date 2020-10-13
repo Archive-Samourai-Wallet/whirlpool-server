@@ -29,6 +29,9 @@ public abstract class AbstractMixIntegrationTest extends AbstractIntegrationTest
     String signature = ecKey.signMessage(poolId);
 
     long inputBalance = mix.getPool().computePremixBalanceMin(liquidity);
+    if (!liquidity) {
+      inputBalance+=+mix.getPool().getMinerFeeMix();
+    }
     TxOutPoint txOutPoint =
         createAndMockTxOutPoint(
             new SegwitAddress(ecKey.getPubKey(), cryptoService.getNetworkParameters()),
