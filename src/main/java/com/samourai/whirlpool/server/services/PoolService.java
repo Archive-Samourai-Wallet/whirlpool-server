@@ -26,10 +26,13 @@ import org.springframework.util.Assert;
 @Service
 public class PoolService {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final int INVITE_INPUT_DELAY = 2000;
+
   private WhirlpoolServerConfig whirlpoolServerConfig;
   private CryptoService cryptoService;
   private WebSocketService webSocketService;
   private ExportService exportService;
+  private TaskService taskService;
   private Map<String, Pool> pools;
 
   @Autowired
@@ -38,11 +41,13 @@ public class PoolService {
       CryptoService cryptoService,
       WebSocketService webSocketService,
       ExportService exportService,
-      WebSocketSessionService webSocketSessionService) {
+      WebSocketSessionService webSocketSessionService,
+      TaskService taskService) {
     this.whirlpoolServerConfig = whirlpoolServerConfig;
     this.cryptoService = cryptoService;
     this.webSocketService = webSocketService;
     this.exportService = exportService;
+    this.taskService = taskService;
     __reset();
 
     // listen websocket onDisconnect
@@ -194,8 +199,14 @@ public class PoolService {
         new ConfirmInputMixStatusNotification(mix.getMixId(), publicKey64);
     mix.registerConfirmingInput(registeredInput);
 
-    // send invite to mix
-    webSocketService.sendPrivate(registeredInput.getUsername(), confirmInputMixStatusNotification);
+    // add delay as we are called from LimitsWatcher which may run just after an input registered
+    taskService.runOnce(
+        INVITE_INPUT_DELAY,
+        () -> {
+          // send invite to mix
+          webSocketService.sendPrivate(
+              registeredInput.getUsername(), confirmInputMixStatusNotification);
+        });
   }
 
   public void confirmInputs(Mix mix, MixService mixService) {
@@ -233,11 +244,11 @@ public class PoolService {
         log.debug(
             "["
                 + mix.getMixId()
-                + "] "
+                + "] ("
                 + nbInputs
                 + "/"
                 + mix.getPool().getAnonymitySet()
-                + " => invited "
+                + ") anonymitySet => invited "
                 + liquiditiesInvited
                 + "/"
                 + liquiditiesToAdd
@@ -279,8 +290,8 @@ public class PoolService {
       }
     }
     if (nbInvited > 0) {
-      if (log.isDebugEnabled()) {
-        log.debug(
+      if (log.isTraceEnabled()) {
+        log.trace(
             "["
                 + mix.getMixId()
                 + "] invited "

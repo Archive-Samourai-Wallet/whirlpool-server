@@ -19,7 +19,7 @@
         <dependency>
             <groupId>io.samourai.code.whirlpool</groupId>
             <artifactId>whirlpool-client-cli</artifactId>
-            <version>develop-SNAPSHOT</version>
+            <version>0.10.9</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.apache.httpcomponents</groupId>
@@ -34,7 +34,7 @@
 		<dependency>
 			<groupId>io.samourai.code.wallet</groupId>
 			<artifactId>extlibj</artifactId>
-			<version>fetchWallet-SNAPSHOT</version>
+			<version>0.0.15-soroban</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

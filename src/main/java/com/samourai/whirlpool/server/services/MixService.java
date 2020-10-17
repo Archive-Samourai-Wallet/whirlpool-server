@@ -49,7 +49,7 @@ public class MixService {
 
   private Map<String, Mix> currentMixs;
 
-  private static final int CONFIRMING_INPUTS_DELAY = 5000;
+  private static final int CONFIRM_INPUT_CHECK_DELAY = 3000;
 
   @Autowired
   public MixService(
@@ -261,12 +261,13 @@ public class MixService {
 
     // reply confirmInputResponse with signedBordereau
     String signedBordereau64 = WhirlpoolProtocol.encodeBytes(signedBordereau);
-    ConfirmInputResponse confirmInputResponse = new ConfirmInputResponse(mixId, signedBordereau64);
+    final ConfirmInputResponse confirmInputResponse =
+        new ConfirmInputResponse(mixId, signedBordereau64);
     webSocketService.sendPrivate(username, confirmInputResponse);
 
     // check mix ready, after a delay to make sure client processed confirmation
     taskService.runOnce(
-        CONFIRMING_INPUTS_DELAY,
+        CONFIRM_INPUT_CHECK_DELAY,
         () -> {
           checkConfirmInputReady(mix);
         });
