@@ -23,9 +23,9 @@
         <table class="table">
             <thead>
                 <th class="align-middle">PoolId</th>
-                <th class="align-middle">Denom.<br/>(btc)</th>
                 <th class="align-middle">Status</th>
-                <th class="align-middle">Users</th>
+                <th class="align-middle">Confirmed users</th>
+                <th class="align-middle">Queued users</th>
                 <th class="align-middle">Elapsed time<br/>(mix)</br.></th>
                 <th class="align-middle">Configuration</th>
             </thead>
@@ -33,7 +33,6 @@
             <div th:each="pool,poolIter : *{pools}">
                 <tr>
                 <th class="align-middle" rowspan="2"><span th:text="${pool.poolId}"/></th>
-                <td><span th:text="${@templateUtil.satoshisToBtc(pool.denomination)}"/></td>
                 <td>
                     <span th:text="${pool.mixStatus}"/><br/>
                     <div th:if="${pool.currentStepProgress != null}">
@@ -46,9 +45,12 @@
                     </div>
                 </td>
                 <td>
-                    <strong><span th:text="${pool.nbInputs}"/> / <span th:text="${pool.anonymitySet}"/> confirmed</span><br/>
-                    <strong th:text="${pool.nbInputsMustMix}"/> / <span th:text="${pool.minMustMix}"/> mustMix<span th:if="${pool.mustMixQueued>0}"> + <strong th:text="${pool.mustMixQueued}"/> queued</span>, <strong th:text="${pool.minerFeeAccumulated}"/></strong> / <span th:text="${pool.minerFeeMix}"/> sat<br/>
-                    <strong th:text="${pool.nbInputsLiquidities}"/> / <span th:text="${pool.minLiquidity}"/> liquidities<span th:if="${pool.liquiditiesQueued>0}"> + <strong th:text="${pool.liquiditiesQueued}"/> queued</span>
+                    <strong th:text="${pool.nbInputs}"/> / <span th:text="${pool.anonymitySet}"/> confirmed</span><br/>
+                    <strong th:text="${pool.nbInputsMustMix}"/> / <span th:text="${pool.minMustMix}"/> mustMix, <strong th:text="${pool.minerFeeAccumulated}"/> / <span th:text="${pool.minerFeeMix}"/> sat<br/>
+                    <strong th:text="${pool.nbInputsLiquidities}"/> / <span th:text="${pool.minLiquidity}"/> liquidities
+                </td>
+                <td>
+                    <span th:text="${pool.mustMixQueued}" title="mustMix"/> + <span th:text="${pool.liquiditiesQueued}" title="liquidities"/>
                 </td>
                 <td><span th:text="${@templateUtil.duration(pool.elapsedTime/1000)}"/></td>
                 <td>
