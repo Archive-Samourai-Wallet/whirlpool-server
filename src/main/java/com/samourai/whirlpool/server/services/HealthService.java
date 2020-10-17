@@ -61,7 +61,7 @@ public class HealthService {
             @Override
             public void fail(MixFailReason reason, String notifiableError) {
               super.fail(reason, notifiableError);
-              if (notifiableError.contains(RegisterInputService.ERROR_INVALID_HASH)) {
+              if (notifiableError.equals(RegisterInputService.HEALTH_CHECK_SUCCESS)) {
                 // expected response
                 if (log.isTraceEnabled()) {
                   log.trace("healthCheck SUCCESS");

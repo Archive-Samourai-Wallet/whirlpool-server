@@ -59,8 +59,8 @@ public abstract class AbstractWebSocketController {
     String username = principal.getName();
     webSocketService.sendPrivateError(username, message);
 
-    // skip local checkCheck
-    if (!RegisterInputService.ERROR_INVALID_HASH.equals(message)) {
+    // skip healthCheck
+    if (!RegisterInputService.HEALTH_CHECK_SUCCESS.equals(message)) {
       if (noStackTrace(e)) {
         log.warn("handleException: " + e.getMessage());
       } else {

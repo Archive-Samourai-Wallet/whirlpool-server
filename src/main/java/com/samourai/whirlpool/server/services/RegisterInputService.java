@@ -18,7 +18,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class RegisterInputService {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-  public static final String ERROR_INVALID_HASH = "Invalid utxoHash";
+  public static final String HEALTH_CHECK_UTXO = "HEALTH_CHECK";
+  public static final String HEALTH_CHECK_SUCCESS = "HEALTH_CHECK_SUCCESS";
 
   private PoolService poolService;
   private CryptoService cryptoService;
@@ -55,8 +56,11 @@ public class RegisterInputService {
       boolean liquidity,
       String ip)
       throws NotifiableException {
+    if (HEALTH_CHECK_UTXO.equals(utxoHash)) {
+      throw new IllegalInputException(HEALTH_CHECK_SUCCESS);
+    }
     if (!cryptoService.isValidTxHash(utxoHash)) {
-      throw new IllegalInputException(ERROR_INVALID_HASH);
+      throw new IllegalInputException("Invalid utxoHash");
     }
     if (utxoIndex < 0) {
       throw new IllegalInputException("Invalid utxoIndex");
@@ -100,7 +104,7 @@ public class RegisterInputService {
 
       // register input to pool
       RegisteredInput registeredInput =
-          poolService.registerInput(poolId, username, liquidity, txOutPoint, true, ip, null);
+          poolService.registerInput(poolId, username, liquidity, txOutPoint, ip, null);
       return registeredInput;
     } catch (NotifiableException e) { // validation error or input rejected
       log.warn("Input rejected (" + utxoHash + ":" + utxoIndex + "): " + e.getMessage());

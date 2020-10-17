@@ -56,7 +56,9 @@ public class WebSocketService {
   }
 
   public void sendPrivateError(String username, String message) {
-    log.warn("(>) " + username + " sendPrivateError: " + message);
+    if (!RegisterInputService.HEALTH_CHECK_SUCCESS.equals(message)) {
+      log.warn("(>) " + username + " sendPrivateError: " + message);
+    }
     ErrorResponse errorResponse = new ErrorResponse(message);
     sendPrivate(username, errorResponse);
   }
