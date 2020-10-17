@@ -83,7 +83,8 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
         new SegwitAddress(ecKey.getPubKey(), cryptoService.getNetworkParameters());
     String signature = ecKey.signMessage(poolId);
 
-    long inputBalance = mix.getPool().computePremixBalanceMin(false)+mix.getPool().getMinerFeeMix();
+    long inputBalance =
+        mix.getPool().computePremixBalanceMin(false) + mix.getPool().getMinerFeeMix();
 
     // same hash
     RpcTransaction rpcTransaction =
@@ -144,7 +145,8 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
         new SegwitAddress(ecKey.getPubKey(), cryptoService.getNetworkParameters());
     String signature = ecKey.signMessage(poolId);
 
-    long inputBalance = mix.getPool().computePremixBalanceMin(false)+mix.getPool().getMinerFeeMix();
+    long inputBalance =
+        mix.getPool().computePremixBalanceMin(false) + mix.getPool().getMinerFeeMix();
 
     // different hashs
     RpcTransaction rpcTransaction =
@@ -239,7 +241,7 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
     testUtils.assertPool(1, 1, pool);
 
     // wait for liquidityWatcher to invite liquidity
-    Thread.sleep(serverConfig.getRegisterInput().getLiquidityInterval() * 1000);
+    Thread.sleep(serverConfig.getRegisterInput().getConfirmInterval() * 1000);
     testUtils.assertMix(1, 1, mix); // liquidity confirming
     testUtils.assertPool(1, 0, pool);
   }

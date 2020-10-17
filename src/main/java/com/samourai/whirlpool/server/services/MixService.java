@@ -112,11 +112,6 @@ public class MixService {
     }
 
     if (registeredInput.isLiquidity()) {
-      // liquidity: verify liquidities open
-      if (!mix.isRegisterLiquiditiesOpen()) {
-        throw new IllegalInputException(
-            "Current mix not opened to liquidities yet"); // should not happen
-      }
       // verify minMustMix
       int mustMixSlotsAvailable = pool.getAnonymitySet() - (mix.getNbInputsLiquidities() + 1);
       if (mustMixSlotsAvailable < pool.getMinMustMix()) {
@@ -270,9 +265,6 @@ public class MixService {
     String signedBordereau64 = WhirlpoolProtocol.encodeBytes(signedBordereau);
     ConfirmInputResponse confirmInputResponse = new ConfirmInputResponse(mixId, signedBordereau64);
     webSocketService.sendPrivate(username, confirmInputResponse);
-
-    // check mix limits
-    mixLimitsService.onInputConfirmed(mix);
 
     // check mix ready
     checkConfirmInputReady(mix);
@@ -827,11 +819,6 @@ public class MixService {
     }
   }
 
-  public void inviteQueuedMustMixs(Mix mix) {
-    // add queued mustMixs if any
-    poolService.inviteToMixAll(mix, false, this);
-  }
-
   private Collection<Mix> getCurrentMixs() {
     return currentMixs.values();
   }
@@ -849,7 +836,7 @@ public class MixService {
 
   public Mix __nextMix(Pool pool) {
     String mixId = Utils.generateUniqueString();
-    Mix mix = new Mix(mixId, pool, whirlpoolServerConfig.getMinerFees(), cryptoService);
+    Mix mix = new Mix(mixId, pool, cryptoService);
     startMix(mix);
     return mix;
   }
@@ -908,9 +895,7 @@ public class MixService {
 
     log.info("[" + pool.getPoolId() + "][NEW MIX " + mix.getMixId() + "]");
     logMixStatus(mix);
-
-    // add queued mustMixs if any
-    poolService.inviteToMixAll(mix, false, this);
+    mixLimitsService.manage(mix);
   }
 
   public Predicate<Map.Entry<String, RegisteredInput>> computeFilterInputMixable(Mix mix) {

@@ -5,7 +5,6 @@ import com.samourai.javaserver.exceptions.NotifiableException;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.protocol.websocket.messages.SubscribePoolResponse;
 import com.samourai.whirlpool.protocol.websocket.notifications.ConfirmInputMixStatusNotification;
-import com.samourai.whirlpool.protocol.websocket.notifications.MixStatus;
 import com.samourai.whirlpool.server.beans.*;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
@@ -123,7 +122,6 @@ public class PoolService {
       String username,
       boolean liquidity,
       TxOutPoint txOutPoint,
-      boolean inviteIfPossible,
       String ip,
       String lastUserHash)
       throws NotifiableException {
@@ -151,18 +149,7 @@ public class PoolService {
     if (!isUtxoConfirmed(txOutPoint, liquidity)) {
       throw new IllegalInputException("Input is not confirmed");
     }
-
-    Mix currentMix = pool.getCurrentMix();
-    if (inviteIfPossible
-        && !liquidity
-        && MixStatus.CONFIRM_INPUT.equals(currentMix.getMixStatus())) {
-      // directly invite mustMix to mix
-      inviteToMix(currentMix, registeredInput);
-    } else {
-      // enqueue mustMix/liquidity in pool
-      queueToPool(pool, registeredInput);
-    }
-
+    queueToPool(pool, registeredInput);
     return registeredInput;
   }
 
@@ -176,13 +163,15 @@ public class PoolService {
       queue = pool.getMustMixQueue();
     }
 
-    log.info(
-        "["
-            + pool.getPoolId()
-            + "] "
-            + registeredInput.getUsername()
-            + " queueing to pool "
-            + (registeredInput.isLiquidity() ? "liquidity" : "mustMix"));
+    if (log.isDebugEnabled()) {
+      log.debug(
+          "["
+              + pool.getPoolId()
+              + "] "
+              + registeredInput.getUsername()
+              + " queueing "
+              + (registeredInput.isLiquidity() ? "liquidity" : "mustMix"));
+    }
 
     // queue input
     queue.register(registeredInput);
@@ -209,12 +198,61 @@ public class PoolService {
     webSocketService.sendPrivate(registeredInput.getUsername(), confirmInputMixStatusNotification);
   }
 
-  public int inviteToMixAll(Mix mix, boolean liquidity, MixService mixService) {
-    return inviteToMix(mix, liquidity, null, mixService);
+  public void confirmInputs(Mix mix, MixService mixService) {
+    int liquiditiesToAdd;
+    if (mix.hasMinMustMixAndFeeReached()) {
+      // enough mustMixs => add missing liquidities
+      liquiditiesToAdd = mix.getPool().getAnonymitySet() - mix.getNbInputs();
+    } else {
+      // not enough mustMixs => add minimal liquidities, then missing mustMixs
+      liquiditiesToAdd = mix.getMinLiquidityMixRemaining();
+    }
+    confirmInputs(mix, mixService, liquiditiesToAdd);
   }
 
-  public synchronized int inviteToMix(
-      Mix mix, boolean liquidity, Integer maxInvites, MixService mixService) {
+  private void confirmInputs(Mix mix, MixService mixService, int liquiditiesToAdd) {
+    int liquiditiesInvited = 0, mustMixsInvited = 0;
+
+    int nbInputs = mix.getNbInputs();
+
+    // invite liquidities first (to allow concurrent liquidity remixing)
+    if (liquiditiesToAdd > 0 && mix.getPool().getLiquidityQueue().hasInputs()) {
+      liquiditiesInvited = inviteToMix(mix, true, liquiditiesToAdd, mixService);
+    }
+
+    // invite mustMixs
+    int mustMixsToAdd =
+        mix.getPool().getAnonymitySet()
+            - Math.max(mix.getMinLiquidityMixRemaining(), (nbInputs + liquiditiesInvited));
+    if (mustMixsToAdd > 0 && mix.getPool().getMustMixQueue().hasInputs()) {
+      mustMixsInvited = inviteToMix(mix, false, mustMixsToAdd, mixService);
+    }
+
+    if (liquiditiesInvited > 0 || mustMixsInvited > 0) {
+      if (log.isDebugEnabled()) {
+        log.debug(
+            "["
+                + mix.getMixId()
+                + "] "
+                + nbInputs
+                + "/"
+                + mix.getPool().getAnonymitySet()
+                + " => invited "
+                + liquiditiesInvited
+                + "/"
+                + liquiditiesToAdd
+                + " "
+                + "liquidities + "
+                + mustMixsInvited
+                + "/"
+                + mustMixsToAdd
+                + " mustMixs");
+      }
+    }
+  }
+
+  private synchronized int inviteToMix(
+      Mix mix, boolean liquidity, int maxInvites, MixService mixService) {
     Predicate<Map.Entry<String, RegisteredInput>> filterInputMixable =
         mixService.computeFilterInputMixable(mix);
     InputPool queue =
@@ -222,7 +260,7 @@ public class PoolService {
     int nbInvited = 0;
     while (true) {
       // stop when enough invites
-      if (maxInvites != null && nbInvited >= maxInvites) {
+      if (nbInvited >= maxInvites) {
         break;
       }
 
@@ -248,8 +286,9 @@ public class PoolService {
                 + "] invited "
                 + nbInvited
                 + "/"
-                + (maxInvites != null ? maxInvites : "all")
-                + " liquidities");
+                + maxInvites
+                + " "
+                + (liquidity ? "liquidities" : "remixs"));
       }
     }
     return nbInvited;
@@ -298,7 +337,9 @@ public class PoolService {
       Optional<RegisteredInput> liquidityRemoved =
           pool.getLiquidityQueue().removeByUsername(username);
       if (liquidityRemoved.isPresent()) {
-        log.info("[" + pool.getPoolId() + "] " + username + " removed 1 liquidity from pool");
+        if (log.isDebugEnabled()) {
+          log.debug("[" + pool.getPoolId() + "] " + username + " removed 1 liquidity from pool");
+        }
 
         // log activity
         ActivityCsv activityCsv =

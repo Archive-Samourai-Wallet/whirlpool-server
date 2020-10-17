@@ -122,7 +122,8 @@ public class HealthService {
   private MixParams computeMixParams() {
     WhirlpoolServerConfig.PoolConfig poolConfig = whirlpoolServerConfig.getPools()[0];
     UtxoWithBalance utxoWithBalance =
-        new UtxoWithBalance(new Utxo("healthCheck", 0), poolConfig.getDenomination());
+        new UtxoWithBalance(
+            new Utxo(RegisterInputService.HEALTH_CHECK_UTXO, 0), poolConfig.getDenomination());
     IPremixHandler premixHandler = new PremixHandler(utxoWithBalance, new ECKey(), "healthCheck");
     IPostmixHandler postmixHandler =
         new IPostmixHandler() {

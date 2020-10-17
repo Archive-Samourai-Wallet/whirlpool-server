@@ -129,22 +129,25 @@ public class TestUtils {
     return confirmedInput;
   }
 
-  public UnspentOutput computeUnspentOutput(String hash, int index, long value) {
+  public UnspentOutput computeUnspentOutput(String hash, int index, long value, String toAddress) {
     UnspentOutput spendFrom = new UnspentOutput();
     spendFrom.tx_hash = hash;
     spendFrom.tx_output_n = index;
     spendFrom.value = value;
     spendFrom.script = "foo";
-    spendFrom.addr = "foo";
+    spendFrom.addr = toAddress;
     spendFrom.confirmations = 1234;
     spendFrom.xpub = new UnspentOutput.Xpub();
     spendFrom.xpub.path = "foo";
     return spendFrom;
   }
 
-  public UnspentOutput computeUnspentOutput(TransactionOutPoint outPoint) {
+  public UnspentOutput computeUnspentOutput(TransactionOutPoint outPoint, String toAddress) {
     return computeUnspentOutput(
-        outPoint.getHash().toString(), (int) outPoint.getIndex(), outPoint.getValue().value);
+        outPoint.getHash().toString(),
+        (int) outPoint.getIndex(),
+        outPoint.getValue().value,
+        toAddress);
   }
 
   public UnspentOutputWithKey generateUnspentOutputWithKey(long value, NetworkParameters params)
@@ -153,7 +156,7 @@ public class TestUtils {
     String input0OutPointAddress = new SegwitAddress(input0Key, params).getBech32AsString();
     TransactionOutPoint input0OutPoint =
         cryptoTestUtil.generateTransactionOutPoint(input0OutPointAddress, value, params);
-    UnspentOutput utxo = computeUnspentOutput(input0OutPoint);
+    UnspentOutput utxo = computeUnspentOutput(input0OutPoint, input0OutPointAddress);
     return new UnspentOutputWithKey(utxo, input0Key.getPrivKeyBytes());
   }
 }

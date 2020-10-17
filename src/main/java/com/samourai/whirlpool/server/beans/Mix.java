@@ -5,7 +5,6 @@ import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.protocol.beans.Utxo;
 import com.samourai.whirlpool.protocol.websocket.notifications.MixStatus;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
-import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import com.samourai.whirlpool.server.persistence.to.MixTO;
 import com.samourai.whirlpool.server.services.CryptoService;
@@ -36,7 +35,6 @@ public class Mix {
   private ScheduledFuture scheduleRegisterOutput;
 
   private Pool pool;
-  private WhirlpoolServerConfig.MinerFeeConfig minerFeeConfig;
 
   private MixStatus mixStatus;
   private InputPool confirmingInputs;
@@ -50,11 +48,7 @@ public class Mix {
   private FailReason failReason;
   private String failInfo;
 
-  public Mix(
-      String mixId,
-      Pool pool,
-      WhirlpoolServerConfig.MinerFeeConfig minerFeeConfig,
-      CryptoService cryptoService) {
+  public Mix(String mixId, Pool pool, CryptoService cryptoService) {
     this.mixTO = null;
     this.created = null;
     this.mixId = mixId;
@@ -69,7 +63,6 @@ public class Mix {
     this.scheduleRegisterOutput = null;
 
     this.pool = pool;
-    this.minerFeeConfig = minerFeeConfig;
 
     this.mixStatus = MixStatus.CONFIRM_INPUT;
     this.confirmingInputs = new InputPool();
@@ -116,7 +109,11 @@ public class Mix {
   }
 
   public boolean hasMinLiquidityMixReached() {
-    return getNbInputsLiquidities() >= pool.getMinLiquidity();
+    return getMinLiquidityMixRemaining() == 0;
+  }
+
+  public int getMinLiquidityMixRemaining() {
+    return Math.max(0, pool.getMinLiquidity() - getNbInputsLiquidities());
   }
 
   public boolean isFull() {
@@ -355,14 +352,6 @@ public class Mix {
     return failInfo;
   }
 
-  public boolean isRegisterLiquiditiesOpen() {
-    if (!hasMinMustMixAndFeeReached()) {
-      // wait to get enough mustMix before accepting liquidities
-      return false;
-    }
-    return true;
-  }
-
   public long computeAmountIn() {
     return inputsById
         .values()
@@ -403,28 +392,6 @@ public class Mix {
             .collect(Collectors.toList());
     if (!confirmedInputs.isEmpty()) {
       boolean mixAlreadyStarted = this.isAlreadyStarted();
-      boolean hasConfirmedMustMix = false;
-      for (ConfirmedInput confirmedInput : confirmedInputs) {
-        unregisterInput(confirmedInput);
-
-        // did we free a confirmed mustMix slot?
-        if (!confirmedInput.getRegisteredInput().isLiquidity()) {
-          hasConfirmedMustMix = true;
-        }
-      }
-
-      // invite queued mustMixs when free slot liberated
-      if (!mixAlreadyStarted && hasConfirmedMustMix) {
-        if (getPool().getMustMixQueue().hasInputs()) {
-          if (log.isDebugEnabled()) {
-            log.debug(
-                confirmedInputs.size()
-                    + " confirmed mustMix disconnected and mix not started => inviting more queued mustMix");
-          }
-          mixService.inviteQueuedMustMixs(this);
-        }
-      }
-
       if (mixAlreadyStarted) {
         // blame confirmed inputs & restart mix
         return confirmedInputs;

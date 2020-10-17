@@ -30,7 +30,7 @@ public abstract class AbstractMixIntegrationTest extends AbstractIntegrationTest
 
     long inputBalance = mix.getPool().computePremixBalanceMin(liquidity);
     if (!liquidity) {
-      inputBalance+=+mix.getPool().getMinerFeeMix();
+      inputBalance += +mix.getPool().getMinerFeeMix();
     }
     TxOutPoint txOutPoint =
         createAndMockTxOutPoint(

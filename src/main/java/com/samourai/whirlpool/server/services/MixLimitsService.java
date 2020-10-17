@@ -5,10 +5,7 @@ import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.utils.timeout.ITimeoutWatcherListener;
 import com.samourai.whirlpool.server.utils.timeout.TimeoutWatcher;
 import java.lang.invoke.MethodHandles;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
@@ -49,9 +46,17 @@ public class MixLimitsService {
     return limitsWatchers.get(mixId);
   }
 
+  public synchronized void manage(Mix mix) {
+    TimeoutWatcher limitsWatcher = getLimitsWatcher(mix);
+    if (limitsWatcher == null) {
+      String mixId = mix.getMixId();
+      limitsWatcher = computeLimitsWatcher(mix);
+      this.limitsWatchers.put(mixId, limitsWatcher);
+    }
+  }
+
   public void unmanage(Mix mix) {
     String mixId = mix.getMixId();
-
     TimeoutWatcher limitsWatcher = getLimitsWatcher(mix);
     if (limitsWatcher != null) {
       limitsWatcher.stop();
@@ -78,7 +83,7 @@ public class MixLimitsService {
             switch (mix.getMixStatus()) {
               case CONFIRM_INPUT:
                 // timeout before adding more liquidities
-                long waitTime = whirlpoolServerConfig.getRegisterInput().getLiquidityInterval();
+                long waitTime = whirlpoolServerConfig.getRegisterInput().getConfirmInterval();
                 timeToWait = waitTime * 1000 - elapsedTime;
                 break;
 
@@ -115,8 +120,7 @@ public class MixLimitsService {
             }
             switch (mix.getMixStatus()) {
               case CONFIRM_INPUT:
-                // add more liquidities
-                addLiquidities(mix);
+                poolService.confirmInputs(mix, mixService);
                 break;
 
               case REGISTER_OUTPUT:
@@ -142,41 +146,6 @@ public class MixLimitsService {
     TimeoutWatcher mixLimitsWatcher =
         new TimeoutWatcher(listener, "limitsWatcher-" + mix.getMixId());
     return mixLimitsWatcher;
-  }
-
-  // CONFIRM_INPUT
-
-  public synchronized void onInputConfirmed(Mix mix) {
-    // first mustMix registered => instanciate limitsWatcher
-    String mixId = mix.getMixId();
-    if (this.limitsWatchers.get(mixId) == null) {
-      TimeoutWatcher limitsWatcher = computeLimitsWatcher(mix);
-      this.limitsWatchers.put(mixId, limitsWatcher);
-    }
-  }
-
-  private void addLiquidities(Mix mix) {
-    if (!mix.isRegisterLiquiditiesOpen()) {
-      if (log.isTraceEnabled()) {
-        log.trace("No liquidity to add yet: minMustMix not reached");
-      }
-      return;
-    }
-
-    int liquiditiesToAdd = mix.getPool().getAnonymitySet() - mix.getNbInputs();
-    if (liquiditiesToAdd > 0) {
-      // add queued liquidities if any
-      liquiditiesToAdd++; // invite one more liquidity to prevent more waiting if one disconnects
-      poolService.inviteToMix(mix, true, liquiditiesToAdd, mixService);
-    } else {
-      if (log.isDebugEnabled()) {
-        log.debug(
-            "No liquidity to add: anonymitySet="
-                + mix.getPool().getAnonymitySet()
-                + ", nbInputs="
-                + mix.getNbInputs());
-      }
-    }
   }
 
   public void blameForSigningAndResetMix(Mix mix) {

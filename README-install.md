@@ -11,7 +11,7 @@ cp src/main/resources/application.properties ./custom.properties
 - build and run:
 ```
 mvn clean install -Dmaven.test.skip=true
-java -jar target/whirlpool-server-version.jar --spring.config.location=./custom.properties [--debugserver]
+java -jar target/whirlpool-server-version.jar --spring.config.location=./custom.properties --logging.file=whirlpool-server.log [--debugserver]
 ```
 
 - create the file ${server.export.directory}/mixs.csv
