@@ -9,20 +9,19 @@
     <link rel="stylesheet" href="/css/history.css" />
 </head>
 <body>
-    <div layout:fragment="main">
-        <h1 class="h2">History</h1>
+<div layout:fragment="main">
+    <h1 class="h2">History</h1>
 
-        <strong th:text="${mixStats.nbMixs}"/> mixs •
-        <strong th:text="${@templateUtil.satoshisToBtc(mixStats.sumMustMix)+'btc'}"/> mixed •
-        <strong th:text="${@templateUtil.satoshisToBtc(mixStats.sumAmountOut)+'btc'}"/> volume
-        <div class="table-responsive">
+    <strong th:text="${mixStats.nbMixs}"/> mixs •
+    <strong th:text="${@templateUtil.satoshisToBtc(mixStats.sumMustMix)+'btc'}"/> mixed •
+    <strong th:text="${@templateUtil.satoshisToBtc(mixStats.sumAmountOut)+'btc'}"/> volume
+    <div class="table-responsive">
         <table class="table table-sm history">
             <thead>
             <tr>
                 <th scope="col">Date</th>
                 <th scope="col">Pool id</th>
                 <th scope="col">Mix id</th>
-                <th scope="col">Denomination</th>
                 <th scope="col">AnonymitySet</th>
                 <th scope="col">Status</th>
                 <th scope="col">Fees</th>
@@ -34,56 +33,57 @@
             </tr>
             </thead>
             <tbody>
-                <tr th:each="mix : ${page.content}">
-                    <td class="updated"><span th:text="${#dates.format(mix.updated, 'dd-MMM-yyyy HH:mm:ss')}"/></td>
-                    <td class="poolId"><span th:text="${mix.poolId}"/></td>
-                    <td class="mixId"><small th:text="${mix.mixId}"/></td>
-                    <td class="denomination"><span th:text="${@templateUtil.satoshisToBtc(mix.denomination)}"/></td>
-                    <td class="anonymitySet"><span th:text="${mix.anonymitySet}" title="mustMix + liquidities"/> (<span th:text="${mix.nbMustMix}" title="mustMix"/> + <span th:text="${mix.nbLiquidities}" title="liquidities"/>)</td>
-                    <td class="status">
-                        <span th:text="${mix.mixStatus}"/> <span th:text="${mix.failReason != null} ? ${'(' + mix.failReason + ')'} : ''"/>
-                        <a th:if="${mix.failInfo != null}" href="#" data-toggle="popover" title="Mix failed" th:data-content="${mix.failInfo}" onclick="return false"><span data-feather="code" /></a>
-                    </td>
-                    <td class="fees">
-                        <span th:text="${mix.feesAmount != null ? mix.feesAmount : ''}"/>
-                    </td>
-                    <td class="feesSatPerB">
-                        <span th:text="${mix.feesPrice != null ? mix.feesPrice : ''}"/>
-                    </td>
-                    <td class="duration"><span th:text="${@templateUtil.duration(mix.mixDuration)}"/></td>
-                    <td class="mixed"><span th:text="${@templateUtil.satoshisToBtc(mix.amountOut)}"/>btc</td>
-                    <td class="txid">
-                        <a th:if="${mix.mixLog != null && mix.mixLog.txid != null}" th:href="${urlExplorer + mix.mixLog.txid}" target="_blank"><small th:text="${mix.mixLog.txid}"/></a>
-                        <span th:if="${mix.mixLog == null || mix.mixLog.txid == null}">...</span>
-                    </td>
-                    <td class="rawTx">
-                        <a th:if="${mix.mixLog != null && mix.mixLog.rawTx != null}" href="#" data-toggle="popover" title="Raw" th:data-content="${mix.mixLog.rawTx}"><span data-feather="code" /></a>
-                        <span th:if="${mix.mixLog == null || mix.mixLog.rawTx == null}">...</span>
-                    </td>
-                </tr>
+            <tr th:each="mix : ${page.content}">
+                <td class="updated"><span th:text="${#dates.format(mix.updated, 'dd-MMM-yyyy HH:mm:ss')}"/></td>
+                <td class="poolId"><span th:text="${mix.poolId}"/></td>
+                <td class="mixId"><small th:text="${mix.mixId}"/></td>
+                <td class="anonymitySet"><span th:text="${mix.anonymitySet}" title="mustMix + liquidities"/> (<span th:text="${mix.nbMustMix}" title="mustMix"/> + <span th:text="${mix.nbLiquidities}" title="liquidities"/>)</td>
+                <td class="status">
+                    <span th:text="${mix.mixStatus}"/> <span th:text="${mix.failReason != null} ? ${'(' + mix.failReason + ')'} : ''"/>
+                    <div th:if="${mix.failInfo != null}" title="Mix failed" style="overflow:auto" class="">
+                        <small th:text="${mix.failInfo.replace(';',' ')}" class="text-muted"/>
+                    </div>
+                </td>
+                <td class="fees">
+                    <span th:text="${mix.feesAmount != null ? mix.feesAmount : ''}"/>
+                </td>
+                <td class="feesSatPerB">
+                    <span th:text="${mix.feesPrice != null ? mix.feesPrice : ''}"/>
+                </td>
+                <td class="duration"><span th:text="${@templateUtil.duration(mix.mixDuration)}"/></td>
+                <td class="mixed"><span th:text="${@templateUtil.satoshisToBtc(mix.amountOut)}"/>btc</td>
+                <td class="txid">
+                    <a th:if="${mix.mixLog != null && mix.mixLog.txid != null}" th:href="${urlExplorer + mix.mixLog.txid}" target="_blank"><small th:text="${mix.mixLog.txid}"/></a>
+                    <span th:if="${mix.mixLog == null || mix.mixLog.txid == null}">...</span>
+                </td>
+                <td class="rawTx">
+                    <a th:if="${mix.mixLog != null && mix.mixLog.rawTx != null}" href="#" data-toggle="popover" title="Raw" th:data-content="${mix.mixLog.rawTx}"><span data-feather="code" /></a>
+                    <span th:if="${mix.mixLog == null || mix.mixLog.rawTx == null}">...</span>
+                </td>
+            </tr>
             </tbody>
         </table>
-        </div>
-        <nav>
-            <ul class="pagination">
-                <li class="page-item" th:if="${page.hasPrevious()}">
-                    <a class="page-link" th:href="@{${ENDPOINT}(page=${page.number-1},size=${page.size})}">
-                        <span>&laquo;</span>
-                    </a>
-                </li>
-                <th:block th:each="i: ${#numbers.sequence(0, page.totalPages - 1)}">
-                    <li th:class="${'page-item' + (page.number == i?' active':'')}">
-                        <a class="page-link" th:href="@{${ENDPOINT}(page=${i},size=${page.size})}">[[${i}+1]]</a>
-                    </li>
-                </th:block>
-                <li class="page-item" th:if="${page.hasNext()}">
-                    <a class="page-link" th:href="@{${ENDPOINT}(page=${page.number+1},size=${page.size})}">
-                        <span>&raquo;</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
     </div>
+    <nav>
+        <ul class="pagination">
+            <li class="page-item" th:if="${page.hasPrevious()}">
+                <a class="page-link" th:href="@{${ENDPOINT}(page=${page.number-1},size=${page.size})}">
+                    <span>&laquo;</span>
+                </a>
+            </li>
+            <th:block th:each="i: ${#numbers.sequence(0, page.totalPages - 1)}">
+                <li th:class="${'page-item' + (page.number == i?' active':'')}">
+                    <a class="page-link" th:href="@{${ENDPOINT}(page=${i},size=${page.size})}">[[${i}+1]]</a>
+                </li>
+            </th:block>
+            <li class="page-item" th:if="${page.hasNext()}">
+                <a class="page-link" th:href="@{${ENDPOINT}(page=${page.number+1},size=${page.size})}">
+                    <span>&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</div>
 </body>
 
 </html>
