@@ -157,7 +157,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
     private int minConfirmationsLiquidity;
     private int maxInputsSameHash;
     private int maxInputsSameUserHash;
-    private long liquidityInterval;
+    private long confirmInterval;
 
     public int getMinConfirmationsMustMix() {
       return minConfirmationsMustMix;
@@ -191,12 +191,12 @@ public class WhirlpoolServerConfig extends ServerConfig {
       this.maxInputsSameUserHash = maxInputsSameUserHash;
     }
 
-    public long getLiquidityInterval() {
-      return liquidityInterval;
+    public long getConfirmInterval() {
+      return confirmInterval;
     }
 
-    public void setLiquidityInterval(long liquidityInterval) {
-      this.liquidityInterval = liquidityInterval;
+    public void setConfirmInterval(long confirmInterval) {
+      this.confirmInterval = confirmInterval;
     }
   }
 
@@ -639,8 +639,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
             + registerInput.minConfirmationsLiquidity
             + ", mustMix="
             + registerInput.minConfirmationsMustMix);
-    configInfo.put(
-        "registerInput.liquidityInterval", String.valueOf(registerInput.liquidityInterval));
+    configInfo.put("registerInput.confirmInterval", String.valueOf(registerInput.confirmInterval));
 
     String timeoutInfo =
         "registerOutput="
