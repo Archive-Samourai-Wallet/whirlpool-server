@@ -4,13 +4,13 @@ import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.protocol.websocket.messages.SubscribePoolResponse;
 import com.samourai.whirlpool.server.services.ExportService;
 import com.samourai.whirlpool.server.services.PoolService;
+import com.samourai.whirlpool.server.services.TaskService;
 import com.samourai.whirlpool.server.services.WebSocketService;
 import java.lang.invoke.MethodHandles;
 import java.security.Principal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.task.TaskExecutor;
 import org.springframework.messaging.handler.annotation.MessageExceptionHandler;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.annotation.SubscribeMapping;
@@ -23,17 +23,17 @@ public class SubscribePoolController extends AbstractWebSocketController {
   private static final int SUBSCRIBE_RESPONSE_DELAY = 1000;
 
   private PoolService poolService;
-  private TaskExecutor taskExecutor;
+  private TaskService taskService;
 
   @Autowired
   public SubscribePoolController(
       PoolService poolService,
       ExportService exportService,
       WebSocketService webSocketService,
-      TaskExecutor taskExecutor) {
+      TaskService taskService) {
     super(webSocketService, exportService);
     this.poolService = poolService;
-    this.taskExecutor = taskExecutor;
+    this.taskService = taskService;
   }
 
   @SubscribeMapping(
@@ -52,14 +52,9 @@ public class SubscribePoolController extends AbstractWebSocketController {
         poolService.computeSubscribePoolResponse(headerPoolId);
 
     // delay to make sure client processed subscription before sending him private response
-    taskExecutor.execute(
+    taskService.runOnce(
+        SUBSCRIBE_RESPONSE_DELAY,
         () -> {
-          synchronized (this) {
-            try {
-              wait(SUBSCRIBE_RESPONSE_DELAY);
-            } catch (InterruptedException e) {
-            }
-          }
           // send reply
           getWebSocketService().sendPrivate(username, subscribePoolResponse);
         });

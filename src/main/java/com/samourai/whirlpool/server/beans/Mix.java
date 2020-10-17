@@ -14,7 +14,6 @@ import java.lang.invoke.MethodHandles;
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledFuture;
 import java.util.stream.Collectors;
 import org.bitcoinj.core.Transaction;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
@@ -32,7 +31,6 @@ public class Mix {
   private byte[] publicKey;
   private Timestamp timeStarted;
   private Map<MixStatus, Timestamp> timeStatus;
-  private ScheduledFuture scheduleRegisterOutput;
 
   private Pool pool;
 
@@ -60,7 +58,6 @@ public class Mix {
     }
     this.timeStarted = new Timestamp(System.currentTimeMillis());
     this.timeStatus = new ConcurrentHashMap<>();
-    this.scheduleRegisterOutput = null;
 
     this.pool = pool;
 
@@ -138,21 +135,6 @@ public class Mix {
 
   public Map<MixStatus, Timestamp> getTimeStatus() {
     return timeStatus;
-  }
-
-  public ScheduledFuture getScheduleRegisterOutput() {
-    return scheduleRegisterOutput;
-  }
-
-  public void setScheduleRegisterOutput(ScheduledFuture scheduleRegisterOutput) {
-    this.scheduleRegisterOutput = scheduleRegisterOutput;
-  }
-
-  public void clearScheduleRegisterOutput() {
-    if (scheduleRegisterOutput != null) {
-      scheduleRegisterOutput.cancel(false);
-      scheduleRegisterOutput = null;
-    }
   }
 
   public Pool getPool() {

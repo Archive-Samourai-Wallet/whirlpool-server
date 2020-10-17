@@ -22,8 +22,6 @@ import com.samourai.whirlpool.server.utils.Utils;
 import java.lang.invoke.MethodHandles;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
@@ -51,7 +49,7 @@ public class MixService {
 
   private Map<String, Mix> currentMixs;
 
-  private static final int GRACE_TIME_CONFIRMING_INPUTS = 10000;
+  private static final int CONFIRMING_INPUTS_DELAY = 5000;
 
   @Autowired
   public MixService(
@@ -266,75 +264,26 @@ public class MixService {
     ConfirmInputResponse confirmInputResponse = new ConfirmInputResponse(mixId, signedBordereau64);
     webSocketService.sendPrivate(username, confirmInputResponse);
 
-    // check mix ready
-    checkConfirmInputReady(mix);
+    // check mix ready, after a delay to make sure client processed confirmation
+    taskService.runOnce(
+        CONFIRMING_INPUTS_DELAY,
+        () -> {
+          checkConfirmInputReady(mix);
+        });
+
     return signedBordereau;
   }
 
-  public void checkConfirmInputReady(Mix mix) {
-    checkConfirmInputReady(mix, true);
-  }
-
-  private void checkConfirmInputReady(Mix mix, boolean allowGracePeriod) {
+  private void checkConfirmInputReady(Mix mix) {
     if (!whirlpoolServerConfig.isMixEnabled()) {
       // mix disabled by server configuration
       return;
     }
 
-    if (MixStatus.CONFIRM_INPUT.equals(mix.getMixStatus()) && isRegisterInputReady(mix)) {
-
-      // ready to go REGISTER_OUTPUT
-      if (allowGracePeriod
-          && GRACE_TIME_CONFIRMING_INPUTS > 0
-          && mix.hasPendingConfirmingInputs()
-          && mix.getNbInputs() < mix.getPool().getAnonymitySet()) {
-        if (log.isDebugEnabled()) {
-          log.debug(
-              "Ready to go REGISTER_OUTPUT - waiting for last pending confirmations: pendingConfirmingInputs="
-                  + mix.getNbConfirmingInputs()
-                  + ", nbInputs="
-                  + mix.getNbInputs()
-                  + ", anonymitySet="
-                  + mix.getPool().getAnonymitySet());
-        }
-
-        // allow grace period for pending inputs confirmations...
-        ScheduledFuture scheduledRegisterOutput = mix.getScheduleRegisterOutput();
-        if (scheduledRegisterOutput == null) {
-          // schedule
-          if (log.isDebugEnabled()) {
-            log.debug("Scheduling REGISTER_OUTPUT, in " + GRACE_TIME_CONFIRMING_INPUTS + "...");
-          }
-          ScheduledFuture scheduledFuture =
-              taskService.runOnce(
-                  GRACE_TIME_CONFIRMING_INPUTS,
-                  () -> {
-                    if (log.isDebugEnabled()) {
-                      log.debug("REGISTER_OUTPUT schedule expired.");
-                    }
-                    mix.clearScheduleRegisterOutput();
-                    checkConfirmInputReady(mix, false);
-                  });
-          mix.setScheduleRegisterOutput(scheduledFuture);
-        } else {
-          // already scheduled
-          if (log.isDebugEnabled()) {
-            log.debug(
-                "REGISTER_OUTPUT already scheduled, in "
-                    + scheduledRegisterOutput.getDelay(TimeUnit.SECONDS)
-                    + "s");
-          }
-        }
-      } else {
-        // all inputs confirmed or mix full => REGISTER_OUTPUT
-        goRegisterOutput(mix);
-      }
+    if (MixStatus.CONFIRM_INPUT.equals(mix.getMixStatus()) && isConfirmInputReady(mix)) {
+      // all inputs confirmed => REGISTER_OUTPUT
+      changeMixStatus(mix.getMixId(), MixStatus.REGISTER_OUTPUT);
     }
-  }
-
-  private void goRegisterOutput(Mix mix) {
-    mix.clearScheduleRegisterOutput();
-    changeMixStatus(mix.getMixId(), MixStatus.REGISTER_OUTPUT);
   }
 
   public boolean isRegisterInputReady(Mix mix) {
@@ -352,6 +301,16 @@ public class MixService {
     }
     // check for inputs spent in the meantime
     if (!revalidateInputsForSpent(mix)) {
+      return false;
+    }
+    return true;
+  }
+
+  public boolean isConfirmInputReady(Mix mix) {
+    if (!isRegisterInputReady(mix)) {
+      return false;
+    }
+    if (mix.hasPendingConfirmingInputs()) {
       return false;
     }
     return true;
