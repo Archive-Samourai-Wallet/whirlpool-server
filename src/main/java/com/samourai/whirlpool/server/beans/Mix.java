@@ -374,6 +374,9 @@ public class Mix {
             .collect(Collectors.toList());
     if (!confirmedInputs.isEmpty()) {
       boolean mixAlreadyStarted = this.isAlreadyStarted();
+      for (ConfirmedInput confirmedInput : confirmedInputs) {
+        unregisterInput(confirmedInput);
+      }
       if (mixAlreadyStarted) {
         // blame confirmed inputs & restart mix
         return confirmedInputs;

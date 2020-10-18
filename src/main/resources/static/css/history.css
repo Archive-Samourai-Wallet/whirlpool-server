@@ -7,3 +7,6 @@ td.mixId, td.txid, td.rawTx {
 .popover-body {
     font-size:0.6em;
 }
+td.status {
+    width: 32em;
+}
