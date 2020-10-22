@@ -26,7 +26,7 @@ public class MixServiceTest extends AbstractIntegrationTest {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   @Test
-  public void isRegisterInputReady_noLiquidity() throws Exception {
+  public void isConfirmInputReady_noLiquidity() throws Exception {
     MixService spyMixService = Mockito.spy(mixService);
     long denomination = 200000000;
     long feeValue = 10000000;
@@ -50,7 +50,7 @@ public class MixServiceTest extends AbstractIntegrationTest {
     long mustMixValue = 200000400;
 
     // 0 mustMix => false
-    Assert.assertFalse(spyMixService.isRegisterInputReady(mix));
+    Assert.assertFalse(spyMixService.isConfirmInputReady(mix));
 
     // 1 mustMix => false
     mix.registerInput(
@@ -58,7 +58,7 @@ public class MixServiceTest extends AbstractIntegrationTest {
             new RegisteredInput(
                 "mustMix1", false, generateOutPoint(mustMixValue), "127.0.0.1", null),
             "userHash1"));
-    Assert.assertFalse(spyMixService.isRegisterInputReady(mix));
+    Assert.assertFalse(spyMixService.isConfirmInputReady(mix));
 
     // 2 mustMix => true
     mix.registerInput(
@@ -66,11 +66,11 @@ public class MixServiceTest extends AbstractIntegrationTest {
             new RegisteredInput(
                 "mustMix2", false, generateOutPoint(mustMixValue), "127.0.0.1", null),
             "userHash2"));
-    Assert.assertTrue(spyMixService.isRegisterInputReady(mix));
+    Assert.assertTrue(spyMixService.isConfirmInputReady(mix));
   }
 
   @Test
-  public void isRegisterInputReady_withLiquidityBefore() throws Exception {
+  public void isConfirmInputReady_withLiquidityBefore() throws Exception {
     MixService spyMixService = Mockito.spy(mixService);
     long denomination = 200000000;
     long feeValue = 10000000;
@@ -94,7 +94,7 @@ public class MixServiceTest extends AbstractIntegrationTest {
     long mustMixValue = 200000255;
 
     // 0 liquidity => false
-    Assert.assertFalse(spyMixService.isRegisterInputReady(mix));
+    Assert.assertFalse(spyMixService.isConfirmInputReady(mix));
 
     // 1 liquidity => false
     mix.registerInput(
@@ -102,7 +102,7 @@ public class MixServiceTest extends AbstractIntegrationTest {
             new RegisteredInput(
                 "liquidity1", true, generateOutPoint(mustMixValue), "127.0.0.1", null),
             "userHashL1"));
-    Assert.assertFalse(spyMixService.isRegisterInputReady(mix));
+    Assert.assertFalse(spyMixService.isConfirmInputReady(mix));
 
     // 2 liquidity => false : minMustMix not reached
     mix.registerInput(
@@ -110,7 +110,7 @@ public class MixServiceTest extends AbstractIntegrationTest {
             new RegisteredInput(
                 "liquidity2", true, generateOutPoint(mustMixValue), "127.0.0.1", null),
             "userHashL2"));
-    Assert.assertFalse(spyMixService.isRegisterInputReady(mix));
+    Assert.assertFalse(spyMixService.isConfirmInputReady(mix));
 
     // 1 mustMix => false : minMustMix reached but minerFeeMix not reached
     mix.registerInput(
@@ -118,7 +118,7 @@ public class MixServiceTest extends AbstractIntegrationTest {
             new RegisteredInput(
                 "mustMix1", false, generateOutPoint(mustMixValue), "127.0.0.1", null),
             "userHashM1"));
-    Assert.assertFalse(spyMixService.isRegisterInputReady(mix));
+    Assert.assertFalse(spyMixService.isConfirmInputReady(mix));
 
     // 2 mustMix => true : minerFeeMix reached
     mix.registerInput(
@@ -126,11 +126,11 @@ public class MixServiceTest extends AbstractIntegrationTest {
             new RegisteredInput(
                 "mustMix2", false, generateOutPoint(mustMixValue), "127.0.0.1", null),
             "userHashM2"));
-    Assert.assertTrue(spyMixService.isRegisterInputReady(mix));
+    Assert.assertTrue(spyMixService.isConfirmInputReady(mix));
   }
 
   @Test
-  public void isRegisterInputReady_spentWhileRegisterInput() throws Exception {
+  public void isConfirmInputReady_spentWhileRegisterInput() throws Exception {
     MixService spyMixService = Mockito.spy(mixService);
     mixService = spyMixService;
 
@@ -156,7 +156,7 @@ public class MixServiceTest extends AbstractIntegrationTest {
     long mustMixValue = 200000400;
 
     // 0 mustMix => false
-    Assert.assertFalse(spyMixService.isRegisterInputReady(mix));
+    Assert.assertFalse(spyMixService.isConfirmInputReady(mix));
 
     // 1 mustMix => false
     ConfirmedInput mustMix1 =
@@ -165,7 +165,7 @@ public class MixServiceTest extends AbstractIntegrationTest {
                 "mustMix1", false, generateOutPoint(mustMixValue), "127.0.0.1", null),
             "userHash1");
     mix.registerInput(mustMix1);
-    Assert.assertFalse(spyMixService.isRegisterInputReady(mix));
+    Assert.assertFalse(spyMixService.isConfirmInputReady(mix));
 
     // 2 mustMix => true
     ConfirmedInput mustMix2 =
@@ -174,7 +174,7 @@ public class MixServiceTest extends AbstractIntegrationTest {
                 "mustMix2", false, generateOutPoint(mustMixValue), "127.0.0.1", null),
             "userHash2");
     mix.registerInput(mustMix2);
-    Assert.assertTrue(spyMixService.isRegisterInputReady(mix));
+    Assert.assertTrue(spyMixService.isConfirmInputReady(mix));
     Assert.assertEquals(2, mix.getNbInputs());
 
     String blameIdentifierMustMix1 = Utils.computeBlameIdentitifer(mustMix1);
@@ -184,7 +184,7 @@ public class MixServiceTest extends AbstractIntegrationTest {
     TxOutPoint out1 = mustMix1.getRegisteredInput().getOutPoint();
     rpcClientService.mockSpentOutput(out1.getHash(), out1.getIndex());
 
-    Assert.assertFalse(spyMixService.isRegisterInputReady(mix)); // mix not valid anymore
+    Assert.assertFalse(spyMixService.isConfirmInputReady(mix)); // mix not valid anymore
     Assert.assertEquals(1, mix.getNbInputs());
 
     // no blame as mix was not started yet
@@ -197,7 +197,7 @@ public class MixServiceTest extends AbstractIntegrationTest {
                 "mustMix3", false, generateOutPoint(mustMixValue), "127.0.0.1", null),
             "userHash3");
     mix.registerInput(mustMix3);
-    Assert.assertTrue(spyMixService.isRegisterInputReady(mix));
+    Assert.assertTrue(spyMixService.isConfirmInputReady(mix));
     Assert.assertEquals(2, mix.getNbInputs());
 
     // REGISTER_OUTPUT
@@ -207,7 +207,7 @@ public class MixServiceTest extends AbstractIntegrationTest {
     TxOutPoint out3 = mustMix3.getRegisteredInput().getOutPoint();
     rpcClientService.mockSpentOutput(out3.getHash(), out3.getIndex());
 
-    Assert.assertFalse(spyMixService.isRegisterInputReady(mix)); // mix not valid + trigger fail
+    Assert.assertFalse(spyMixService.isConfirmInputReady(mix)); // mix not valid + trigger fail
 
     // mix failed
     Assert.assertEquals(MixStatus.FAIL, mix.getMixStatus());

@@ -287,8 +287,8 @@ public class MixService {
     }
   }
 
-  public boolean isRegisterInputReady(Mix mix) {
-    if (mix.getNbInputs() == 0) {
+  protected boolean isConfirmInputReady(Mix mix) {
+    if (!mix.isFull()) {
       return false;
     }
     if (!mix.hasMinMustMixAndFeeReached()) {
@@ -297,21 +297,8 @@ public class MixService {
     if (!mix.hasMinLiquidityMixReached()) {
       return false;
     }
-    if (mix.getNbInputs() < mix.getPool().getAnonymitySet()) {
-      return false;
-    }
     // check for inputs spent in the meantime
     if (!revalidateInputsForSpent(mix)) {
-      return false;
-    }
-    return true;
-  }
-
-  public boolean isConfirmInputReady(Mix mix) {
-    if (!isRegisterInputReady(mix)) {
-      return false;
-    }
-    if (mix.hasPendingConfirmingInputs()) {
       return false;
     }
     return true;
@@ -372,7 +359,7 @@ public class MixService {
   }
 
   protected synchronized boolean isRegisterOutputReady(Mix mix) {
-    if (!isRegisterInputReady(mix)) {
+    if (!isConfirmInputReady(mix)) {
       return false;
     }
 

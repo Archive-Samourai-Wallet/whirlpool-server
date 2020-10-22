@@ -171,10 +171,6 @@ public class Mix {
     return confirmingInput;
   }
 
-  public boolean hasPendingConfirmingInputs() {
-    return confirmingInputs.hasInputs();
-  }
-
   public int getNbConfirmingInputs() {
     return confirmingInputs.getSize();
   }

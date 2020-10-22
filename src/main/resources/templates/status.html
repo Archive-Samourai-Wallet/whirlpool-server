@@ -24,9 +24,9 @@
             <thead>
                 <th class="align-middle">PoolId</th>
                 <th class="align-middle">Status</th>
-                <th class="align-middle">Confirmed users</th>
-                <th class="align-middle">Queued users</th>
-                <th class="align-middle">Elapsed time<br/>(mix)</br.></th>
+                <th class="align-middle">Confirmed</th>
+                <th class="align-middle">Queued</th>
+                <th class="align-middle">Elapsed time</th>
                 <th class="align-middle">Configuration</th>
             </thead>
             <tbody>
@@ -45,12 +45,13 @@
                     </div>
                 </td>
                 <td>
-                    <strong th:text="${pool.nbInputs}"/> / <span th:text="${pool.anonymitySet}"/> confirmed</span><br/>
                     <strong th:text="${pool.nbInputsMustMix}"/> / <span th:text="${pool.minMustMix}"/> mustMix, <strong th:text="${pool.minerFeeAccumulated}"/> / <span th:text="${pool.minerFeeMix}"/> sat<br/>
-                    <strong th:text="${pool.nbInputsLiquidities}"/> / <span th:text="${pool.minLiquidity}"/> liquidities
+                    <strong th:text="${pool.nbInputsLiquidities}"/> / <span th:text="${pool.minLiquidity}"/> liquidities<br/>
+                    <strong th:text="${pool.nbInputs}"/> / <span th:text="${pool.anonymitySet}"/> confirmed</span>
                 </td>
                 <td>
-                    <span th:text="${pool.mustMixQueued}" title="mustMix"/> + <span th:text="${pool.liquiditiesQueued}" title="liquidities"/>
+                    <strong th:text="${pool.mustMixQueued}" title="mustMix"/> mustMix<br/>
+                    <strong th:text="${pool.liquiditiesQueued}" title="liquidities"/> liquidities
                 </td>
                 <td><span th:text="${@templateUtil.duration(pool.elapsedTime/1000)}"/></td>
                 <td>
