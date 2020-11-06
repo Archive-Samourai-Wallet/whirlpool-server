@@ -10,7 +10,6 @@ import com.samourai.whirlpool.server.beans.export.ActivityCsv;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
-import com.samourai.whirlpool.server.utils.MessageListener;
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.Map;
@@ -20,6 +19,7 @@ import java.util.function.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
@@ -32,6 +32,7 @@ public class PoolService {
   private CryptoService cryptoService;
   private WebSocketService webSocketService;
   private ExportService exportService;
+  private MetricService metricService;
   private TaskService taskService;
   private Map<String, Pool> pools;
 
@@ -41,23 +42,28 @@ public class PoolService {
       CryptoService cryptoService,
       WebSocketService webSocketService,
       ExportService exportService,
+      MetricService metricService,
       WebSocketSessionService webSocketSessionService,
-      TaskService taskService) {
+      TaskService taskService,
+      TaskScheduler taskScheduler) {
     this.whirlpoolServerConfig = whirlpoolServerConfig;
     this.cryptoService = cryptoService;
     this.webSocketService = webSocketService;
     this.exportService = exportService;
+    this.metricService = metricService;
     this.taskService = taskService;
     __reset();
 
     // listen websocket onDisconnect
-    webSocketSessionService.addOnDisconnectListener(
-        new MessageListener<String>() {
-          @Override
-          public void onMessage(String username) {
-            onClientDisconnect(username);
-          }
-        });
+    webSocketSessionService.addOnDisconnectListener(username -> onClientDisconnect(username));
+
+    if (MetricService.MOCK) {
+      taskScheduler.scheduleAtFixedRate(
+          () -> {
+            metricService.mockPools(getPools());
+          },
+          4000);
+    }
   }
 
   public void __reset() {
@@ -94,6 +100,7 @@ public class PoolService {
               minerFeeConfig,
               minerFeeMix);
       pools.put(poolId, pool);
+      metricService.manage(pool);
     }
   }
 
@@ -148,7 +155,7 @@ public class PoolService {
     }
 
     RegisteredInput registeredInput =
-        new RegisteredInput(username, liquidity, txOutPoint, ip, lastUserHash);
+        new RegisteredInput(poolId, username, liquidity, txOutPoint, ip, lastUserHash);
 
     // verify confirmations
     if (!isUtxoConfirmed(txOutPoint, liquidity)) {

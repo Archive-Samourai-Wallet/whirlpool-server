@@ -20,6 +20,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
 @EnableWebSecurity
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+  private static final String[] ENDPOINTS_ACTUATOR = new String[] {"/actuator/prometheus"};
+
   private static final String[] REST_MIX_ENDPOINTS =
       new String[] {
         WhirlpoolEndpoint.REST_POOLS,
@@ -46,6 +48,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         .antMatchers(LoginWebController.ENDPOINT)
         .permitAll()
         .antMatchers(LoginWebController.PROCESS_ENDPOINT)
+        .permitAll()
+
+        // public actuator
+        .antMatchers(ENDPOINTS_ACTUATOR)
         .permitAll()
 
         // public mixing websocket

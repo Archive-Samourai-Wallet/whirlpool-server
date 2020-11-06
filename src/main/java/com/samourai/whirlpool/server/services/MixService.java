@@ -10,6 +10,7 @@ import com.samourai.whirlpool.protocol.websocket.messages.ConfirmInputResponse;
 import com.samourai.whirlpool.protocol.websocket.notifications.*;
 import com.samourai.whirlpool.server.beans.*;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;
+import com.samourai.whirlpool.server.beans.export.MixCsv;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.exceptions.BroadcastException;
@@ -17,7 +18,6 @@ import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import com.samourai.whirlpool.server.exceptions.MixException;
 import com.samourai.whirlpool.server.exceptions.QueueInputException;
 import com.samourai.whirlpool.server.services.rpc.RpcClientService;
-import com.samourai.whirlpool.server.utils.MessageListener;
 import com.samourai.whirlpool.server.utils.Utils;
 import java.lang.invoke.MethodHandles;
 import java.util.*;
@@ -44,6 +44,7 @@ public class MixService {
   private WhirlpoolServerConfig whirlpoolServerConfig;
   private PoolService poolService;
   private ExportService exportService;
+  private MetricService metricService;
   private TaskService taskService;
   private TxUtil txUtil;
 
@@ -63,6 +64,7 @@ public class MixService {
       MixLimitsService mixLimitsService,
       PoolService poolService,
       ExportService exportService,
+      MetricService metricService,
       TaskService taskService,
       TxUtil txUtil,
       WebSocketSessionService webSocketSessionService) {
@@ -77,19 +79,14 @@ public class MixService {
     this.mixLimitsService = mixLimitsService;
     this.poolService = poolService;
     this.exportService = exportService;
+    this.metricService = metricService;
     this.taskService = taskService;
     this.txUtil = txUtil;
 
     this.__reset();
 
     // listen websocket onDisconnect
-    webSocketSessionService.addOnDisconnectListener(
-        new MessageListener<String>() {
-          @Override
-          public void onMessage(String username) {
-            onClientDisconnect(username);
-          }
-        });
+    webSocketSessionService.addOnDisconnectListener(username -> onClientDisconnect(username));
   }
 
   /** Last input validations when adding it to a mix (not when queueing it) */
@@ -741,7 +738,7 @@ public class MixService {
     Map<String, String> clientDetails = ImmutableMap.of("u", username);
 
     for (Mix mix : getCurrentMixs()) {
-      Collection<ConfirmedInput> confirmedInputsToBlame = mix.onDisconnect(username, this);
+      Collection<ConfirmedInput> confirmedInputsToBlame = mix.onDisconnect(username);
       if (!confirmedInputsToBlame.isEmpty()) {
         confirmedInputsToBlame.forEach(
             confirmedInput -> {
@@ -798,7 +795,8 @@ public class MixService {
 
     // export to CSV
     try {
-      exportService.exportMix(mix);
+      MixCsv mixCsv = exportService.exportMix(mix);
+      metricService.onMixResult(mixCsv, mix.getInputs());
     } catch (Exception e) {
       log.error("", e);
     }

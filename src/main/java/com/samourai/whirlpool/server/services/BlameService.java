@@ -20,17 +20,29 @@ public class BlameService {
   private DbService dbService;
   private BanService banService;
   private ExportService exportService;
+  private MetricService metricService;
 
   @Autowired
-  public BlameService(DbService dbService, BanService banService, ExportService exportService) {
+  public BlameService(
+      DbService dbService,
+      BanService banService,
+      ExportService exportService,
+      MetricService metricService) {
     this.dbService = dbService;
     this.banService = banService;
     this.exportService = exportService;
+    this.metricService = metricService;
   }
 
   public void blame(ConfirmedInput confirmedInput, BlameReason reason, Mix mix) {
+    // blame
     String identifier = Utils.computeBlameIdentitifer(confirmedInput);
-    blame(identifier, reason, mix.getMixId(), confirmedInput.getRegisteredInput().getIp());
+    dbService.saveBlame(
+        identifier, reason, mix.getMixId(), confirmedInput.getRegisteredInput().getIp());
+
+    // notify banService
+    List<BlameTO> blames = dbService.findBlames(identifier);
+    banService.onBlame(confirmedInput, identifier, blames);
 
     // log activity
     ActivityCsv activityCsv =
@@ -41,15 +53,6 @@ public class BlameService {
             ImmutableMap.of("reason", reason.name()),
             null);
     exportService.exportActivity(activityCsv);
-  }
-
-  private BlameTO blame(String identifier, BlameReason reason, String mixId, String ip) {
-    BlameTO blameTO = dbService.saveBlame(identifier, reason, mixId, ip);
-
-    // notify banService
-    List<BlameTO> blames = dbService.findBlames(identifier);
-    banService.onBlame(identifier, blames);
-
-    return blameTO;
+    metricService.onBlame(confirmedInput.getRegisteredInput());
   }
 }

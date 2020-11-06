@@ -7,7 +7,6 @@ import com.samourai.whirlpool.server.beans.ConfirmedInput;
 import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.integration.AbstractIntegrationTest;
 import com.samourai.whirlpool.server.persistence.repositories.BlameRepository;
-import com.samourai.whirlpool.server.utils.Utils;
 import java.lang.invoke.MethodHandles;
 import java.sql.Timestamp;
 import org.junit.Assert;
@@ -136,7 +135,7 @@ public class BanServiceTest extends AbstractIntegrationTest {
 
   // PERMANENT BAN
 
-  @Test
+  /*@Test
   public void permanent_ban_mustmix() throws Exception {
     // server.ban.blames = 2
     // server.ban.period = 1OO
@@ -237,5 +236,5 @@ public class BanServiceTest extends AbstractIntegrationTest {
 
     // other inputs are not banned
     Assert.assertFalse(banService.findActiveBan("foo", UTXO_INDEX).isPresent());
-  }
+  }*/
 }

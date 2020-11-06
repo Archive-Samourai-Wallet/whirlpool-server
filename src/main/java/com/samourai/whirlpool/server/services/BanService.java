@@ -1,5 +1,8 @@
 package com.samourai.whirlpool.server.services;
 
+import com.google.common.collect.ImmutableMap;
+import com.samourai.whirlpool.server.beans.ConfirmedInput;
+import com.samourai.whirlpool.server.beans.export.ActivityCsv;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.persistence.to.BanTO;
 import com.samourai.whirlpool.server.persistence.to.BlameTO;
@@ -21,11 +24,19 @@ public class BanService {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private DbService dbService;
   private WhirlpoolServerConfig serverConfig;
+  private ExportService exportService;
+  private MetricService metricService;
 
   @Autowired
-  public BanService(DbService dbService, WhirlpoolServerConfig serverConfig) {
+  public BanService(
+      DbService dbService,
+      WhirlpoolServerConfig serverConfig,
+      ExportService exportService,
+      MetricService metricService) {
     this.dbService = dbService;
     this.serverConfig = serverConfig;
+    this.exportService = exportService;
+    this.metricService = metricService;
   }
 
   public void banTemporary(String identifier, String response, String notes) {
@@ -37,10 +48,6 @@ public class BanService {
       String identifier, String response, String notes, long expirationDelay) {
     Timestamp expiration = new Timestamp(System.currentTimeMillis() + expirationDelay);
     ban(identifier, response, notes, expiration);
-  }
-
-  public void banPermanent(String identifier, String response, String notes) {
-    ban(identifier, response, notes, null);
   }
 
   private void ban(String identifier, String response, String notes, Timestamp expiration) {
@@ -78,7 +85,7 @@ public class BanService {
     return bans;
   }
 
-  public void onBlame(String identifier, List<BlameTO> blames) {
+  public void onBlame(ConfirmedInput confirmedInput, String identifier, List<BlameTO> blames) {
     int maxBlames = serverConfig.getBan().getBlames();
 
     long blamePeriodMs = serverConfig.getBan().getPeriod() * 1000;
@@ -122,9 +129,18 @@ public class BanService {
                 .stream()
                 .map(blameTO -> blameTO.getReason().name())
                 .collect(Collectors.toList()));
-    banTemporary(
-        identifier,
-        null,
-        countActiveBlames + " blames in " + blamePeriodMinutes + "min: " + blameReasons);
+    String reason = countActiveBlames + " blames in " + blamePeriodMinutes + "min: " + blameReasons;
+    banTemporary(identifier, null, reason);
+
+    // log activity
+    ActivityCsv activityCsv =
+        new ActivityCsv(
+            "BAN",
+            confirmedInput.getRegisteredInput().getPoolId(),
+            confirmedInput.getRegisteredInput(),
+            ImmutableMap.of("reason", reason),
+            null);
+    exportService.exportActivity(activityCsv);
+    metricService.onBan(confirmedInput.getRegisteredInput());
   }
 }

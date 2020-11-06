@@ -93,4 +93,8 @@ public class InputPool {
   public int getSize() {
     return inputsById.size();
   }
+
+  public int getSizeByTor(boolean tor) {
+    return (int) inputsById.values().parallelStream().filter(input -> input.isTor() == tor).count();
+  }
 }

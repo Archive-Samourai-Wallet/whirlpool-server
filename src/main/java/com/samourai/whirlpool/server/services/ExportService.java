@@ -31,14 +31,15 @@ public class ExportService {
             serverConfig.getExport().getActivity(), ActivityCsv.class, ActivityCsv.HEADERS);
   }
 
-  public void exportMix(Mix mix) {
+  public MixCsv exportMix(Mix mix) {
+    MixTO mixTO = mix.__getMixTO().get();
+    MixCsv mixCSV = new MixCsv(mixTO);
     try {
-      MixTO mixTO = mix.__getMixTO().get();
-      MixCsv mixCSV = new MixCsv(mixTO);
       exportMixs.write(mixCSV);
     } catch (Exception e) {
       log.error("unable to export mix", e);
     }
+    return mixCSV;
   }
 
   public void exportActivity(ActivityCsv activityCsv) {
