@@ -121,7 +121,13 @@ public class SigningServiceTest extends AbstractIntegrationTest {
         createAndMockTxOutPoint(testUtils.generateSegwitAddress(), inputBalance, 10);
     mix.registerInput(
         new ConfirmedInput(
-            new RegisteredInput(firstUsername, false, firstTxOutPoint, "127.0.0.1", null),
+            new RegisteredInput(
+                mix.getPool().getPoolId(),
+                firstUsername,
+                false,
+                firstTxOutPoint,
+                "127.0.0.1",
+                null),
             "userHash1"));
     mix.registerOutput(testUtils.generateSegwitAddress().getBech32AsString());
 

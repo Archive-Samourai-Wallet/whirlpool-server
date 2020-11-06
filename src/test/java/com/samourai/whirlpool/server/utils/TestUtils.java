@@ -120,10 +120,11 @@ public class TestUtils {
     return pem;
   }
 
-  public ConfirmedInput computeConfirmedInput(String utxoHash, long utxoIndex, boolean liquidity) {
+  public ConfirmedInput computeConfirmedInput(
+      String poolId, String utxoHash, long utxoIndex, boolean liquidity) {
     TxOutPoint outPoint = new TxOutPoint(utxoHash, utxoIndex, 1234, 99, null, "fakeReceiveAddress");
     RegisteredInput registeredInput =
-        new RegisteredInput("foo", liquidity, outPoint, "127.0.0.1", null);
+        new RegisteredInput(poolId, "foo", liquidity, outPoint, "127.0.0.1", null);
     ConfirmedInput confirmedInput =
         new ConfirmedInput(registeredInput, "userHash" + utxoHash + utxoIndex);
     return confirmedInput;

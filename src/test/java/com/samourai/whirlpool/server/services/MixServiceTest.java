@@ -56,7 +56,12 @@ public class MixServiceTest extends AbstractIntegrationTest {
     mix.registerInput(
         new ConfirmedInput(
             new RegisteredInput(
-                "mustMix1", false, generateOutPoint(mustMixValue), "127.0.0.1", null),
+                mix.getPool().getPoolId(),
+                "mustMix1",
+                false,
+                generateOutPoint(mustMixValue),
+                "127.0.0.1",
+                null),
             "userHash1"));
     Assert.assertFalse(spyMixService.isConfirmInputReady(mix));
 
@@ -64,7 +69,12 @@ public class MixServiceTest extends AbstractIntegrationTest {
     mix.registerInput(
         new ConfirmedInput(
             new RegisteredInput(
-                "mustMix2", false, generateOutPoint(mustMixValue), "127.0.0.1", null),
+                mix.getPool().getPoolId(),
+                "mustMix2",
+                false,
+                generateOutPoint(mustMixValue),
+                "127.0.0.1",
+                null),
             "userHash2"));
     Assert.assertTrue(spyMixService.isConfirmInputReady(mix));
   }
@@ -100,7 +110,12 @@ public class MixServiceTest extends AbstractIntegrationTest {
     mix.registerInput(
         new ConfirmedInput(
             new RegisteredInput(
-                "liquidity1", true, generateOutPoint(mustMixValue), "127.0.0.1", null),
+                mix.getPool().getPoolId(),
+                "liquidity1",
+                true,
+                generateOutPoint(mustMixValue),
+                "127.0.0.1",
+                null),
             "userHashL1"));
     Assert.assertFalse(spyMixService.isConfirmInputReady(mix));
 
@@ -108,7 +123,12 @@ public class MixServiceTest extends AbstractIntegrationTest {
     mix.registerInput(
         new ConfirmedInput(
             new RegisteredInput(
-                "liquidity2", true, generateOutPoint(mustMixValue), "127.0.0.1", null),
+                mix.getPool().getPoolId(),
+                "liquidity2",
+                true,
+                generateOutPoint(mustMixValue),
+                "127.0.0.1",
+                null),
             "userHashL2"));
     Assert.assertFalse(spyMixService.isConfirmInputReady(mix));
 
@@ -116,7 +136,12 @@ public class MixServiceTest extends AbstractIntegrationTest {
     mix.registerInput(
         new ConfirmedInput(
             new RegisteredInput(
-                "mustMix1", false, generateOutPoint(mustMixValue), "127.0.0.1", null),
+                mix.getPool().getPoolId(),
+                "mustMix1",
+                false,
+                generateOutPoint(mustMixValue),
+                "127.0.0.1",
+                null),
             "userHashM1"));
     Assert.assertFalse(spyMixService.isConfirmInputReady(mix));
 
@@ -124,7 +149,12 @@ public class MixServiceTest extends AbstractIntegrationTest {
     mix.registerInput(
         new ConfirmedInput(
             new RegisteredInput(
-                "mustMix2", false, generateOutPoint(mustMixValue), "127.0.0.1", null),
+                mix.getPool().getPoolId(),
+                "mustMix2",
+                false,
+                generateOutPoint(mustMixValue),
+                "127.0.0.1",
+                null),
             "userHashM2"));
     Assert.assertTrue(spyMixService.isConfirmInputReady(mix));
   }
@@ -162,7 +192,12 @@ public class MixServiceTest extends AbstractIntegrationTest {
     ConfirmedInput mustMix1 =
         new ConfirmedInput(
             new RegisteredInput(
-                "mustMix1", false, generateOutPoint(mustMixValue), "127.0.0.1", null),
+                mix.getPool().getPoolId(),
+                "mustMix1",
+                false,
+                generateOutPoint(mustMixValue),
+                "127.0.0.1",
+                null),
             "userHash1");
     mix.registerInput(mustMix1);
     Assert.assertFalse(spyMixService.isConfirmInputReady(mix));
@@ -171,7 +206,12 @@ public class MixServiceTest extends AbstractIntegrationTest {
     ConfirmedInput mustMix2 =
         new ConfirmedInput(
             new RegisteredInput(
-                "mustMix2", false, generateOutPoint(mustMixValue), "127.0.0.1", null),
+                mix.getPool().getPoolId(),
+                "mustMix2",
+                false,
+                generateOutPoint(mustMixValue),
+                "127.0.0.1",
+                null),
             "userHash2");
     mix.registerInput(mustMix2);
     Assert.assertTrue(spyMixService.isConfirmInputReady(mix));
@@ -194,7 +234,12 @@ public class MixServiceTest extends AbstractIntegrationTest {
     ConfirmedInput mustMix3 =
         new ConfirmedInput(
             new RegisteredInput(
-                "mustMix3", false, generateOutPoint(mustMixValue), "127.0.0.1", null),
+                mix.getPool().getPoolId(),
+                "mustMix3",
+                false,
+                generateOutPoint(mustMixValue),
+                "127.0.0.1",
+                null),
             "userHash3");
     mix.registerInput(mustMix3);
     Assert.assertTrue(spyMixService.isConfirmInputReady(mix));
