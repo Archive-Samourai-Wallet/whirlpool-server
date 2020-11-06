@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{decorators/dashboard}"
+      th:with="currentPage = ${myCurrentPage}">
+<head>
+    <title>Metrics</title>
+</head>
+<body>
+    <div layout:fragment="main">
+        <div class="text-center">
+            <small><a th:href="${metricsUrl}" target="_blank" class="text-muted">open in new window</a></small>
+        </div>
+        <iframe th:src="${metricsUrl}" style="border:1px solid #000" width="100%" height="1500"></iframe>
+    </div>
+</body>
+
+</html>

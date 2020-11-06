@@ -20,7 +20,18 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
 @EnableWebSecurity
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
-  private static final String[] ENDPOINTS_ACTUATOR = new String[] {"/actuator/prometheus"};
+  private static final String[] WEB_ACTUATOR_ENDPOINTS = new String[] {"/actuator/prometheus"};
+
+  private static final String[] WEB_ADMIN_ENDPOINTS =
+      new String[] {
+        StatusWebController.ENDPOINT,
+        HistoryWebController.ENDPOINT,
+        ConfigWebController.ENDPOINT,
+        BanWebController.ENDPOINT,
+        SystemWebController.ENDPOINT,
+        MetricsWebController.ENDPOINT_WHIRLPOOL,
+        MetricsWebController.ENDPOINT_SYSTEM
+      };
 
   private static final String[] REST_MIX_ENDPOINTS =
       new String[] {
@@ -51,7 +62,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         .permitAll()
 
         // public actuator
-        .antMatchers(ENDPOINTS_ACTUATOR)
+        .antMatchers(WEB_ACTUATOR_ENDPOINTS)
         .permitAll()
 
         // public mixing websocket
@@ -61,16 +72,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         .permitAll()
 
         // restrict admin
-        .antMatchers(StatusWebController.ENDPOINT)
-        .hasAnyAuthority(WhirlpoolPrivilege.STATUS.toString(), WhirlpoolPrivilege.ALL.toString())
-        .antMatchers(HistoryWebController.ENDPOINT)
-        .hasAnyAuthority(WhirlpoolPrivilege.HISTORY.toString(), WhirlpoolPrivilege.ALL.toString())
-        .antMatchers(ConfigWebController.ENDPOINT)
-        .hasAnyAuthority(WhirlpoolPrivilege.CONFIG.toString(), WhirlpoolPrivilege.ALL.toString())
-        .antMatchers(BanWebController.ENDPOINT)
-        .hasAnyAuthority(WhirlpoolPrivilege.BAN.toString(), WhirlpoolPrivilege.ALL.toString())
-        .antMatchers(SystemWebController.ENDPOINT)
-        .hasAnyAuthority(WhirlpoolPrivilege.SYSTEM.toString(), WhirlpoolPrivilege.ALL.toString())
+        .antMatchers(WEB_ADMIN_ENDPOINTS)
+        .hasAnyAuthority(WhirlpoolPrivilege.ALL.toString())
 
         // reject others
         .anyRequest()
