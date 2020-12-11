@@ -313,7 +313,7 @@ public class MixService {
 
     // verify no output address reuse with inputs
     if (mix.getInputByAddress(receiveAddress).isPresent()) {
-      throw new IllegalInputException("receiveAddress already registered as input");
+      throw new IllegalInputException("output already registered as input");
     }
 
     log.info("[" + mix.getMixId() + "] registered output: " + receiveAddress);

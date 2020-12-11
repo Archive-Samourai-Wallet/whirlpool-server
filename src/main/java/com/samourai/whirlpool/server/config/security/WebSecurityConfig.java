@@ -36,6 +36,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
   private static final String[] REST_MIX_ENDPOINTS =
       new String[] {
         WhirlpoolEndpoint.REST_POOLS,
+        WhirlpoolEndpoint.REST_CHECK_OUTPUT,
         WhirlpoolEndpoint.REST_REGISTER_OUTPUT,
         WhirlpoolEndpoint.REST_TX0_DATA,
         SystemController.ENDPOINT_HEALTH

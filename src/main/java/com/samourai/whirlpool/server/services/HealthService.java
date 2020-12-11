@@ -114,7 +114,7 @@ public class HealthService {
       ServerApi serverApi = new ServerApi(serverUrl, httpClientService);
       whirlpoolClientConfig =
           new WhirlpoolClientConfig(
-              httpClientService, stompClientService, serverApi, params, mobile);
+              httpClientService, stompClientService, serverApi, null, params, mobile);
     }
     return whirlpoolClientConfig;
   }
@@ -133,10 +133,10 @@ public class HealthService {
           }
 
           @Override
-          public void confirmReceiveAddress() {}
+          public void onRegisterOutput() {}
 
           @Override
-          public void cancelReceiveAddress() {}
+          public void onMixFail() {}
         };
     MixParams mixParams =
         new MixParams(

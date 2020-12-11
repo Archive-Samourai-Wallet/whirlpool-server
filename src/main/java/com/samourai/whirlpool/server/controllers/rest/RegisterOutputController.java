@@ -2,11 +2,10 @@ package com.samourai.whirlpool.server.controllers.rest;
 
 import com.samourai.whirlpool.protocol.WhirlpoolEndpoint;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
+import com.samourai.whirlpool.protocol.rest.CheckOutputRequest;
 import com.samourai.whirlpool.protocol.rest.RegisterOutputRequest;
 import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;
-import com.samourai.whirlpool.server.services.BlameService;
-import com.samourai.whirlpool.server.services.DbService;
 import com.samourai.whirlpool.server.services.ExportService;
 import com.samourai.whirlpool.server.services.RegisterOutputService;
 import java.lang.invoke.MethodHandles;
@@ -24,18 +23,24 @@ public class RegisterOutputController extends AbstractRestController {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private RegisterOutputService registerOutputService;
-  private BlameService blameService;
-  private DbService dbService;
   private ExportService exportService;
 
   @Autowired
   public RegisterOutputController(
-      RegisterOutputService registerOutputService,
-      DbService dbService,
-      ExportService exportService) {
+      RegisterOutputService registerOutputService, ExportService exportService) {
     this.registerOutputService = registerOutputService;
-    this.dbService = dbService;
     this.exportService = exportService;
+  }
+
+  @RequestMapping(value = WhirlpoolEndpoint.REST_CHECK_OUTPUT, method = RequestMethod.POST)
+  public void checkOutput(HttpServletRequest request, @RequestBody CheckOutputRequest payload)
+      throws Exception {
+    if (log.isDebugEnabled()) {
+      log.debug("(<) " + WhirlpoolEndpoint.REST_CHECK_OUTPUT);
+    }
+
+    // check output
+    registerOutputService.checkOutput(payload.receiveAddress, payload.signature);
   }
 
   @RequestMapping(value = WhirlpoolEndpoint.REST_REGISTER_OUTPUT, method = RequestMethod.POST)

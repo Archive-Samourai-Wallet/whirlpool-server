@@ -239,7 +239,7 @@ public class RegisterOutputServiceTest extends AbstractMixIntegrationTest {
           reusedAddress); // INVALID receiveAddress
       Assert.assertTrue(false);
     } catch (Exception e) {
-      Assert.assertEquals("receiveAddress already registered as input", e.getMessage());
+      Assert.assertEquals("output already registered as input", e.getMessage());
     }
   }
 }
