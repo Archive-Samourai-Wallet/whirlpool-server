@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import com.samourai.whirlpool.protocol.WhirlpoolEndpoint;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.protocol.rest.Tx0DataResponse;
+import com.samourai.whirlpool.protocol.rest.Tx0NotifyRequest;
 import com.samourai.whirlpool.server.beans.PoolFee;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
@@ -23,10 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 public class Tx0Controller extends AbstractRestController {
@@ -50,6 +48,17 @@ public class Tx0Controller extends AbstractRestController {
     this.exportService = exportService;
     this.serverConfig = serverConfig;
     this.xManagerClient = xManagerClient;
+  }
+
+  @RequestMapping(value = WhirlpoolEndpoint.REST_TX0_NOTIFY, method = RequestMethod.POST)
+  public void tx0Notify(HttpServletRequest request, @RequestBody Tx0NotifyRequest payload)
+      throws Exception {
+    if (log.isDebugEnabled()) {
+      log.debug("(<) " + WhirlpoolEndpoint.REST_TX0_NOTIFY + " " + payload.txid);
+    }
+
+    // verify tx0
+    // TODO
   }
 
   @RequestMapping(value = WhirlpoolEndpoint.REST_TX0_DATA, method = RequestMethod.GET)
