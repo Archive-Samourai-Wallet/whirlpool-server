@@ -74,6 +74,7 @@ public class AssertMultiClientManager extends MultiClientManager {
             httpClientService,
             new JavaStompClientService(httpClientService),
             new ServerApi(server, httpClientService),
+            null,
             cryptoService.getNetworkParameters(),
             false);
     return new WhirlpoolClientImpl(config);

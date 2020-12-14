@@ -185,7 +185,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
     int feeIndex = 123456;
 
     Tx0Data tx0Data = new Tx0Data(feePaymentCode, 0, 1111, 100, feePayload, feeAddress, feeIndex);
-    Tx0Preview tx0Preview = new Tx0Preview(tx0Data, 2, 1000102, 94998479, 4);
+    Tx0Preview tx0Preview = new Tx0Preview(tx0Data, 2, 2 * 4, 2, 1000102, 94998479, 4);
     Tx0 tx0 =
         new Tx0Service(whirlpoolWalletConfig)
             .tx0(
@@ -244,7 +244,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
 
     Tx0Data tx0Data =
         new Tx0Data(feePaymentCode, 0, FEES_VALID, 0, feePayload, feeAddress, feeIndex);
-    Tx0Preview tx0Preview = new Tx0Preview(tx0Data, 2, 1000102, 94024590, 4);
+    Tx0Preview tx0Preview = new Tx0Preview(tx0Data, 2, 2 * 4, 2, 1000102, 94024590, 4);
 
     Tx0 tx0 =
         new Tx0Service(whirlpoolWalletConfig)
@@ -321,7 +321,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
 
     Tx0Data tx0Data =
         new Tx0Data(feePaymentCode, FEES_VALID, 0, 0, feePayload, feeAddress, feeIndex);
-    Tx0Preview tx0Preview = new Tx0Preview(tx0Data, 2, 1000102, 94024590, 4);
+    Tx0Preview tx0Preview = new Tx0Preview(tx0Data, 2, 2 * 4, 2, 1000102, 94024590, 4);
 
     Tx0 tx0 =
         new Tx0Service(whirlpoolWalletConfig)
@@ -382,7 +382,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
 
     Tx0Data tx0Data =
         new Tx0Data(feePaymentCode, FEES_VALID, 0, 0, feePayload, feeAddress, feeIndex);
-    Tx0Preview tx0Preview = new Tx0Preview(tx0Data, 2, 1000102, 94024590, 4);
+    Tx0Preview tx0Preview = new Tx0Preview(tx0Data, 2, 2 * 4, 2, 1000102, 94024590, 4);
 
     Tx0 tx0 =
         new Tx0Service(whirlpoolWalletConfig)
