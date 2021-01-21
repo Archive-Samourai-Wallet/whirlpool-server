@@ -68,40 +68,39 @@ public class PoolService {
 
   public void __reset() {
     WhirlpoolServerConfig.PoolConfig[] poolConfigs = whirlpoolServerConfig.getPools();
-    WhirlpoolServerConfig.MinerFeeConfig minerFeeConfig = whirlpoolServerConfig.getMinerFees();
-    __reset(poolConfigs, minerFeeConfig);
+    WhirlpoolServerConfig.MinerFeeConfig globalMinerFeeConfig =
+        whirlpoolServerConfig.getMinerFees();
+    __reset(poolConfigs, globalMinerFeeConfig);
   }
 
   public void __reset(
       WhirlpoolServerConfig.PoolConfig[] poolConfigs,
-      WhirlpoolServerConfig.MinerFeeConfig minerFeeConfig) {
+      WhirlpoolServerConfig.MinerFeeConfig globalMinerFeeConfig) {
     pools = new ConcurrentHashMap<>();
     for (WhirlpoolServerConfig.PoolConfig poolConfig : poolConfigs) {
-      String poolId = poolConfig.getId();
-      long denomination = poolConfig.getDenomination();
-      long feeValue = poolConfig.getFeeValue();
-      Map<Long, Long> feeAccept = poolConfig.getFeeAccept();
-      int minMustMix = poolConfig.getMustMixMin();
-      int minLiquidity = poolConfig.getLiquidityMin();
-      int anonymitySet = poolConfig.getAnonymitySet();
-      long minerFeeMix = poolConfig.getMinerFeeMix(minerFeeConfig);
-
-      Assert.notNull(poolId, "Pool configuration: poolId must not be NULL");
-      Assert.isTrue(!pools.containsKey(poolId), "Pool configuration: poolId must not be duplicate");
-      PoolFee poolFee = new PoolFee(feeValue, feeAccept);
-      Pool pool =
-          new Pool(
-              poolId,
-              denomination,
-              poolFee,
-              minMustMix,
-              minLiquidity,
-              anonymitySet,
-              minerFeeConfig,
-              minerFeeMix);
-      pools.put(poolId, pool);
-      metricService.manage(pool);
+      PoolMinerFee minerFee =
+          new PoolMinerFee(
+              globalMinerFeeConfig, poolConfig.getMinerFees(), poolConfig.getMustMixMin());
+      __reset(poolConfig, minerFee);
     }
+  }
+
+  public void __reset(WhirlpoolServerConfig.PoolConfig poolConfig, PoolMinerFee minerFee) {
+    String poolId = poolConfig.getId();
+    long denomination = poolConfig.getDenomination();
+    long feeValue = poolConfig.getFeeValue();
+    Map<Long, Long> feeAccept = poolConfig.getFeeAccept();
+    int minMustMix = poolConfig.getMustMixMin();
+    int minLiquidity = poolConfig.getLiquidityMin();
+    int anonymitySet = poolConfig.getAnonymitySet();
+
+    Assert.notNull(poolId, "Pool configuration: poolId must not be NULL");
+    Assert.isTrue(!pools.containsKey(poolId), "Pool configuration: poolId must not be duplicate");
+    PoolFee poolFee = new PoolFee(feeValue, feeAccept);
+    Pool pool =
+        new Pool(poolId, denomination, poolFee, minMustMix, minLiquidity, anonymitySet, minerFee);
+    pools.put(poolId, pool);
+    metricService.manage(pool);
   }
 
   public Collection<Pool> getPools() {

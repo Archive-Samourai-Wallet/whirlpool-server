@@ -45,7 +45,7 @@
                     </div>
                 </td>
                 <td>
-                    <strong th:text="${pool.nbInputsMustMix}"/> / <span th:text="${pool.minMustMix}"/> mustMix, <strong th:text="${pool.minerFeeAccumulated}"/> / <span th:text="${pool.minerFeeMix}"/> sat<br/>
+                    <strong th:text="${pool.nbInputsMustMix}"/> / <span th:text="${pool.minMustMix}"/> mustMix, <strong th:text="${pool.minerFeeAccumulated}"/> / <span th:text="${pool.minerFee.minerFeeMix}"/> sat<br/>
                     <strong th:text="${pool.nbInputsLiquidities}"/> / <span th:text="${pool.minLiquidity}"/> liquidities<br/>
                     <strong th:text="${pool.nbInputs}"/> / <span th:text="${pool.anonymitySet}"/> confirmed</span>
                 </td>
@@ -56,6 +56,7 @@
                 <td><span th:text="${@templateUtil.duration(pool.elapsedTime/1000)}"/></td>
                 <td>
                     Pool fee: <span th:text="${@templateUtil.satoshisToBtc(pool.feeValue)}"/><br/>
+                    Miner fee: <span th:text="${pool.minerFee.minerFeeMin}" title="minerFeeMin"/>-<span th:text="${pool.minerFee.minerFeeMax}" title="minerFeeMax"/> (cap=<span th:text="${pool.minerFee.minerFeeCap}" title="minerFeeMaxCap"/>, minRelay=<span th:text="${pool.minerFee.minRelayFee}" title="minRelayFee"/>)<br/>
                 </td>
                 </tr>
                 <tr>
@@ -88,9 +89,6 @@
             </div>
             </tbody>
         </table>
-        <p>
-            Miner fee: <span th:text="${minerFees.minerFeeMin}" title="minerFeeMin"/>-<span th:text="${minerFees.minerFeeCap}" title="minerFeeCap"/> (max <span th:text="${minerFees.minerFeeMax}" title="minerFeeMax"/>)<br/>
-        </p>
     </div>
 </body>
 </html>

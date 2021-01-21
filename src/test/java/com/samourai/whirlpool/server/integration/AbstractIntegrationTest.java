@@ -13,6 +13,7 @@ import com.samourai.whirlpool.cli.config.CliConfig;
 import com.samourai.whirlpool.client.utils.ClientCryptoService;
 import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.beans.Pool;
+import com.samourai.whirlpool.server.beans.PoolMinerFee;
 import com.samourai.whirlpool.server.beans.rpc.RpcTransaction;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
@@ -119,17 +120,20 @@ public abstract class AbstractIntegrationTest {
   }
 
   protected void configurePools(
-      WhirlpoolServerConfig.MinerFeeConfig minerFeeConfig,
+      WhirlpoolServerConfig.MinerFeeConfig globalMinerFeeConfig,
       WhirlpoolServerConfig.PoolConfig... poolConfigs) {
-    poolService.__reset(poolConfigs, minerFeeConfig);
+    poolService.__reset(poolConfigs, globalMinerFeeConfig);
     mixService.__reset();
   }
 
-  protected Mix __nextMix(
-      WhirlpoolServerConfig.MinerFeeConfig minerFeeConfig,
-      WhirlpoolServerConfig.PoolConfig poolConfig)
+  protected void configurePool(PoolMinerFee minerFee, WhirlpoolServerConfig.PoolConfig poolConfig) {
+    poolService.__reset(poolConfig, minerFee);
+    mixService.__reset();
+  }
+
+  protected Mix __nextMix(PoolMinerFee minerFee, WhirlpoolServerConfig.PoolConfig poolConfig)
       throws IllegalInputException {
-    configurePools(minerFeeConfig, poolConfig);
+    configurePool(minerFee, poolConfig);
     Pool pool = poolService.getPool(poolConfig.getId());
     Mix mix = mixService.__nextMix(pool);
     return mix;
@@ -154,22 +158,19 @@ public abstract class AbstractIntegrationTest {
     poolConfig.setLiquidityMin(liquidityMin);
     poolConfig.setAnonymitySet(anonymitySet);
 
-    WhirlpoolServerConfig.MinerFeeConfig minerFeeConfig =
+    WhirlpoolServerConfig.MinerFeeConfig globalMinerFeeConfig =
         new WhirlpoolServerConfig.MinerFeeConfig();
-    minerFeeConfig.setMinerFeeMin(minerFeeMin);
-    minerFeeConfig.setMinerFeeCap(minerFeeCap);
-    minerFeeConfig.setMinerFeeMax(minerFeeMax);
+    globalMinerFeeConfig.setMinerFeeMin(minerFeeMin);
+    globalMinerFeeConfig.setMinerFeeCap(minerFeeCap);
+    globalMinerFeeConfig.setMinerFeeMax(minerFeeMax);
+
+    PoolMinerFee minerFee = new PoolMinerFee(globalMinerFeeConfig, null, mustMixMin);
 
     // run new mix for the pool
-    return __nextMix(minerFeeConfig, poolConfig);
+    return __nextMix(minerFee, poolConfig);
   }
 
-  protected Mix __nextMix(
-      int mustMixMin,
-      int liquidityMin,
-      int anonymitySet,
-      Pool copyPool,
-      WhirlpoolServerConfig.MinerFeeConfig minerFeeConfig)
+  protected Mix __nextMix(int mustMixMin, int liquidityMin, int anonymitySet, Pool copyPool)
       throws IllegalInputException {
     // create new pool
     WhirlpoolServerConfig.PoolConfig poolConfig = new WhirlpoolServerConfig.PoolConfig();
@@ -182,13 +183,7 @@ public abstract class AbstractIntegrationTest {
     poolConfig.setAnonymitySet(anonymitySet);
 
     // run new mix for the pool
-    return __nextMix(minerFeeConfig, poolConfig);
-  }
-
-  protected Mix __nextMix(int mustMixMin, int liquidityMin, int anonymitySet, Pool copyPool)
-      throws IllegalInputException {
-    return __nextMix(
-        mustMixMin, liquidityMin, anonymitySet, copyPool, copyPool._getMinerFeeConfig());
+    return __nextMix(copyPool.getMinerFee(), poolConfig);
   }
 
   protected Mix __getCurrentMix() {

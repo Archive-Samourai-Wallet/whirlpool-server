@@ -25,7 +25,17 @@ server.pools[x].denomination: amount in satoshis
 server.miner-fees.miner-fee-min: minimum miner-fee accepted for mustMix
 server.miner-fees.miner-fee-max: maximum miner-fee accepted for mustMix
 server.miner-fees.miner-fee-cap: "soft cap" miner-fee recommended for a new mustMix (should be <= miner-fee-max)
+server.miner-fees.min-relay-fee: minimum miner-fee to accumulate for mixing
 ```
+
+Optional pool override:
+```
+server.pools[x].miner-fees.miner-fee-min
+server.pools[x].miner-fees.miner-fee-max
+server.pools[x].miner-fees.miner-fee-cap
+server.pools[x].miner-fees.min-relay-fee
+```
+
 UTXO should be founded with:<br/>
 for mustMix: (*server.mix.denomination* + *server.miner-fees.miner-fee-min*) to (*server.mix.denomination* + *server.miner-fees.miner-fee-max*). New TX0 outputs are capped to (*server.mix.denomination* + *server.miner-fees.miner-fee-cap*).<br/>
 for liquidities: (*server.mix.denomination*) to (*server.mix.denomination* + *server.mix.miner-fee-max*)
@@ -73,7 +83,6 @@ SCode can expire for tx0s confirmed after a specified time.
 server.pools[x].anonymity-set = 5
 server.pools[x].must-mix-min = 1
 server.pools[x].liquidity-min = 1
-server.miner-fees.min-relay-fee = 510
 ```
 Mix will start when *anonymity-set* (mustMix + liquidities) are registered.<br/>
 

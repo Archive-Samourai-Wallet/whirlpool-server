@@ -1,7 +1,6 @@
 package com.samourai.whirlpool.server.beans;
 
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
-import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 
 public class Pool {
   private String poolId;
@@ -10,8 +9,7 @@ public class Pool {
   private int minMustMix;
   private int minLiquidity;
   private int anonymitySet;
-  private WhirlpoolServerConfig.MinerFeeConfig minerFeeConfig;
-  private long minerFeeMix;
+  private PoolMinerFee minerFee;
 
   private Mix currentMix;
   private InputPool mustMixQueue;
@@ -24,16 +22,14 @@ public class Pool {
       int minMustMix,
       int minLiquidity,
       int anonymitySet,
-      WhirlpoolServerConfig.MinerFeeConfig minerFeeConfig,
-      long minerFeeMix) {
+      PoolMinerFee minerFee) {
     this.poolId = poolId;
     this.denomination = denomination;
     this.poolFee = poolFee;
     this.minMustMix = minMustMix;
     this.minLiquidity = minLiquidity;
     this.anonymitySet = anonymitySet;
-    this.minerFeeConfig = minerFeeConfig;
-    this.minerFeeMix = minerFeeMix;
+    this.minerFee = minerFee;
 
     this.mustMixQueue = new InputPool();
     this.liquidityQueue = new InputPool();
@@ -61,15 +57,15 @@ public class Pool {
   }
 
   public long computeMustMixBalanceMin() {
-    return denomination + minerFeeConfig.getMinerFeeMin();
+    return denomination + minerFee.getMinerFeeMin();
   }
 
   public long computeMustMixBalanceCap() {
-    return denomination + minerFeeConfig.getMinerFeeCap();
+    return denomination + minerFee.getMinerFeeCap();
   }
 
   public long computeMustMixBalanceMax() {
-    return denomination + minerFeeConfig.getMinerFeeMax();
+    return denomination + minerFee.getMinerFeeMax();
   }
 
   public String getPoolId() {
@@ -97,7 +93,7 @@ public class Pool {
   }
 
   public long getMinerFeeMix() {
-    return minerFeeMix;
+    return minerFee.getMinerFeeMix();
   }
 
   public Mix getCurrentMix() {
@@ -116,8 +112,7 @@ public class Pool {
     return liquidityQueue;
   }
 
-  // for tests
-  public WhirlpoolServerConfig.MinerFeeConfig _getMinerFeeConfig() {
-    return minerFeeConfig;
+  public PoolMinerFee getMinerFee() {
+    return minerFee;
   }
 }
