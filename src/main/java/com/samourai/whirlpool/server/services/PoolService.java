@@ -93,12 +93,21 @@ public class PoolService {
     int minMustMix = poolConfig.getMustMixMin();
     int minLiquidity = poolConfig.getLiquidityMin();
     int anonymitySet = poolConfig.getAnonymitySet();
+    int tx0MaxOutputs = poolConfig.getTx0MaxOutputs();
 
     Assert.notNull(poolId, "Pool configuration: poolId must not be NULL");
     Assert.isTrue(!pools.containsKey(poolId), "Pool configuration: poolId must not be duplicate");
     PoolFee poolFee = new PoolFee(feeValue, feeAccept);
     Pool pool =
-        new Pool(poolId, denomination, poolFee, minMustMix, minLiquidity, anonymitySet, minerFee);
+        new Pool(
+            poolId,
+            denomination,
+            poolFee,
+            minMustMix,
+            minLiquidity,
+            anonymitySet,
+            tx0MaxOutputs,
+            minerFee);
     pools.put(poolId, pool);
     metricService.manage(pool);
   }

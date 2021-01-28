@@ -31,7 +31,7 @@ public class BlockchainDataService {
     this.bech32Util = bech32Util;
   }
 
-  protected Optional<RpcTransaction> getRpcTransaction(String txid) {
+  public Optional<RpcTransaction> getRpcTransaction(String txid) {
     if (log.isTraceEnabled()) {
       log.trace("RPC query: getRawTransaction " + txid);
     }

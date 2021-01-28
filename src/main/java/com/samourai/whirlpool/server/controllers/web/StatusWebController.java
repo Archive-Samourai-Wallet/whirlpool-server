@@ -67,6 +67,7 @@ public class StatusWebController {
               pool.getMinerFee().getMinerFeeCap(); // used in template
               pool.getMinerFee().getMinerFeeMax(); // used in template
               pool.getMinerFee().getMinerFeeMix(); // used in template
+              poolAttributes.put("tx0MaxOutputs", pool.getTx0MaxOutputs());
               poolAttributes.put("minerFeeAccumulated", mix.computeMinerFeeAccumulated());
               poolAttributes.put("nbInputs", mix.getNbInputs());
               poolAttributes.put("nbInputsMustMix", mix.getNbInputsMustMix());

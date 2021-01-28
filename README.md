@@ -22,6 +22,7 @@ The node will be used to verify UTXO and broadcast tx.
 ### Pool: UTXO amounts
 ```
 server.pools[x].denomination: amount in satoshis
+server.pools[x].tx0MaxOutputs: max outputs per tx0
 server.miner-fees.miner-fee-min: minimum miner-fee accepted for mustMix
 server.miner-fees.miner-fee-max: maximum miner-fee accepted for mustMix
 server.miner-fees.miner-fee-cap: "soft cap" miner-fee recommended for a new mustMix (should be <= miner-fee-max)

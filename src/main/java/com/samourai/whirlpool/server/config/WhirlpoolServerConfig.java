@@ -335,6 +335,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
     private int mustMixMin;
     private int liquidityMin;
     private int anonymitySet;
+    private int tx0MaxOutputs;
 
     public String getId() {
       return id;
@@ -398,6 +399,29 @@ public class WhirlpoolServerConfig extends ServerConfig {
 
     public void setAnonymitySet(int anonymitySet) {
       this.anonymitySet = anonymitySet;
+    }
+
+    public int getTx0MaxOutputs() {
+      return tx0MaxOutputs;
+    }
+
+    public void setTx0MaxOutputs(int tx0MaxOutputs) {
+      this.tx0MaxOutputs = tx0MaxOutputs;
+    }
+
+    public String toString() {
+      String poolInfo = "denomination=" + Utils.satoshisToBtc(denomination);
+      poolInfo +=
+          ", feeValue="
+              + Utils.satoshisToBtc(feeValue)
+              + ", feeAccept="
+              + (feeAccept != null ? feeAccept : null)
+              + ", anonymitySet="
+              + anonymitySet;
+      poolInfo += ", minerFees=" + (minerFees != null ? minerFees.toString() : "null");
+      poolInfo += ", mustMixMin=" + getMustMixMin() + ", liquidityMin=" + getLiquidityMin() + "]";
+      poolInfo += ", tx0MaxOutputs=" + tx0MaxOutputs;
+      return poolInfo;
     }
   }
 
@@ -686,24 +710,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
             + ", expiration="
             + ban.expiration);
     for (PoolConfig poolConfig : pools) {
-      String poolInfo = "denomination=" + Utils.satoshisToBtc(poolConfig.denomination);
-      poolInfo +=
-          ", feeValue="
-              + Utils.satoshisToBtc(poolConfig.feeValue)
-              + ", feeAccept="
-              + (poolConfig.feeAccept != null ? poolConfig.feeAccept : null)
-              + ", anonymitySet="
-              + poolConfig.anonymitySet;
-      poolInfo +=
-          ", minerFees="
-              + (poolConfig.minerFees != null ? poolConfig.minerFees.toString() : "null");
-      poolInfo +=
-          ", mustMixMin="
-              + poolConfig.getMustMixMin()
-              + ", liquidityMin="
-              + poolConfig.getLiquidityMin()
-              + "]";
-      configInfo.put("pools[" + poolConfig.id + "]", poolInfo);
+      configInfo.put("pools[" + poolConfig.id + "]", poolConfig.toString());
     }
     int i = 0;
     for (Map.Entry<String, ScodeSamouraiFeeConfig> feePayloadEntry :

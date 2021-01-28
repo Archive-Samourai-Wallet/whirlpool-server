@@ -57,6 +57,7 @@
                 <td>
                     Pool fee: <span th:text="${@templateUtil.satoshisToBtc(pool.feeValue)}"/><br/>
                     Miner fee: <span th:text="${pool.minerFee.minerFeeMin}" title="minerFeeMin"/>-<span th:text="${pool.minerFee.minerFeeMax}" title="minerFeeMax"/> (cap=<span th:text="${pool.minerFee.minerFeeCap}" title="minerFeeMaxCap"/>, minRelay=<span th:text="${pool.minerFee.minRelayFee}" title="minRelayFee"/>)<br/>
+                    Tx0 max outputs: <span th:text="${pool.tx0MaxOutputs}" />
                 </td>
                 </tr>
                 <tr>

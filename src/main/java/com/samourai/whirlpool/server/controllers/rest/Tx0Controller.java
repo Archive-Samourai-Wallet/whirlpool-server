@@ -8,9 +8,7 @@ import com.samourai.whirlpool.protocol.rest.Tx0NotifyRequest;
 import com.samourai.whirlpool.server.beans.PoolFee;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
-import com.samourai.whirlpool.server.services.ExportService;
-import com.samourai.whirlpool.server.services.FeeValidationService;
-import com.samourai.whirlpool.server.services.PoolService;
+import com.samourai.whirlpool.server.services.*;
 import com.samourai.whirlpool.server.utils.Utils;
 import com.samourai.xmanager.client.XManagerClient;
 import com.samourai.xmanager.protocol.XManagerService;
@@ -35,6 +33,9 @@ public class Tx0Controller extends AbstractRestController {
   private ExportService exportService;
   private WhirlpoolServerConfig serverConfig;
   private XManagerClient xManagerClient;
+  private BlockchainDataService blockchainDataService;
+  private TaskService taskService;
+  private MetricService metricService;
 
   @Autowired
   public Tx0Controller(
@@ -42,23 +43,46 @@ public class Tx0Controller extends AbstractRestController {
       FeeValidationService feeValidationService,
       ExportService exportService,
       WhirlpoolServerConfig serverConfig,
-      XManagerClient xManagerClient) {
+      XManagerClient xManagerClient,
+      BlockchainDataService blockchainDataService,
+      TaskService taskService,
+      MetricService metricService) {
     this.poolService = poolService;
     this.feeValidationService = feeValidationService;
     this.exportService = exportService;
     this.serverConfig = serverConfig;
     this.xManagerClient = xManagerClient;
+    this.blockchainDataService = blockchainDataService;
+    this.taskService = taskService;
+    this.metricService = metricService;
   }
 
   @RequestMapping(value = WhirlpoolEndpoint.REST_TX0_NOTIFY, method = RequestMethod.POST)
-  public void tx0Notify(HttpServletRequest request, @RequestBody Tx0NotifyRequest payload)
-      throws Exception {
-    if (log.isDebugEnabled()) {
-      log.debug("(<) " + WhirlpoolEndpoint.REST_TX0_NOTIFY + " " + payload.txid);
+  public void tx0Notify(HttpServletRequest request, @RequestBody Tx0NotifyRequest payload) {
+    if (payload.txid == null || payload.poolId == null) {
+      // ignore old clients
+      return;
     }
 
-    // verify tx0
-    // TODO
+    if (log.isDebugEnabled()) {
+      log.debug(
+          "(<) " + WhirlpoolEndpoint.REST_TX0_NOTIFY + " [" + payload.poolId + "]" + payload.txid);
+    }
+
+    // TODO validate & metric
+    /*
+    // run tx0 analyzis in another thread
+    taskService.runOnce(1, () -> {
+      try {
+        // verify tx0
+        RpcTransaction rpcTransaction =
+                blockchainDataService.getRpcTransaction(payload.txid).orElseThrow(() -> notFoundException);
+        metricService.onTx0(payload, payload.poolId);
+      } catch (Exception e) {
+        log.error("tx0Notify failed", e);
+      }
+    });
+    */
   }
 
   @RequestMapping(value = WhirlpoolEndpoint.REST_TX0_DATA, method = RequestMethod.GET)

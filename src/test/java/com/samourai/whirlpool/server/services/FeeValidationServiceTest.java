@@ -178,6 +178,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
     pool.setMinAnonymitySet(1);
     pool.setMixAnonymitySet(2);
     pool.setMinMustMix(1);
+    pool.setTx0MaxOutputs(70);
 
     byte[] feePayload = Utils.feePayloadShortToBytes(SCODE_FOO_PAYLOAD); // valid feePayload
     String feePaymentCode = feeValidationService.getFeePaymentCode();
@@ -185,7 +186,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
     int feeIndex = 123456;
 
     Tx0Data tx0Data = new Tx0Data(feePaymentCode, 0, 1111, 100, feePayload, feeAddress, feeIndex);
-    Tx0Preview tx0Preview = new Tx0Preview(tx0Data, 2, 2 * 4, 2, 1000102, 94998479, 4);
+    Tx0Preview tx0Preview = new Tx0Preview(pool, tx0Data, 2, 2 * 4, 2, 1, 1, 1000102, 94998479, 4);
     Tx0 tx0 =
         new Tx0Service(whirlpoolWalletConfig)
             .tx0(
@@ -234,6 +235,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
     pool.setMinAnonymitySet(1);
     pool.setMixAnonymitySet(2);
     pool.setMinMustMix(1);
+    pool.setTx0MaxOutputs(70);
     List<Pool> poolItems = new ArrayList<>();
     poolItems.add(pool);
 
@@ -244,7 +246,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
 
     Tx0Data tx0Data =
         new Tx0Data(feePaymentCode, 0, FEES_VALID, 0, feePayload, feeAddress, feeIndex);
-    Tx0Preview tx0Preview = new Tx0Preview(tx0Data, 2, 2 * 4, 2, 1000102, 94024590, 4);
+    Tx0Preview tx0Preview = new Tx0Preview(pool, tx0Data, 2, 2 * 4, 2, 1, 1, 1000102, 94024590, 4);
 
     Tx0 tx0 =
         new Tx0Service(whirlpoolWalletConfig)
@@ -310,6 +312,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
     pool.setMinAnonymitySet(1);
     pool.setMixAnonymitySet(2);
     pool.setMinMustMix(1);
+    pool.setTx0MaxOutputs(70);
     List<Pool> poolItems = new ArrayList<>();
     poolItems.add(pool);
 
@@ -321,7 +324,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
 
     Tx0Data tx0Data =
         new Tx0Data(feePaymentCode, FEES_VALID, 0, 0, feePayload, feeAddress, feeIndex);
-    Tx0Preview tx0Preview = new Tx0Preview(tx0Data, 2, 2 * 4, 2, 1000102, 94024590, 4);
+    Tx0Preview tx0Preview = new Tx0Preview(pool, tx0Data, 2, 2 * 4, 2, 1, 1, 1000102, 94024590, 4);
 
     Tx0 tx0 =
         new Tx0Service(whirlpoolWalletConfig)
@@ -371,6 +374,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
     pool.setMinAnonymitySet(1);
     pool.setMixAnonymitySet(2);
     pool.setMinMustMix(1);
+    pool.setTx0MaxOutputs(70);
     List<Pool> poolItems = new ArrayList<>();
     poolItems.add(pool);
 
@@ -382,7 +386,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
 
     Tx0Data tx0Data =
         new Tx0Data(feePaymentCode, FEES_VALID, 0, 0, feePayload, feeAddress, feeIndex);
-    Tx0Preview tx0Preview = new Tx0Preview(tx0Data, 2, 2 * 4, 2, 1000102, 94024590, 4);
+    Tx0Preview tx0Preview = new Tx0Preview(pool, tx0Data, 2, 2 * 4, 2, 1, 1, 1000102, 94024590, 4);
 
     Tx0 tx0 =
         new Tx0Service(whirlpoolWalletConfig)
