@@ -20,6 +20,7 @@ public class RegisterInputService {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   public static final String HEALTH_CHECK_UTXO = "HEALTH_CHECK";
   public static final String HEALTH_CHECK_SUCCESS = "HEALTH_CHECK_SUCCESS";
+  public static final String ERROR_ALREADY_SPENT = "Waiting for first mix confirmation";
 
   private PoolService poolService;
   private CryptoService cryptoService;
@@ -87,7 +88,9 @@ public class RegisterInputService {
 
       // verify unspent
       if (!blockchainDataService.isTxOutUnspent(utxoHash, utxoIndex)) {
-        throw new IllegalInputException("Input already spent");
+        // spent input being resubmitted by client = spending tx is missing in mempool backing CLI
+        // we assume it's a mix tx which was removed from CLI mempool due to mempool congestion
+        throw new IllegalInputException(RegisterInputService.ERROR_ALREADY_SPENT);
       }
 
       // check tx0Whitelist

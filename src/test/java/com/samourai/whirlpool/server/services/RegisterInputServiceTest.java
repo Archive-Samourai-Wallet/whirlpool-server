@@ -45,7 +45,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
   private TxOutPoint runTestValidInput(boolean liquidity, boolean spent) throws Exception {
     if (spent) {
       thrown.expect(IllegalInputException.class);
-      thrown.expectMessage("Input already spent");
+      thrown.expectMessage(RegisterInputService.ERROR_ALREADY_SPENT);
     }
 
     TxOutPoint txOutPoint = null;
@@ -83,7 +83,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
           "127.0.0.1");
 
     } catch (Exception e) {
-      if (spent && "Input already spent".equals(e.getMessage())) {
+      if (spent && RegisterInputService.ERROR_ALREADY_SPENT.equals(e.getMessage())) {
         throw e; // expected
       }
       e.printStackTrace();
