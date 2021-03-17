@@ -16,7 +16,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 2,
-  "iteration": 1607586563715,
+  "iteration": 1614882231546,
   "links": [],
   "panels": [
     {
@@ -70,7 +70,7 @@
       },
       "gridPos": {
         "h": 2,
-        "w": 8,
+        "w": 6,
         "x": 0,
         "y": 1
       },
@@ -91,6 +91,88 @@
       },
       "pluginVersion": "7.3.1",
       "repeat": "poolId",
+      "scopedVars": {
+        "poolId": {
+          "selected": false,
+          "text": "0.001btc",
+          "value": "0.001btc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "time()-whirlpool_mix_start_time_seconds{application=\"$application\",poolId=~\"$poolId\"}",
+          "format": "time_series",
+          "instant": false,
+          "interval": "",
+          "intervalFactor": 1,
+          "legendFormat": "success",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "$poolId mixing since",
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": null,
+            "filterable": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 1800
+              },
+              {
+                "color": "semi-dark-orange",
+                "value": 3600
+              },
+              {
+                "color": "semi-dark-red",
+                "value": 18000
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 6,
+        "x": 6,
+        "y": 1
+      },
+      "id": 149,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "7.3.1",
+      "repeatIteration": 1614882231546,
+      "repeatPanelId": 92,
       "scopedVars": {
         "poolId": {
           "selected": false,
@@ -151,11 +233,11 @@
       },
       "gridPos": {
         "h": 2,
-        "w": 8,
-        "x": 8,
+        "w": 6,
+        "x": 12,
         "y": 1
       },
-      "id": 149,
+      "id": 150,
       "options": {
         "colorMode": "value",
         "graphMode": "none",
@@ -171,7 +253,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.3.1",
-      "repeatIteration": 1607586563715,
+      "repeatIteration": 1614882231546,
       "repeatPanelId": 92,
       "scopedVars": {
         "poolId": {
@@ -233,11 +315,11 @@
       },
       "gridPos": {
         "h": 2,
-        "w": 8,
-        "x": 16,
+        "w": 6,
+        "x": 18,
         "y": 1
       },
-      "id": 150,
+      "id": 151,
       "options": {
         "colorMode": "value",
         "graphMode": "none",
@@ -253,7 +335,7 @@
         "textMode": "auto"
       },
       "pluginVersion": "7.3.1",
-      "repeatIteration": 1607586563715,
+      "repeatIteration": 1614882231546,
       "repeatPanelId": 92,
       "scopedVars": {
         "poolId": {
@@ -310,7 +392,7 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 8,
+        "w": 6,
         "x": 0,
         "y": 3
       },
@@ -330,6 +412,98 @@
       "pluginVersion": "7.3.1",
       "repeat": "poolId",
       "repeatDirection": "h",
+      "scopedVars": {
+        "poolId": {
+          "selected": false,
+          "text": "0.001btc",
+          "value": "0.001btc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "whirlpool_pool_mixing_mustmix{application=\"$application\",poolId=~\"$poolId\"}",
+          "format": "time_series",
+          "instant": false,
+          "interval": "",
+          "intervalFactor": 1,
+          "legendFormat": "mustMix",
+          "refId": "A"
+        },
+        {
+          "expr": "whirlpool_pool_mixing_liquidity{application=\"$application\",poolId=~\"$poolId\"}",
+          "format": "time_series",
+          "instant": false,
+          "interval": "",
+          "intervalFactor": 1,
+          "legendFormat": "liquidity",
+          "refId": "B"
+        },
+        {
+          "expr": "sum(whirlpool_pool_queue_liquidity{application=\"$application\",poolId=~\"$poolId\"})",
+          "interval": "",
+          "legendFormat": "liquidity queue",
+          "refId": "C"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "$poolId mixing",
+      "transformations": [],
+      "type": "gauge"
+    },
+    {
+      "datasource": null,
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": null,
+            "filterable": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "light-red",
+                "value": null
+              },
+              {
+                "color": "light-orange",
+                "value": 1
+              },
+              {
+                "color": "semi-dark-green",
+                "value": 3
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 3
+      },
+      "id": 152,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "7.3.1",
+      "repeatDirection": "h",
+      "repeatIteration": 1614882231546,
+      "repeatPanelId": 22,
       "scopedVars": {
         "poolId": {
           "selected": false,
@@ -401,11 +575,11 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 8,
-        "x": 8,
+        "w": 6,
+        "x": 12,
         "y": 3
       },
-      "id": 151,
+      "id": 153,
       "options": {
         "orientation": "auto",
         "reduceOptions": {
@@ -420,7 +594,7 @@
       },
       "pluginVersion": "7.3.1",
       "repeatDirection": "h",
-      "repeatIteration": 1607586563715,
+      "repeatIteration": 1614882231546,
       "repeatPanelId": 22,
       "scopedVars": {
         "poolId": {
@@ -493,11 +667,11 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 8,
-        "x": 16,
+        "w": 6,
+        "x": 18,
         "y": 3
       },
-      "id": 152,
+      "id": 154,
       "options": {
         "orientation": "auto",
         "reduceOptions": {
@@ -512,7 +686,7 @@
       },
       "pluginVersion": "7.3.1",
       "repeatDirection": "h",
-      "repeatIteration": 1607586563715,
+      "repeatIteration": 1614882231546,
       "repeatPanelId": 22,
       "scopedVars": {
         "poolId": {
@@ -588,7 +762,7 @@
       "fillGradient": 0,
       "gridPos": {
         "h": 5,
-        "w": 8,
+        "w": 6,
         "x": 0,
         "y": 7
       },
@@ -615,6 +789,139 @@
       "points": false,
       "renderer": "flot",
       "repeat": "poolId",
+      "scopedVars": {
+        "poolId": {
+          "selected": false,
+          "text": "0.001btc",
+          "value": "0.001btc"
+        }
+      },
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": true,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "sum(increase(whirlpool_mix_fail_total{application=\"$application\",poolId=~\"$poolId\"}[$__rate_interval]))",
+          "instant": false,
+          "interval": "",
+          "intervalFactor": 2,
+          "legendFormat": "failed",
+          "refId": "B"
+        },
+        {
+          "expr": "sum(increase(whirlpool_mix_success_total{application=\"$application\",poolId=~\"$poolId\"}[$__rate_interval]))",
+          "instant": false,
+          "interval": "",
+          "intervalFactor": 2,
+          "legendFormat": "success",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "$poolId mixs",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {
+        "failed": "light-red",
+        "mix error": "light-red",
+        "mix success": "light-green",
+        "success": "light-green"
+      },
+      "bars": true,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 6,
+        "y": 7
+      },
+      "hiddenSeries": false,
+      "id": 155,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": false,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.3.1",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "repeatIteration": 1614882231546,
+      "repeatPanelId": 59,
       "scopedVars": {
         "poolId": {
           "selected": false,
@@ -720,12 +1027,12 @@
       "fillGradient": 0,
       "gridPos": {
         "h": 5,
-        "w": 8,
-        "x": 8,
+        "w": 6,
+        "x": 12,
         "y": 7
       },
       "hiddenSeries": false,
-      "id": 153,
+      "id": 156,
       "legend": {
         "avg": false,
         "current": false,
@@ -746,7 +1053,7 @@
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
-      "repeatIteration": 1607586563715,
+      "repeatIteration": 1614882231546,
       "repeatPanelId": 59,
       "scopedVars": {
         "poolId": {
@@ -853,12 +1160,12 @@
       "fillGradient": 0,
       "gridPos": {
         "h": 5,
-        "w": 8,
-        "x": 16,
+        "w": 6,
+        "x": 18,
         "y": 7
       },
       "hiddenSeries": false,
-      "id": 154,
+      "id": 157,
       "legend": {
         "avg": false,
         "current": false,
@@ -879,7 +1186,7 @@
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
-      "repeatIteration": 1607586563715,
+      "repeatIteration": 1614882231546,
       "repeatPanelId": 59,
       "scopedVars": {
         "poolId": {
@@ -988,7 +1295,7 @@
       "fillGradient": 0,
       "gridPos": {
         "h": 5,
-        "w": 8,
+        "w": 6,
         "x": 0,
         "y": 12
       },
@@ -1016,6 +1323,146 @@
       "renderer": "flot",
       "repeat": "poolId",
       "repeatDirection": "h",
+      "scopedVars": {
+        "poolId": {
+          "selected": false,
+          "text": "0.001btc",
+          "value": "0.001btc"
+        }
+      },
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "sum(whirlpool_pool_queue_liquidity{application=\"$application\",poolId=~\"$poolId\"})+sum(whirlpool_pool_mixing_liquidity{application=\"$application\",poolId=~\"$poolId\"})",
+          "format": "time_series",
+          "instant": false,
+          "interval": "",
+          "intervalFactor": 2,
+          "legendFormat": "liquidities",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(whirlpool_pool_queue_mustmix{application=\"$application\",poolId=~\"$poolId\"})+sum(whirlpool_pool_mixing_mustmix{application=\"$application\",poolId=~\"$poolId\"})",
+          "format": "time_series",
+          "hide": false,
+          "instant": false,
+          "interval": "",
+          "intervalFactor": 2,
+          "legendFormat": "mustMixs",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "$poolId users",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "transformations": [],
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {
+        "liquidities": "light-blue",
+        "mustMix": "light-green"
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": null,
+            "filterable": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 6,
+        "y": 12
+      },
+      "hiddenSeries": false,
+      "id": 158,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.3.1",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "repeatDirection": "h",
+      "repeatIteration": 1614882231546,
+      "repeatPanelId": 2,
       "scopedVars": {
         "poolId": {
           "selected": false,
@@ -1127,12 +1574,12 @@
       "fillGradient": 0,
       "gridPos": {
         "h": 5,
-        "w": 8,
-        "x": 8,
+        "w": 6,
+        "x": 12,
         "y": 12
       },
       "hiddenSeries": false,
-      "id": 155,
+      "id": 159,
       "legend": {
         "avg": false,
         "current": false,
@@ -1154,7 +1601,7 @@
       "points": false,
       "renderer": "flot",
       "repeatDirection": "h",
-      "repeatIteration": 1607586563715,
+      "repeatIteration": 1614882231546,
       "repeatPanelId": 2,
       "scopedVars": {
         "poolId": {
@@ -1267,12 +1714,12 @@
       "fillGradient": 0,
       "gridPos": {
         "h": 5,
-        "w": 8,
-        "x": 16,
+        "w": 6,
+        "x": 18,
         "y": 12
       },
       "hiddenSeries": false,
-      "id": 156,
+      "id": 160,
       "legend": {
         "avg": false,
         "current": false,
@@ -1294,7 +1741,7 @@
       "points": false,
       "renderer": "flot",
       "repeatDirection": "h",
-      "repeatIteration": 1607586563715,
+      "repeatIteration": 1614882231546,
       "repeatPanelId": 2,
       "scopedVars": {
         "poolId": {
@@ -1405,7 +1852,7 @@
       "fillGradient": 0,
       "gridPos": {
         "h": 4,
-        "w": 8,
+        "w": 6,
         "x": 0,
         "y": 17
       },
@@ -1432,6 +1879,139 @@
       "points": false,
       "renderer": "flot",
       "repeat": "poolId",
+      "scopedVars": {
+        "poolId": {
+          "selected": false,
+          "text": "0.001btc",
+          "value": "0.001btc"
+        }
+      },
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": true,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "sum(increase(whirlpool_blame_total{application=\"$application\",poolId=~\"$poolId\"}[$__rate_interval]))",
+          "instant": false,
+          "interval": "",
+          "intervalFactor": 2,
+          "legendFormat": "blame",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(increase(whirlpool_ban_total{application=\"$application\",poolId=~\"$poolId\"}[$__rate_interval]))",
+          "instant": false,
+          "interval": "",
+          "intervalFactor": 2,
+          "legendFormat": "ban",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "$poolId abuse",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {
+        "ban": "light-red",
+        "blame": "light-orange",
+        "mix error": "light-red"
+      },
+      "bars": true,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 17
+      },
+      "hiddenSeries": false,
+      "id": 161,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": false,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.3.1",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "repeatIteration": 1614882231546,
+      "repeatPanelId": 116,
       "scopedVars": {
         "poolId": {
           "selected": false,
@@ -1537,12 +2117,12 @@
       "fillGradient": 0,
       "gridPos": {
         "h": 4,
-        "w": 8,
-        "x": 8,
+        "w": 6,
+        "x": 12,
         "y": 17
       },
       "hiddenSeries": false,
-      "id": 157,
+      "id": 162,
       "legend": {
         "avg": false,
         "current": false,
@@ -1563,7 +2143,7 @@
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
-      "repeatIteration": 1607586563715,
+      "repeatIteration": 1614882231546,
       "repeatPanelId": 116,
       "scopedVars": {
         "poolId": {
@@ -1670,12 +2250,12 @@
       "fillGradient": 0,
       "gridPos": {
         "h": 4,
-        "w": 8,
-        "x": 16,
+        "w": 6,
+        "x": 18,
         "y": 17
       },
       "hiddenSeries": false,
-      "id": 158,
+      "id": 163,
       "legend": {
         "avg": false,
         "current": false,
@@ -1696,7 +2276,7 @@
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
-      "repeatIteration": 1607586563715,
+      "repeatIteration": 1614882231546,
       "repeatPanelId": 116,
       "scopedVars": {
         "poolId": {
@@ -1817,7 +2397,7 @@
       "fillGradient": 0,
       "gridPos": {
         "h": 5,
-        "w": 8,
+        "w": 6,
         "x": 0,
         "y": 22
       },
@@ -1845,6 +2425,142 @@
       "renderer": "flot",
       "repeat": "poolId",
       "repeatDirection": "h",
+      "scopedVars": {
+        "poolId": {
+          "selected": false,
+          "text": "0.001btc",
+          "value": "0.001btc"
+        }
+      },
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": true,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "whirlpool_mix_input_total{application=\"$application\",poolId=~\"$poolId\",tor=\"true\"}",
+          "format": "time_series",
+          "instant": false,
+          "interval": "",
+          "intervalFactor": 2,
+          "legendFormat": "Tor",
+          "refId": "A"
+        },
+        {
+          "expr": "whirlpool_mix_input_total{application=\"$application\",poolId=~\"$poolId\",tor=\"false\"}",
+          "format": "time_series",
+          "instant": false,
+          "interval": "",
+          "intervalFactor": 2,
+          "legendFormat": "clearnet",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "$poolId Tor usage (mixs)",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {
+        "Tor": "light-purple",
+        "clearnet": "light-green",
+        "disconnect": "light-red"
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 6,
+        "y": 22
+      },
+      "hiddenSeries": false,
+      "id": 164,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": true,
+      "pluginVersion": "7.3.1",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "repeatDirection": "h",
+      "repeatIteration": 1614882231546,
+      "repeatPanelId": 68,
       "scopedVars": {
         "poolId": {
           "selected": false,
@@ -1952,12 +2668,12 @@
       "fillGradient": 0,
       "gridPos": {
         "h": 5,
-        "w": 8,
-        "x": 8,
+        "w": 6,
+        "x": 12,
         "y": 22
       },
       "hiddenSeries": false,
-      "id": 159,
+      "id": 165,
       "legend": {
         "avg": false,
         "current": false,
@@ -1979,7 +2695,7 @@
       "points": false,
       "renderer": "flot",
       "repeatDirection": "h",
-      "repeatIteration": 1607586563715,
+      "repeatIteration": 1614882231546,
       "repeatPanelId": 68,
       "scopedVars": {
         "poolId": {
@@ -2088,12 +2804,12 @@
       "fillGradient": 0,
       "gridPos": {
         "h": 5,
-        "w": 8,
-        "x": 16,
+        "w": 6,
+        "x": 18,
         "y": 22
       },
       "hiddenSeries": false,
-      "id": 160,
+      "id": 166,
       "legend": {
         "avg": false,
         "current": false,
@@ -2115,7 +2831,7 @@
       "points": false,
       "renderer": "flot",
       "repeatDirection": "h",
-      "repeatIteration": 1607586563715,
+      "repeatIteration": 1614882231546,
       "repeatPanelId": 68,
       "scopedVars": {
         "poolId": {
@@ -2224,7 +2940,7 @@
       "fillGradient": 0,
       "gridPos": {
         "h": 5,
-        "w": 8,
+        "w": 6,
         "x": 0,
         "y": 27
       },
@@ -2252,6 +2968,142 @@
       "renderer": "flot",
       "repeat": "poolId",
       "repeatDirection": "h",
+      "scopedVars": {
+        "poolId": {
+          "selected": false,
+          "text": "0.001btc",
+          "value": "0.001btc"
+        }
+      },
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": true,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "whirlpool_pool_queue_liquidity{application=\"$application\",poolId=~\"$poolId\",tor=\"true\"}",
+          "format": "time_series",
+          "instant": false,
+          "interval": "",
+          "intervalFactor": 2,
+          "legendFormat": "Tor",
+          "refId": "B"
+        },
+        {
+          "expr": "whirlpool_pool_queue_liquidity{application=\"$application\",poolId=~\"$poolId\",tor=\"false\"}",
+          "format": "time_series",
+          "instant": false,
+          "interval": "",
+          "intervalFactor": 2,
+          "legendFormat": "clearnet",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "$poolId Tor usage (liquidity queue)",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {
+        "Tor": "light-purple",
+        "clearnet": "light-green",
+        "disconnect": "light-red"
+      },
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 6,
+        "y": 27
+      },
+      "hiddenSeries": false,
+      "id": 167,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": true,
+      "pluginVersion": "7.3.1",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "repeatDirection": "h",
+      "repeatIteration": 1614882231546,
+      "repeatPanelId": 103,
       "scopedVars": {
         "poolId": {
           "selected": false,
@@ -2359,12 +3211,12 @@
       "fillGradient": 0,
       "gridPos": {
         "h": 5,
-        "w": 8,
-        "x": 8,
+        "w": 6,
+        "x": 12,
         "y": 27
       },
       "hiddenSeries": false,
-      "id": 161,
+      "id": 168,
       "legend": {
         "avg": false,
         "current": false,
@@ -2386,7 +3238,7 @@
       "points": false,
       "renderer": "flot",
       "repeatDirection": "h",
-      "repeatIteration": 1607586563715,
+      "repeatIteration": 1614882231546,
       "repeatPanelId": 103,
       "scopedVars": {
         "poolId": {
@@ -2495,12 +3347,12 @@
       "fillGradient": 0,
       "gridPos": {
         "h": 5,
-        "w": 8,
-        "x": 16,
+        "w": 6,
+        "x": 18,
         "y": 27
       },
       "hiddenSeries": false,
-      "id": 162,
+      "id": 169,
       "legend": {
         "avg": false,
         "current": false,
@@ -2522,7 +3374,7 @@
       "points": false,
       "renderer": "flot",
       "repeatDirection": "h",
-      "repeatIteration": 1607586563715,
+      "repeatIteration": 1614882231546,
       "repeatPanelId": 103,
       "scopedVars": {
         "poolId": {
@@ -2934,7 +3786,7 @@
     ]
   },
   "time": {
-    "from": "now-20d",
+    "from": "now-1h",
     "to": "now"
   },
   "timepicker": {},

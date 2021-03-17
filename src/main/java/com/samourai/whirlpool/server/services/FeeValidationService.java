@@ -164,6 +164,7 @@ public class FeeValidationService {
         }
       }
     }
+    long feeValue = poolFee.computeFeeValue(feeValuePercent);
     log.warn(
         "Tx0: no valid fee payment found for tx0="
             + tx0.getHashAsString()
@@ -174,7 +175,9 @@ public class FeeValidationService {
             + ", poolFee="
             + poolFee
             + ", feeValuePercent="
-            + feeValuePercent);
+            + feeValuePercent
+            + ", feeValue="
+            + feeValue);
     return false;
   }
 
