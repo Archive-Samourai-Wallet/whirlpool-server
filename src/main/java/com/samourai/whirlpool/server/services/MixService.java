@@ -34,7 +34,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class MixService {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-  private WebSocketService webSocketService;
+  private WSMessageService WSMessageService;
   private CryptoService cryptoService;
   private BlameService blameService;
   private DbService dbService;
@@ -58,7 +58,7 @@ public class MixService {
       BlameService blameService,
       DbService dbService,
       RpcClientService rpcClientService,
-      WebSocketService webSocketService,
+      WSMessageService WSMessageService,
       Bech32UtilGeneric bech32Util,
       WhirlpoolServerConfig whirlpoolServerConfig,
       MixLimitsService mixLimitsService,
@@ -67,12 +67,12 @@ public class MixService {
       MetricService metricService,
       TaskService taskService,
       TxUtil txUtil,
-      WebSocketSessionService webSocketSessionService) {
+      WSSessionService wsSessionService) {
     this.cryptoService = cryptoService;
     this.blameService = blameService;
     this.dbService = dbService;
     this.rpcClientService = rpcClientService;
-    this.webSocketService = webSocketService;
+    this.WSMessageService = WSMessageService;
     this.bech32Util = bech32Util;
     this.whirlpoolServerConfig = whirlpoolServerConfig;
     mixLimitsService.setMixService(this); // avoids circular reference
@@ -86,7 +86,7 @@ public class MixService {
     this.__reset();
 
     // listen websocket onDisconnect
-    webSocketSessionService.addOnDisconnectListener(username -> onClientDisconnect(username));
+    wsSessionService.addOnDisconnectListener(username -> onClientDisconnect(username));
   }
 
   /** Last input validations when adding it to a mix (not when queueing it) */
@@ -260,7 +260,7 @@ public class MixService {
     String signedBordereau64 = WhirlpoolProtocol.encodeBytes(signedBordereau);
     final ConfirmInputResponse confirmInputResponse =
         new ConfirmInputResponse(mixId, signedBordereau64);
-    webSocketService.sendPrivate(username, confirmInputResponse);
+    WSMessageService.sendPrivate(username, confirmInputResponse);
 
     // check mix ready, after a delay to make sure client processed confirmation
     taskService.runOnce(
@@ -555,7 +555,7 @@ public class MixService {
             .parallelStream()
             .map(confirmedInput -> confirmedInput.getRegisteredInput().getUsername())
             .collect(Collectors.toList());
-    webSocketService.sendPrivate(usernames, payload);
+    WSMessageService.sendPrivate(usernames, payload);
   }
 
   private MixStatusNotification computeMixStatusNotification(String mixId) throws MixException {

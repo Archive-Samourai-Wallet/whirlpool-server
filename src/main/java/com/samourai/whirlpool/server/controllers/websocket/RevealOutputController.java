@@ -4,7 +4,7 @@ import com.samourai.whirlpool.protocol.WhirlpoolEndpoint;
 import com.samourai.whirlpool.protocol.websocket.messages.RevealOutputRequest;
 import com.samourai.whirlpool.server.services.ExportService;
 import com.samourai.whirlpool.server.services.MixService;
-import com.samourai.whirlpool.server.services.WebSocketService;
+import com.samourai.whirlpool.server.services.WSMessageService;
 import java.lang.invoke.MethodHandles;
 import java.security.Principal;
 import org.slf4j.Logger;
@@ -25,8 +25,8 @@ public class RevealOutputController extends AbstractWebSocketController {
 
   @Autowired
   public RevealOutputController(
-      WebSocketService webSocketService, ExportService exportService, MixService mixService) {
-    super(webSocketService, exportService);
+      WSMessageService WSMessageService, ExportService exportService, MixService mixService) {
+    super(WSMessageService, exportService);
     this.mixService = mixService;
   }
 

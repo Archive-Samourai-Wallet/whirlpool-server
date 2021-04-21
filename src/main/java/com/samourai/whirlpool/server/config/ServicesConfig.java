@@ -3,6 +3,7 @@ package com.samourai.whirlpool.server.config;
 import com.samourai.http.client.HttpUsage;
 import com.samourai.javaserver.config.ServerServicesConfig;
 import com.samourai.javaserver.utils.ServerUtils;
+import com.samourai.javawsserver.config.JWSSConfig;
 import com.samourai.wallet.api.explorer.ExplorerApi;
 import com.samourai.wallet.bip47.rpc.java.SecretPointFactoryJava;
 import com.samourai.wallet.bip47.rpc.secretPoint.ISecretPointFactory;
@@ -12,6 +13,7 @@ import com.samourai.wallet.util.CryptoTestUtil;
 import com.samourai.wallet.util.FormatsUtilGeneric;
 import com.samourai.wallet.util.MessageSignUtilGeneric;
 import com.samourai.wallet.util.TxUtil;
+import com.samourai.whirlpool.protocol.WhirlpoolEndpoint;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.protocol.fee.WhirlpoolFee;
 import com.samourai.whirlpool.server.services.JavaHttpClientService;
@@ -104,5 +106,25 @@ public class ServicesConfig extends ServerServicesConfig {
       WhirlpoolServerConfig serverConfig, JavaHttpClientService httpClient) {
     return new XManagerClient(
         serverConfig.isTestnet(), false, httpClient.getHttpClient(HttpUsage.COORDINATOR_REST));
+  }
+
+  @Bean
+  JWSSConfig jwssConfig() {
+    String[] endpoints =
+        new String[] {
+          WhirlpoolEndpoint.WS_CONNECT,
+          WhirlpoolEndpoint.WS_REGISTER_INPUT,
+          WhirlpoolEndpoint.WS_CONFIRM_INPUT,
+          WhirlpoolEndpoint.WS_REVEAL_OUTPUT,
+          WhirlpoolEndpoint.WS_SIGNING
+        };
+    String WS_PREFIX = "/ws/";
+    String WS_PREFIX_DESTINATION = "/topic/";
+    return new JWSSConfig(
+        endpoints,
+        WhirlpoolProtocol.WS_PREFIX_USER_PRIVATE,
+        WS_PREFIX,
+        WS_PREFIX_DESTINATION, // NOT USED
+        WhirlpoolProtocol.WS_PREFIX_USER_REPLY);
   }
 }

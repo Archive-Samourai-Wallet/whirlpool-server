@@ -1,11 +1,12 @@
 package com.samourai.whirlpool.server.config.security;
 
 import com.samourai.javaserver.config.ServerServicesConfig;
+import com.samourai.javawsserver.config.JWSSConfig;
 import com.samourai.whirlpool.protocol.WhirlpoolEndpoint;
-import com.samourai.whirlpool.server.config.websocket.WebSocketConfig;
 import com.samourai.whirlpool.server.controllers.rest.SystemController;
 import com.samourai.whirlpool.server.controllers.web.*;
 import org.apache.commons.lang3.ArrayUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -43,6 +44,13 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         SystemController.ENDPOINT_HEALTH
       };
 
+  private JWSSConfig config;
+
+  @Autowired
+  public WebSecurityConfig(JWSSConfig config) {
+    this.config = config;
+  }
+
   @Override
   protected void configure(HttpSecurity http) throws Exception {
     String WS_CONNECT_XHR = WhirlpoolEndpoint.WS_CONNECT + "/**";
@@ -68,7 +76,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         .permitAll()
 
         // public mixing websocket
-        .antMatchers(ArrayUtils.addAll(WebSocketConfig.WEBSOCKET_ENDPOINTS, WS_CONNECT_XHR))
+        .antMatchers(ArrayUtils.addAll(config.getWebsocketEndpoints(), WS_CONNECT_XHR))
         .permitAll()
         .antMatchers(REST_MIX_ENDPOINTS)
         .permitAll()

@@ -5,7 +5,7 @@ import com.samourai.whirlpool.protocol.websocket.messages.SubscribePoolResponse;
 import com.samourai.whirlpool.server.services.ExportService;
 import com.samourai.whirlpool.server.services.PoolService;
 import com.samourai.whirlpool.server.services.TaskService;
-import com.samourai.whirlpool.server.services.WebSocketService;
+import com.samourai.whirlpool.server.services.WSMessageService;
 import java.lang.invoke.MethodHandles;
 import java.security.Principal;
 import org.slf4j.Logger;
@@ -29,9 +29,9 @@ public class SubscribePoolController extends AbstractWebSocketController {
   public SubscribePoolController(
       PoolService poolService,
       ExportService exportService,
-      WebSocketService webSocketService,
+      WSMessageService WSMessageService,
       TaskService taskService) {
-    super(webSocketService, exportService);
+    super(WSMessageService, exportService);
     this.poolService = poolService;
     this.taskService = taskService;
   }
@@ -56,7 +56,7 @@ public class SubscribePoolController extends AbstractWebSocketController {
         SUBSCRIBE_RESPONSE_DELAY,
         () -> {
           // send reply
-          getWebSocketService().sendPrivate(username, subscribePoolResponse);
+          getWSMessageService().sendPrivate(username, subscribePoolResponse);
         });
   }
 

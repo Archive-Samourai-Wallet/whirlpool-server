@@ -5,7 +5,7 @@ import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.protocol.websocket.messages.ConfirmInputRequest;
 import com.samourai.whirlpool.server.services.ConfirmInputService;
 import com.samourai.whirlpool.server.services.ExportService;
-import com.samourai.whirlpool.server.services.WebSocketService;
+import com.samourai.whirlpool.server.services.WSMessageService;
 import java.lang.invoke.MethodHandles;
 import java.security.Principal;
 import org.slf4j.Logger;
@@ -26,10 +26,10 @@ public class ConfirmInputController extends AbstractWebSocketController {
 
   @Autowired
   public ConfirmInputController(
-      WebSocketService webSocketService,
+      WSMessageService WSMessageService,
       ExportService exportService,
       ConfirmInputService confirmInputService) {
-    super(webSocketService, exportService);
+    super(WSMessageService, exportService);
     this.confirmInputService = confirmInputService;
   }
 

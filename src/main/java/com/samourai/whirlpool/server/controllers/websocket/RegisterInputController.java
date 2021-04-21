@@ -1,14 +1,14 @@
 package com.samourai.whirlpool.server.controllers.websocket;
 
+import com.samourai.javawsserver.interceptors.JWSSIpHandshakeInterceptor;
 import com.samourai.whirlpool.protocol.WhirlpoolEndpoint;
 import com.samourai.whirlpool.protocol.websocket.messages.RegisterInputRequest;
 import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;
-import com.samourai.whirlpool.server.config.websocket.IpHandshakeInterceptor;
 import com.samourai.whirlpool.server.exceptions.AlreadyRegisteredInputException;
 import com.samourai.whirlpool.server.services.ExportService;
 import com.samourai.whirlpool.server.services.RegisterInputService;
-import com.samourai.whirlpool.server.services.WebSocketService;
+import com.samourai.whirlpool.server.services.WSMessageService;
 import java.lang.invoke.MethodHandles;
 import java.security.Principal;
 import java.util.Map;
@@ -30,10 +30,10 @@ public class RegisterInputController extends AbstractWebSocketController {
 
   @Autowired
   public RegisterInputController(
-      WebSocketService webSocketService,
+      WSMessageService WSMessageService,
       ExportService exportService,
       RegisterInputService registerInputService) {
-    super(webSocketService, exportService);
+    super(WSMessageService, exportService);
     this.registerInputService = registerInputService;
   }
 
@@ -47,7 +47,7 @@ public class RegisterInputController extends AbstractWebSocketController {
     validateHeaders(headers);
 
     String username = principal.getName();
-    String ip = IpHandshakeInterceptor.getIp(messageHeaderAccessor);
+    String ip = JWSSIpHandshakeInterceptor.getIp(messageHeaderAccessor);
     if (log.isDebugEnabled()) {
       log.debug(
           "(<) ["

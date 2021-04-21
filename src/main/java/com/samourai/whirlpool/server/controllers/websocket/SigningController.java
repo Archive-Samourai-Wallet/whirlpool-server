@@ -4,7 +4,7 @@ import com.samourai.whirlpool.protocol.WhirlpoolEndpoint;
 import com.samourai.whirlpool.protocol.websocket.messages.SigningRequest;
 import com.samourai.whirlpool.server.services.ExportService;
 import com.samourai.whirlpool.server.services.SigningService;
-import com.samourai.whirlpool.server.services.WebSocketService;
+import com.samourai.whirlpool.server.services.WSMessageService;
 import java.lang.invoke.MethodHandles;
 import java.security.Principal;
 import org.slf4j.Logger;
@@ -25,10 +25,10 @@ public class SigningController extends AbstractWebSocketController {
 
   @Autowired
   public SigningController(
-      WebSocketService webSocketService,
+      WSMessageService WSMessageService,
       ExportService exportService,
       SigningService signingService) {
-    super(webSocketService, exportService);
+    super(WSMessageService, exportService);
     this.signingService = signingService;
   }
 

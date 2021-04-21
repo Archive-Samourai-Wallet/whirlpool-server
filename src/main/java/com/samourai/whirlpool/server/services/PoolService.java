@@ -30,7 +30,7 @@ public class PoolService {
 
   private WhirlpoolServerConfig whirlpoolServerConfig;
   private CryptoService cryptoService;
-  private WebSocketService webSocketService;
+  private WSMessageService WSMessageService;
   private ExportService exportService;
   private MetricService metricService;
   private TaskService taskService;
@@ -40,22 +40,22 @@ public class PoolService {
   public PoolService(
       WhirlpoolServerConfig whirlpoolServerConfig,
       CryptoService cryptoService,
-      WebSocketService webSocketService,
+      WSMessageService WSMessageService,
       ExportService exportService,
       MetricService metricService,
-      WebSocketSessionService webSocketSessionService,
+      WSSessionService wsSessionService,
       TaskService taskService,
       TaskScheduler taskScheduler) {
     this.whirlpoolServerConfig = whirlpoolServerConfig;
     this.cryptoService = cryptoService;
-    this.webSocketService = webSocketService;
+    this.WSMessageService = WSMessageService;
     this.exportService = exportService;
     this.metricService = metricService;
     this.taskService = taskService;
     __reset();
 
     // listen websocket onDisconnect
-    webSocketSessionService.addOnDisconnectListener(username -> onClientDisconnect(username));
+    wsSessionService.addOnDisconnectListener(username -> onClientDisconnect(username));
 
     if (MetricService.MOCK) {
       taskScheduler.scheduleAtFixedRate(
@@ -219,7 +219,7 @@ public class PoolService {
         INVITE_INPUT_DELAY,
         () -> {
           // send invite to mix
-          webSocketService.sendPrivate(
+          WSMessageService.sendPrivate(
               registeredInput.getUsername(), confirmInputMixStatusNotification);
         });
   }

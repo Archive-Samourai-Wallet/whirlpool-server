@@ -2,13 +2,13 @@ package com.samourai.whirlpool.server.controllers.websocket;
 
 import com.google.common.collect.ImmutableMap;
 import com.samourai.javaserver.exceptions.NotifiableException;
+import com.samourai.javawsserver.interceptors.JWSSIpHandshakeInterceptor;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;
-import com.samourai.whirlpool.server.config.websocket.IpHandshakeInterceptor;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import com.samourai.whirlpool.server.services.ExportService;
 import com.samourai.whirlpool.server.services.RegisterInputService;
-import com.samourai.whirlpool.server.services.WebSocketService;
+import com.samourai.whirlpool.server.services.WSMessageService;
 import java.lang.invoke.MethodHandles;
 import java.security.Principal;
 import java.util.LinkedHashMap;
@@ -23,12 +23,12 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 public abstract class AbstractWebSocketController {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  private WebSocketService webSocketService;
+  private WSMessageService WSMessageService;
   private ExportService exportService;
 
   public AbstractWebSocketController(
-      WebSocketService webSocketService, ExportService exportService) {
-    this.webSocketService = webSocketService;
+      WSMessageService WSMessageService, ExportService exportService) {
+    this.WSMessageService = WSMessageService;
     this.exportService = exportService;
   }
 
@@ -57,7 +57,7 @@ public abstract class AbstractWebSocketController {
     NotifiableException notifiable = NotifiableException.computeNotifiableException(e);
     String message = notifiable.getMessage();
     String username = principal.getName();
-    webSocketService.sendPrivateError(username, message);
+    WSMessageService.sendPrivateError(username, message);
 
     // skip healthCheck
     if (!RegisterInputService.HEALTH_CHECK_SUCCESS.equals(message)) {
@@ -71,7 +71,7 @@ public abstract class AbstractWebSocketController {
       Map<String, String> clientDetails = computeClientDetails(messageHeaderAccessor);
       clientDetails.put("u", username);
       Map<String, String> details = ImmutableMap.of("error", message);
-      String ip = IpHandshakeInterceptor.getIp(messageHeaderAccessor);
+      String ip = JWSSIpHandshakeInterceptor.getIp(messageHeaderAccessor);
       ActivityCsv activityCsv = new ActivityCsv(activity, null, details, ip, clientDetails);
       getExportService().exportActivity(activityCsv);
     }
@@ -101,8 +101,8 @@ public abstract class AbstractWebSocketController {
     return clientDetails;
   }
 
-  protected WebSocketService getWebSocketService() {
-    return webSocketService;
+  protected WSMessageService getWSMessageService() {
+    return WSMessageService;
   }
 
   protected ExportService getExportService() {
