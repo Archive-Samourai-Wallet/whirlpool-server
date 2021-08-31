@@ -23,8 +23,7 @@ public class MultiClientManager {
     if (log.isDebugEnabled()) {
       log.debug("Register client#" + i);
     }
-    MultiClientListener listener = new MultiClientListener("client#" + i, this);
-    listener.setLogPrefix("cli#" + i);
+    MultiClientListener listener = new MultiClientListener(this);
     this.clients.add(whirlpoolClient);
     this.listeners.add(listener);
     return listener;

@@ -3,7 +3,8 @@ package com.samourai.whirlpool.server.controllers.rest;
 import com.google.common.collect.ImmutableMap;
 import com.samourai.whirlpool.protocol.WhirlpoolEndpoint;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
-import com.samourai.whirlpool.protocol.rest.Tx0DataResponse;
+import com.samourai.whirlpool.protocol.rest.Tx0DataResponseV1;
+import com.samourai.whirlpool.protocol.rest.Tx0DataResponseV2;
 import com.samourai.whirlpool.protocol.rest.Tx0NotifyRequest;
 import com.samourai.whirlpool.server.beans.PoolFee;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;
@@ -30,6 +31,7 @@ public class Tx0Controller extends AbstractRestController {
 
   private PoolService poolService;
   private FeeValidationService feeValidationService;
+  private FeePayloadService feePayloadService;
   private ExportService exportService;
   private WhirlpoolServerConfig serverConfig;
   private XManagerClient xManagerClient;
@@ -41,6 +43,7 @@ public class Tx0Controller extends AbstractRestController {
   public Tx0Controller(
       PoolService poolService,
       FeeValidationService feeValidationService,
+      FeePayloadService feePayloadService,
       ExportService exportService,
       WhirlpoolServerConfig serverConfig,
       XManagerClient xManagerClient,
@@ -49,6 +52,7 @@ public class Tx0Controller extends AbstractRestController {
       MetricService metricService) {
     this.poolService = poolService;
     this.feeValidationService = feeValidationService;
+    this.feePayloadService = feePayloadService;
     this.exportService = exportService;
     this.serverConfig = serverConfig;
     this.xManagerClient = xManagerClient;
@@ -85,8 +89,106 @@ public class Tx0Controller extends AbstractRestController {
     */
   }
 
-  @RequestMapping(value = WhirlpoolEndpoint.REST_TX0_DATA, method = RequestMethod.GET)
-  public Tx0DataResponse tx0Data(
+  @RequestMapping(value = WhirlpoolEndpoint.REST_TX0_DATA_V2, method = RequestMethod.GET)
+  public Tx0DataResponseV2 tx0Data(
+      HttpServletRequest request,
+      @RequestParam(value = "poolId", required = true) String poolId,
+      @RequestParam(value = "scode", required = false) String scode)
+      throws Exception {
+
+    // prevent bruteforce attacks
+    Thread.sleep(1000);
+
+    if (StringUtils.isEmpty(scode) || "null".equals(scode)) {
+      scode = null;
+    }
+
+    PoolFee poolFee = poolService.getPool(poolId).getPoolFee();
+
+    String feePaymentCode = feeValidationService.getFeePaymentCode();
+    WhirlpoolServerConfig.ScodeSamouraiFeeConfig scodeConfig =
+        feeValidationService.getScodeConfigByScode(scode, System.currentTimeMillis());
+    short scodePayload;
+    short partnerPayload = 0;
+    long feeValue;
+    int feeDiscountPercent;
+    String message;
+
+    if (scodeConfig != null) {
+      // scode found => apply discount
+      scodePayload = scodeConfig.getPayload();
+      feeValue = poolFee.computeFeeValue(scodeConfig.getFeeValuePercent());
+      feeDiscountPercent = 100 - scodeConfig.getFeeValuePercent();
+      message = scodeConfig.getMessage();
+    } else {
+      // no SCODE => 100% fee
+      scodePayload = 0;
+      feeValue = poolFee.getFeeValue();
+      feeDiscountPercent = 0;
+      message = null;
+
+      if (scode != null) {
+        log.warn("Invalid SCODE: " + scode);
+      }
+    }
+
+    // fetch feeAddress
+    int feeIndex;
+    String feeAddress;
+    long feeChange;
+    if (feeValue > 0) {
+      // fees
+      AddressIndexResponse addressIndexResponse =
+          xManagerClient.getAddressIndexOrDefault(XManagerService.WHIRLPOOL);
+      feeIndex = addressIndexResponse.index;
+      feeAddress = addressIndexResponse.address;
+      feeChange = 0;
+    } else {
+      // no fees
+      feeIndex = 0;
+      feeAddress = null;
+      feeChange = computeRandomFeeChange(poolFee);
+    }
+
+    byte[] feePayload = feePayloadService.encodeFeePayload(feeIndex, scodePayload, partnerPayload);
+    String feePayload64 = WhirlpoolProtocol.encodeBytes(feePayload);
+
+    if (log.isDebugEnabled()) {
+      String scodeStr = !StringUtils.isEmpty(scode) ? scode : "null";
+      log.debug(
+          "Tx0Data: scode="
+              + scodeStr
+              + ", pool.feeValue="
+              + poolFee.getFeeValue()
+              + ", feeValue="
+              + feeValue
+              + ", feeChange="
+              + feeChange
+              + ", feeIndex="
+              + feeIndex
+              + ", feeAddress="
+              + (feeAddress != null ? feeAddress : ""));
+    }
+
+    // log activity
+    Map<String, String> details = ImmutableMap.of("scode", (scode != null ? scode : "null"));
+    ActivityCsv activityCsv = new ActivityCsv("TX0", poolId, null, details, request);
+    exportService.exportActivity(activityCsv);
+
+    Tx0DataResponseV2 tx0DataResponse =
+        new Tx0DataResponseV2(
+            feePaymentCode,
+            feeValue,
+            feeChange,
+            feeDiscountPercent,
+            message,
+            feePayload64,
+            feeAddress);
+    return tx0DataResponse;
+  }
+
+  @RequestMapping(value = WhirlpoolEndpoint.REST_TX0_DATA_V1, method = RequestMethod.GET)
+  public Tx0DataResponseV1 tx0DataV1(
       HttpServletRequest request,
       @RequestParam(value = "poolId", required = true) String poolId,
       @RequestParam(value = "scode", required = false) String scode)
@@ -168,8 +270,8 @@ public class Tx0Controller extends AbstractRestController {
     ActivityCsv activityCsv = new ActivityCsv("TX0", poolId, null, details, request);
     exportService.exportActivity(activityCsv);
 
-    Tx0DataResponse tx0DataResponse =
-        new Tx0DataResponse(
+    Tx0DataResponseV1 tx0DataResponse =
+        new Tx0DataResponseV1(
             feePaymentCode,
             feeValue,
             feeChange,

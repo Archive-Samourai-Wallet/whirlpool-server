@@ -7,7 +7,7 @@ import com.samourai.javawsserver.config.JWSSConfig;
 import com.samourai.wallet.api.explorer.ExplorerApi;
 import com.samourai.wallet.bip47.rpc.java.SecretPointFactoryJava;
 import com.samourai.wallet.bip47.rpc.secretPoint.ISecretPointFactory;
-import com.samourai.wallet.hd.java.HD_WalletFactoryJava;
+import com.samourai.wallet.hd.HD_WalletFactoryGeneric;
 import com.samourai.wallet.segwit.bech32.Bech32UtilGeneric;
 import com.samourai.wallet.util.CryptoTestUtil;
 import com.samourai.wallet.util.FormatsUtilGeneric;
@@ -15,7 +15,7 @@ import com.samourai.wallet.util.MessageSignUtilGeneric;
 import com.samourai.wallet.util.TxUtil;
 import com.samourai.whirlpool.protocol.WhirlpoolEndpoint;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
-import com.samourai.whirlpool.protocol.fee.WhirlpoolFee;
+import com.samourai.whirlpool.protocol.util.XorMask;
 import com.samourai.whirlpool.server.services.JavaHttpClientService;
 import com.samourai.xmanager.client.XManagerClient;
 import java.lang.invoke.MethodHandles;
@@ -62,8 +62,8 @@ public class ServicesConfig extends ServerServicesConfig {
   }
 
   @Bean
-  WhirlpoolFee whirlpoolFee(ISecretPointFactory secretPointFactory) {
-    return WhirlpoolFee.getInstance(secretPointFactory);
+  XorMask xorMask(ISecretPointFactory secretPointFactory) {
+    return XorMask.getInstance(secretPointFactory);
   }
 
   @Bean
@@ -77,8 +77,8 @@ public class ServicesConfig extends ServerServicesConfig {
   }
 
   @Bean
-  HD_WalletFactoryJava hdWalletFactory() {
-    return HD_WalletFactoryJava.getInstance();
+  HD_WalletFactoryGeneric hdWalletFactory() {
+    return HD_WalletFactoryGeneric.getInstance();
   }
 
   @Bean

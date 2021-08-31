@@ -50,7 +50,7 @@ public class MixService {
 
   private Map<String, Mix> currentMixs;
 
-  private static final int CONFIRM_INPUT_CHECK_DELAY = 3000;
+  private static int CONFIRM_INPUT_CHECK_DELAY = 3000;
 
   @Autowired
   public MixService(
@@ -593,7 +593,10 @@ public class MixService {
   private Mix getMix(String mixId, MixStatus mixStatus) throws MixException {
     Mix mix = currentMixs.get(mixId);
     if (mix == null) {
-      throw new MixException("Mix not found");
+      if (log.isDebugEnabled()) {
+        log.debug("Mix not found: " + mixId + ". currentMixs=" + currentMixs.keySet());
+      }
+      throw new MixException("Mix not found: " + mixId);
     }
     if (mixStatus != null && !mixStatus.equals(mix.getMixStatus())) {
       throw new MixException(
@@ -857,5 +860,9 @@ public class MixService {
 
   public MixLimitsService __getMixLimitsService() {
     return mixLimitsService;
+  }
+
+  public static void __setCONFIRM_INPUT_CHECK_DELAY(int confirmInputCheckDelay) {
+    CONFIRM_INPUT_CHECK_DELAY = confirmInputCheckDelay;
   }
 }

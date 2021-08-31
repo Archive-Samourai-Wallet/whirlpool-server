@@ -1,6 +1,6 @@
 package com.samourai.whirlpool.server.utils;
 
-import com.samourai.wallet.client.Bip84Wallet;
+import com.samourai.wallet.client.BipWalletAndAddressType;
 import com.samourai.wallet.segwit.SegwitAddress;
 import com.samourai.whirlpool.cli.config.CliConfig;
 import com.samourai.whirlpool.cli.services.CliTorClientService;
@@ -9,6 +9,7 @@ import com.samourai.whirlpool.cli.services.JavaStompClientService;
 import com.samourai.whirlpool.client.WhirlpoolClient;
 import com.samourai.whirlpool.client.mix.MixParams;
 import com.samourai.whirlpool.client.mix.handler.*;
+import com.samourai.whirlpool.client.wallet.beans.WhirlpoolAccount;
 import com.samourai.whirlpool.client.whirlpool.ServerApi;
 import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientConfig;
 import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientImpl;
@@ -23,6 +24,7 @@ import com.samourai.whirlpool.server.services.CryptoService;
 import com.samourai.whirlpool.server.services.rpc.MockRpcClientServiceImpl;
 import java.lang.invoke.MethodHandles;
 import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.Utils;
 import org.junit.Assert;
@@ -42,7 +44,8 @@ public class AssertMultiClientManager extends MultiClientManager {
 
   private TxOutPoint[] inputs;
   private ECKey[] inputKeys;
-  private Bip84Wallet[] bip84Wallets;
+  private BipWalletAndAddressType[] bip84Wallets;
+  private NetworkParameters params;
 
   public AssertMultiClientManager(
       int nbClients,
@@ -51,7 +54,8 @@ public class AssertMultiClientManager extends MultiClientManager {
       CryptoService cryptoService,
       MockRpcClientServiceImpl rpcClientService,
       BlockchainDataService blockchainDataService,
-      int port) {
+      int port,
+      NetworkParameters params) {
     this.mix = mix;
     this.testUtils = testUtils;
     this.cryptoService = cryptoService;
@@ -61,7 +65,8 @@ public class AssertMultiClientManager extends MultiClientManager {
 
     inputs = new TxOutPoint[nbClients];
     inputKeys = new ECKey[nbClients];
-    bip84Wallets = new Bip84Wallet[nbClients];
+    bip84Wallets = new BipWalletAndAddressType[nbClients];
+    this.params = params;
   }
 
   private WhirlpoolClient createClient(CliConfig cliConfig) {
@@ -73,6 +78,7 @@ public class AssertMultiClientManager extends MultiClientManager {
         new WhirlpoolClientConfig(
             httpClientService,
             new JavaStompClientService(httpClientService),
+            cliTorClientService,
             new ServerApi(server, httpClientService),
             null,
             cryptoService.getNetworkParameters(),
@@ -82,13 +88,14 @@ public class AssertMultiClientManager extends MultiClientManager {
 
   private int prepareClientWithMock(long inputBalance, CliConfig cliConfig) throws Exception {
     SegwitAddress inputAddress = testUtils.generateSegwitAddress();
-    Bip84Wallet bip84Wallet = testUtils.generateWallet().getBip84Wallet(0);
+    BipWalletAndAddressType bip84Wallet =
+        testUtils.generateWallet().getBip84Wallet(WhirlpoolAccount.DEPOSIT);
     return prepareClientWithMock(inputAddress, bip84Wallet, null, null, inputBalance, cliConfig);
   }
 
   private int prepareClientWithMock(
       SegwitAddress inputAddress,
-      Bip84Wallet bip84Wallet,
+      BipWalletAndAddressType bip84Wallet,
       Integer nbConfirmations,
       Integer utxoIndex,
       long inputBalance,
@@ -110,7 +117,7 @@ public class AssertMultiClientManager extends MultiClientManager {
   }
 
   private synchronized int prepareClient(
-      TxOutPoint utxo, ECKey utxoKey, Bip84Wallet bip84Wallet, CliConfig cliConfig) {
+      TxOutPoint utxo, ECKey utxoKey, BipWalletAndAddressType bip84Wallet, CliConfig cliConfig) {
     int i = clients.size();
     register(createClient(cliConfig));
     bip84Wallets[i] = bip84Wallet;
@@ -148,7 +155,7 @@ public class AssertMultiClientManager extends MultiClientManager {
 
   public void connectWithMock(
       SegwitAddress inputAddress,
-      Bip84Wallet bip84Wallet,
+      BipWalletAndAddressType bip84Wallet,
       Integer nbConfirmations,
       Integer utxoIndex,
       long inputBalance,
@@ -161,7 +168,7 @@ public class AssertMultiClientManager extends MultiClientManager {
   }
 
   public void connect(
-      TxOutPoint utxo, ECKey utxoKey, Bip84Wallet bip84Wallet, CliConfig cliConfig) {
+      TxOutPoint utxo, ECKey utxoKey, BipWalletAndAddressType bip84Wallet, CliConfig cliConfig) {
     int i = prepareClient(utxo, utxoKey, bip84Wallet, cliConfig);
     whirlpool(i);
   }
@@ -173,14 +180,15 @@ public class AssertMultiClientManager extends MultiClientManager {
     TxOutPoint input = inputs[i];
     ECKey ecKey = inputKeys[i];
 
-    Bip84Wallet bip84Wallet = bip84Wallets[i];
+    BipWalletAndAddressType bip84Wallet = bip84Wallets[i];
     UtxoWithBalance utxo = new UtxoWithBalance(input.getHash(), input.getIndex(), input.getValue());
     IPremixHandler premixHandler =
         new PremixHandler(utxo, ecKey, "userPreHash" + input.getHash() + input.getIndex());
-    IPostmixHandler postmixHandler = new Bip84PostmixHandler(bip84Wallet, false);
+    IPostmixHandler postmixHandler = new Bip84PostmixHandler(params, bip84Wallet, false);
 
     MixParams mixParams =
-        new MixParams(pool.getPoolId(), pool.getDenomination(), premixHandler, postmixHandler);
+        new MixParams(
+            pool.getPoolId(), pool.getDenomination(), null, premixHandler, postmixHandler);
 
     whirlpoolClient.whirlpool(mixParams, listener);
   }

@@ -96,7 +96,7 @@ public class InputValidationServiceTest extends AbstractIntegrationTest {
     for (int i = 2; i < 8; i++) {
       thrown.expect(IllegalInputException.class);
       thrown.expectMessage(
-          "Input rejected (invalid fee for tx0=" + txid + ", x=0, feePayloadHex=null)");
+          "Input rejected (invalid fee for tx0=" + txid + ", x=0, scodePayload=no)");
       doCheckInput(txid, i, poolFee);
     }
 
@@ -105,7 +105,7 @@ public class InputValidationServiceTest extends AbstractIntegrationTest {
     for (int i = 2; i < 8; i++) {
       thrown.expect(IllegalInputException.class);
       thrown.expectMessage(
-          "Input rejected (invalid fee for tx0=" + txid + ", x=0, feePayloadHex=null)");
+          "Input rejected (invalid fee for tx0=" + txid + ", x=0, scodePayload=no)");
       doCheckInput(txid, i, poolFee);
     }
   }
@@ -122,7 +122,7 @@ public class InputValidationServiceTest extends AbstractIntegrationTest {
       // invalid fee address
       thrown.expect(IllegalInputException.class);
       thrown.expectMessage(
-          "Input rejected (invalid fee for tx0=" + txid + ", x=643, feePayloadHex=null)");
+          "Input rejected (invalid fee for tx0=" + txid + ", x=643, scodePayload=no)");
       doCheckInput(txid, i, poolFee);
     }
   }
@@ -132,7 +132,7 @@ public class InputValidationServiceTest extends AbstractIntegrationTest {
     // reject nofee when unknown feePayload
     thrown.expect(IllegalInputException.class);
     thrown.expectMessage(
-        "Input rejected (invalid fee for tx0=b3557587f87bcbd37e847a0fff0ded013b23026f153d85f28cb5d407d39ef2f3, x=11, feePayloadHex=3039)");
+        "Input rejected (invalid fee for tx0=b3557587f87bcbd37e847a0fff0ded013b23026f153d85f28cb5d407d39ef2f3, x=11, scodePayload=yes)");
     doCheckInput("b3557587f87bcbd37e847a0fff0ded013b23026f153d85f28cb5d407d39ef2f3", 2);
   }
 

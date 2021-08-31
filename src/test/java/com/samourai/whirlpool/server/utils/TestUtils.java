@@ -3,11 +3,11 @@ package com.samourai.whirlpool.server.utils;
 import com.samourai.wallet.api.backend.beans.UnspentOutput;
 import com.samourai.wallet.bip47.rpc.BIP47Wallet;
 import com.samourai.wallet.hd.HD_Wallet;
-import com.samourai.wallet.hd.java.HD_WalletFactoryJava;
+import com.samourai.wallet.hd.HD_WalletFactoryGeneric;
 import com.samourai.wallet.segwit.SegwitAddress;
 import com.samourai.wallet.segwit.bech32.Bech32UtilGeneric;
+import com.samourai.wallet.send.provider.SimpleUtxoKeyProvider;
 import com.samourai.wallet.util.CryptoTestUtil;
-import com.samourai.whirlpool.client.tx0.UnspentOutputWithKey;
 import com.samourai.whirlpool.server.beans.ConfirmedInput;
 import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.beans.Pool;
@@ -27,6 +27,7 @@ import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.params.RSAPrivateCrtKeyParameters;
 import org.bouncycastle.crypto.util.PrivateKeyFactory;
 import org.bouncycastle.crypto.util.PrivateKeyInfoFactory;
+import org.bouncycastle.util.encoders.Hex;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemReader;
 import org.bouncycastle.util.io.pem.PemWriter;
@@ -41,13 +42,13 @@ public class TestUtils {
 
   private CryptoService cryptoService;
   protected Bech32UtilGeneric bech32Util;
-  protected HD_WalletFactoryJava hdWalletFactory;
+  protected HD_WalletFactoryGeneric hdWalletFactory;
   private CryptoTestUtil cryptoTestUtil;
 
   public TestUtils(
       CryptoService cryptoService,
       Bech32UtilGeneric bech32Util,
-      HD_WalletFactoryJava hdWalletFactory,
+      HD_WalletFactoryGeneric hdWalletFactory,
       CryptoTestUtil cryptoTestUtil) {
     this.cryptoService = cryptoService;
     this.bech32Util = bech32Util;
@@ -130,12 +131,16 @@ public class TestUtils {
     return confirmedInput;
   }
 
-  public UnspentOutput computeUnspentOutput(String hash, int index, long value, String toAddress) {
+  public UnspentOutput computeUnspentOutput(String hash, int index, long value, String toAddress)
+      throws Exception {
+    NetworkParameters params = cryptoService.getNetworkParameters();
+    String scriptBytes =
+        Hex.toHexString(Bech32UtilGeneric.getInstance().computeScriptPubKey(toAddress, params));
     UnspentOutput spendFrom = new UnspentOutput();
     spendFrom.tx_hash = hash;
     spendFrom.tx_output_n = index;
     spendFrom.value = value;
-    spendFrom.script = "foo";
+    spendFrom.script = scriptBytes;
     spendFrom.addr = toAddress;
     spendFrom.confirmations = 1234;
     spendFrom.xpub = new UnspentOutput.Xpub();
@@ -143,7 +148,8 @@ public class TestUtils {
     return spendFrom;
   }
 
-  public UnspentOutput computeUnspentOutput(TransactionOutPoint outPoint, String toAddress) {
+  public UnspentOutput computeUnspentOutput(TransactionOutPoint outPoint, String toAddress)
+      throws Exception {
     return computeUnspentOutput(
         outPoint.getHash().toString(),
         (int) outPoint.getIndex(),
@@ -151,13 +157,15 @@ public class TestUtils {
         toAddress);
   }
 
-  public UnspentOutputWithKey generateUnspentOutputWithKey(long value, NetworkParameters params)
+  public UnspentOutput generateUnspentOutputWithKey(
+      long value, NetworkParameters params, SimpleUtxoKeyProvider utxoKeyProvider)
       throws Exception {
     ECKey input0Key = new ECKey();
     String input0OutPointAddress = new SegwitAddress(input0Key, params).getBech32AsString();
     TransactionOutPoint input0OutPoint =
         cryptoTestUtil.generateTransactionOutPoint(input0OutPointAddress, value, params);
     UnspentOutput utxo = computeUnspentOutput(input0OutPoint, input0OutPointAddress);
-    return new UnspentOutputWithKey(utxo, input0Key.getPrivKeyBytes());
+    utxoKeyProvider.setKey(input0OutPoint, input0Key);
+    return utxo;
   }
 }

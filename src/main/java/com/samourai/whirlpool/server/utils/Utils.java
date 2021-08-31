@@ -3,7 +3,6 @@ package com.samourai.whirlpool.server.utils;
 import com.samourai.javaserver.utils.ServerUtils;
 import com.samourai.wallet.segwit.bech32.Bech32UtilGeneric;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
-import com.samourai.whirlpool.protocol.fee.WhirlpoolFee;
 import com.samourai.whirlpool.server.beans.ConfirmedInput;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.services.rpc.JSONRpcClientServiceImpl;
@@ -14,7 +13,6 @@ import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.CharacterPredicates;
 import org.apache.commons.text.RandomStringGenerator;
 import org.bitcoinj.core.NetworkParameters;
@@ -135,30 +133,9 @@ public class Utils {
   }
 
   public static byte[] feePayloadShortToBytes(short feePayloadAsShort) {
-    return ByteBuffer.allocate(WhirlpoolFee.FEE_PAYLOAD_LENGTH).putShort(feePayloadAsShort).array();
-  }
-
-  public static short feePayloadBytesToShort(byte[] feePayload) {
-    return ByteBuffer.wrap(feePayload).getShort();
-  }
-
-  public static String bytesToBinaryString(byte[] bytes) {
-    List<String> strs = new ArrayList<>();
-    for (byte b : bytes) {
-      String str = String.format("%8s", Integer.toBinaryString((b + 256) % 256)).replace(' ', '0');
-      strs.add(str);
-    }
-    return StringUtils.join(strs.toArray(), " ");
-  }
-
-  public static byte[] bytesFromBinaryString(String str) {
-    String[] bytesStrs = str.split(" ");
-    byte[] result = new byte[bytesStrs.length];
-    for (int i = 0; i < bytesStrs.length; i++) {
-      String byteStr = bytesStrs[i];
-      result[i] = (byte) (int) (Integer.valueOf(byteStr, 2));
-    }
-    return result;
+    return ByteBuffer.allocate(WhirlpoolProtocol.FEE_PAYLOAD_LENGTH)
+        .putShort(feePayloadAsShort)
+        .array();
   }
 
   public static String obfuscateString(String str, int offset) {

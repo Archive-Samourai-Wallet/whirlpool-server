@@ -3,26 +3,16 @@ package com.samourai.whirlpool.server.integration.manual;
 import com.samourai.wallet.bip47.rpc.BIP47Wallet;
 import com.samourai.wallet.bip69.BIP69OutputComparator;
 import com.samourai.wallet.hd.HD_Wallet;
-import com.samourai.wallet.hd.java.HD_WalletFactoryJava;
+import com.samourai.wallet.hd.HD_WalletFactoryGeneric;
 import com.samourai.wallet.segwit.bech32.Bech32Segwit;
 import com.samourai.wallet.segwit.bech32.Bech32UtilGeneric;
 import com.samourai.wallet.util.FormatsUtilGeneric;
 import com.samourai.whirlpool.server.utils.BIP47WalletAndHDWallet;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import org.apache.commons.lang3.tuple.Pair;
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionOutPoint;
-import org.bitcoinj.core.TransactionOutput;
+import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.HDKeyDerivation;
@@ -35,7 +25,7 @@ import org.json.JSONObject;
 
 public class ManualPremixer {
   private Bech32UtilGeneric bech32Util = Bech32UtilGeneric.getInstance();
-  private HD_WalletFactoryJava hdWalletFactory = HD_WalletFactoryJava.getInstance();
+  private HD_WalletFactoryGeneric hdWalletFactory = HD_WalletFactoryGeneric.getInstance();
 
   // parameters
   private final NetworkParameters params;

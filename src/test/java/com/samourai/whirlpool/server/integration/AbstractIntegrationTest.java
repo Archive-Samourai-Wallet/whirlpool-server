@@ -1,8 +1,12 @@
 package com.samourai.whirlpool.server.integration;
 
+import com.samourai.http.client.HttpUsage;
+import com.samourai.http.client.IHttpClient;
+import com.samourai.http.client.IHttpClientService;
 import com.samourai.javaserver.utils.ServerUtils;
+import com.samourai.wallet.api.backend.BackendServer;
 import com.samourai.wallet.bip47.rpc.java.Bip47UtilJava;
-import com.samourai.wallet.hd.java.HD_WalletFactoryJava;
+import com.samourai.wallet.hd.HD_WalletFactoryGeneric;
 import com.samourai.wallet.segwit.SegwitAddress;
 import com.samourai.wallet.segwit.bech32.Bech32UtilGeneric;
 import com.samourai.wallet.util.CryptoTestUtil;
@@ -11,6 +15,9 @@ import com.samourai.wallet.util.MessageSignUtilGeneric;
 import com.samourai.wallet.util.TxUtil;
 import com.samourai.whirlpool.cli.config.CliConfig;
 import com.samourai.whirlpool.client.utils.ClientCryptoService;
+import com.samourai.whirlpool.client.wallet.WhirlpoolWalletConfig;
+import com.samourai.whirlpool.client.wallet.data.dataSource.DataSourceFactory;
+import com.samourai.whirlpool.client.wallet.data.dataSource.SamouraiDataSourceFactory;
 import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.beans.Pool;
 import com.samourai.whirlpool.server.beans.PoolMinerFee;
@@ -24,11 +31,13 @@ import com.samourai.whirlpool.server.utils.AssertMultiClientManager;
 import com.samourai.whirlpool.server.utils.TestUtils;
 import com.samourai.whirlpool.server.utils.Utils;
 import java.lang.invoke.MethodHandles;
+import java.util.Optional;
 import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.params.TestNet3Params;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.rules.ExpectedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,7 +76,7 @@ public abstract class AbstractIntegrationTest {
 
   @Autowired protected Bech32UtilGeneric bech32Util;
 
-  @Autowired protected HD_WalletFactoryJava walletFactory;
+  @Autowired protected HD_WalletFactoryGeneric walletFactory;
 
   protected Bip47UtilJava bip47Util = Bip47UtilJava.getInstance();
 
@@ -83,9 +92,11 @@ public abstract class AbstractIntegrationTest {
 
   @Autowired protected CryptoTestUtil cryptoTestUtil;
 
-  @Autowired protected HD_WalletFactoryJava hdWalletFactory;
+  @Autowired protected HD_WalletFactoryGeneric hdWalletFactory;
 
   @Autowired protected BlameService blameService;
+
+  @Autowired protected FeePayloadService feePayloadService;
 
   protected MessageSignUtilGeneric messageSignUtil = MessageSignUtilGeneric.getInstance();
 
@@ -110,6 +121,8 @@ public abstract class AbstractIntegrationTest {
     cliConfig = new CliConfig();
 
     messageSignUtil = MessageSignUtilGeneric.getInstance();
+
+    mixService.__setCONFIRM_INPUT_CHECK_DELAY(0);
 
     dbService.__reset();
     mixLimitsService = mixService.__getMixLimitsService();
@@ -145,13 +158,28 @@ public abstract class AbstractIntegrationTest {
       long minerFeeMin,
       long minerFeeCap,
       long minerFeeMax,
+      long minRelayFee,
       int mustMixMin,
       int liquidityMin,
       int anonymitySet)
       throws IllegalInputException {
-    // create new pool
+
+    // find pool
+    Optional<Pool> poolOpt =
+        poolService
+            .getPools()
+            .stream()
+            .filter(p -> p.getDenomination() == denomination)
+            .findFirst();
+    String poolId = poolOpt.isPresent() ? poolOpt.get().getPoolId() : "pool-" + denomination;
+    if (log.isDebugEnabled()) {
+      log.debug(
+          "+ __nextMix: " + (poolOpt.isPresent() ? "updating" : "creating") + " poolId=" + poolId);
+    }
+
+    // create/update pool config
     WhirlpoolServerConfig.PoolConfig poolConfig = new WhirlpoolServerConfig.PoolConfig();
-    poolConfig.setId(Utils.generateUniqueString());
+    poolConfig.setId(poolId);
     poolConfig.setFeeValue(feeValue);
     poolConfig.setDenomination(denomination);
     poolConfig.setMustMixMin(mustMixMin);
@@ -163,6 +191,7 @@ public abstract class AbstractIntegrationTest {
     globalMinerFeeConfig.setMinerFeeMin(minerFeeMin);
     globalMinerFeeConfig.setMinerFeeCap(minerFeeCap);
     globalMinerFeeConfig.setMinerFeeMax(minerFeeMax);
+    globalMinerFeeConfig.setMinRelayFee(minRelayFee);
 
     PoolMinerFee minerFee = new PoolMinerFee(globalMinerFeeConfig, null, mustMixMin);
 
@@ -191,7 +220,7 @@ public abstract class AbstractIntegrationTest {
     return pool.getCurrentMix();
   }
 
-  @AfterAll
+  @After
   public void tearDown() {
     if (multiClientManager != null) {
       multiClientManager.exit();
@@ -207,7 +236,8 @@ public abstract class AbstractIntegrationTest {
             cryptoService,
             rpcClientService,
             blockchainDataService,
-            port);
+            port,
+            params);
     return multiClientManager;
   }
 
@@ -247,5 +277,28 @@ public abstract class AbstractIntegrationTest {
     serverConfig
         .getSamouraiFees()
         .setScodes(serverConfig.getSamouraiFees().getScodes()); // reset scodesUpperCase
+  }
+
+  protected WhirlpoolWalletConfig computeWhirlpoolWalletConfig() {
+    DataSourceFactory dataSourceFactory =
+        new SamouraiDataSourceFactory(BackendServer.TESTNET, false, null);
+    IHttpClientService httpClientService =
+        new IHttpClientService() {
+          @Override
+          public IHttpClient getHttpClient(HttpUsage httpUsage) {
+            return null;
+          }
+        };
+    WhirlpoolWalletConfig config =
+        new WhirlpoolWalletConfig(
+            dataSourceFactory, httpClientService, null, null, null, TestNet3Params.get(), false);
+    return config;
+  }
+
+  protected void waitMixLimitsService(Mix mix) throws Exception {
+    mixLimitsService.__simulateElapsedTime(mix, 999999999);
+    synchronized (this) {
+      wait(500);
+    }
   }
 }

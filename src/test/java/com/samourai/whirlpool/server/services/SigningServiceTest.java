@@ -16,7 +16,6 @@ import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import com.samourai.whirlpool.server.integration.AbstractIntegrationTest;
 import java.lang.invoke.MethodHandles;
 import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bouncycastle.crypto.params.RSABlindingParameters;
 import org.bouncycastle.crypto.params.RSAKeyParameters;
@@ -158,46 +157,6 @@ public class SigningServiceTest extends AbstractIntegrationTest {
   }
 
   @Test
-  public void signing_failOnInvalidSignedAmount() throws Exception {
-    // mix config
-    Mix mix = __nextMix(1, 0, 1, __getCurrentMix().getPool()); // 1 user
-
-    // prepare input
-    ECKey ecKey = new ECKey();
-    boolean liquidity = false;
-    long inputBalance =
-        mix.getPool().computePremixBalanceMin(liquidity) + mix.getPool().getMinerFeeMix();
-    TxOutPoint txOutPoint =
-        createAndMockTxOutPoint(new SegwitAddress(ecKey.getPubKey(), params), inputBalance, 10);
-
-    // invalid signature (invalid signed amount)
-    UtxoWithBalance utxoWithBalance =
-        new UtxoWithBalance(txOutPoint.getHash(), txOutPoint.getIndex(), inputBalance);
-    PremixHandler premixHandler =
-        new PremixHandler(utxoWithBalance, ecKey, "userPreHash") {
-          @Override
-          public void signTransaction(Transaction tx, int inputIndex, NetworkParameters params) {
-            long spendAmount = 1234; // invalid signed amount
-            TxUtil.getInstance().signInputSegwit(tx, inputIndex, ecKey, spendAmount, params);
-          }
-        };
-
-    // test
-    try {
-      String username = "user1";
-      String[] witness64 = doSigning(mix, premixHandler, liquidity, txOutPoint, username);
-      mixService.registerSignature(mix.getMixId(), username, witness64);
-      Assertions.assertTrue(false);
-    } catch (IllegalInputException e) {
-      // verify
-      Assert.assertEquals("Invalid signature", e.getMessage());
-      Assert.assertEquals(MixStatus.SIGNING, mix.getMixStatus());
-      return;
-    }
-    Assert.assertTrue(false); // IllegalInputException expected
-  }
-
-  @Test
   public void signing_failOnInvalidSignature() throws Exception {
     // mix config
     Mix mix = __nextMix(1, 0, 1, __getCurrentMix().getPool()); // 1 user
@@ -214,13 +173,7 @@ public class SigningServiceTest extends AbstractIntegrationTest {
     UtxoWithBalance utxoWithBalance =
         new UtxoWithBalance(txOutPoint.getHash(), txOutPoint.getIndex(), inputBalance);
     PremixHandler premixHandler =
-        new PremixHandler(utxoWithBalance, ecKey, "userPreHash") {
-          @Override
-          public void signTransaction(Transaction tx, int inputIndex, NetworkParameters params) {
-            TxUtil.getInstance()
-                .signInputSegwit(tx, inputIndex, new ECKey(), inputBalance, params); // invalid key
-          }
-        };
+        new PremixHandler(utxoWithBalance, new ECKey(), "userPreHash"); // invalid key
 
     // test
     try {
@@ -231,7 +184,6 @@ public class SigningServiceTest extends AbstractIntegrationTest {
     } catch (IllegalInputException e) {
       // verify
       Assert.assertEquals("Invalid signature", e.getMessage());
-      Assert.assertEquals(MixStatus.SIGNING, mix.getMixStatus());
       return;
     }
     Assert.assertTrue(false); // IllegalInputException expected
@@ -257,6 +209,7 @@ public class SigningServiceTest extends AbstractIntegrationTest {
         txOutPoint.getIndex(),
         liquidity,
         "127.0.0.1");
+    waitMixLimitsService(mix);
 
     // confirm input
     RSAKeyParameters serverPublicKey = (RSAKeyParameters) mix.getKeyPair().getPublic();

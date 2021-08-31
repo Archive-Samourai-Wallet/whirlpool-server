@@ -8,7 +8,6 @@ import com.samourai.whirlpool.server.beans.InputPool;
 import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.beans.Pool;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
-import com.samourai.whirlpool.server.exceptions.AlreadyRegisteredInputException;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import com.samourai.whirlpool.server.integration.AbstractMixIntegrationTest;
 import java.lang.invoke.MethodHandles;
@@ -60,7 +59,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
                   "34069012401142361066035129995856280497224474312925604298733347744482107649210"));
       String signature = ecKey.signMessage(poolId);
 
-      long inputBalance = mix.getPool().computePremixBalanceMin(liquidity);
+      long inputBalance = mix.getPool().computePremixBalanceMax(liquidity);
       int confirmations = liquidity ? MIN_CONFIRMATIONS_LIQUIDITY : MIN_CONFIRMATIONS_MUSTMIX;
       txOutPoint =
           createAndMockTxOutPoint(
@@ -81,6 +80,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
           txOutPoint.getIndex(),
           liquidity,
           "127.0.0.1");
+      waitMixLimitsService(mix);
 
     } catch (Exception e) {
       if (spent && RegisterInputService.ERROR_ALREADY_SPENT.equals(e.getMessage())) {
@@ -132,10 +132,8 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
     Pool pool = mix.getPool();
     InputPool liquidityPool = mix.getPool().getLiquidityQueue();
 
-    // liquidity should be queued
-    Assert.assertTrue(liquidityPool.hasInput(txOutPoint));
-    testUtils.assertPool(0, 1, pool); // mustMix queued
-    testUtils.assertMixEmpty(mix);
+    // liquidity should be queued then invited
+    testUtils.assertMix(0, 1, mix);
   }
 
   @Test
@@ -185,7 +183,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
         new SegwitAddress(ecKey.getPubKey(), cryptoService.getNetworkParameters());
     String signature = ecKey.signMessage(poolId);
 
-    long inputBalance = mix.getPool().computePremixBalanceMin(false);
+    long inputBalance = mix.getPool().computePremixBalanceMax(false);
     TxOutPoint txOutPoint = createAndMockTxOutPoint(inputAddress, inputBalance);
 
     // TEST
@@ -231,7 +229,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
 
         // TEST
         String signature = ecKey.signMessage(poolId);
-        long inputBalance = mix.getPool().computePremixBalanceMin(false);
+        long inputBalance = mix.getPool().computePremixBalanceMax(false);
         TxOutPoint txOutPoint = createAndMockTxOutPoint(inputAddress, inputBalance);
         registerInputService.registerInput(
             poolId,
@@ -260,7 +258,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
         new SegwitAddress(ecKey.getPubKey(), cryptoService.getNetworkParameters());
     String signature = "INVALID";
 
-    long inputBalance = mix.getPool().computePremixBalanceMin(false);
+    long inputBalance = mix.getPool().computePremixBalanceMax(false);
     TxOutPoint txOutPoint = createAndMockTxOutPoint(inputAddress, inputBalance);
 
     // TEST
@@ -291,7 +289,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
         testUtils.generateSegwitAddress(); // INVALID: not related to pubkey
     String signature = ecKey.signMessage(poolId);
 
-    long inputBalance = mix.getPool().computePremixBalanceMin(false);
+    long inputBalance = mix.getPool().computePremixBalanceMax(false);
     TxOutPoint txOutPoint = createAndMockTxOutPoint(inputAddress, inputBalance);
 
     // TEST
@@ -322,7 +320,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
         new SegwitAddress(ecKey.getPubKey(), cryptoService.getNetworkParameters());
     String signature = ecKey.signMessage(poolId);
 
-    long inputBalance = mix.getPool().computePremixBalanceMin(false);
+    long inputBalance = mix.getPool().computePremixBalanceMax(false);
     TxOutPoint txOutPoint = createAndMockTxOutPoint(inputAddress, inputBalance);
 
     // TEST
@@ -334,10 +332,10 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
         txOutPoint.getIndex(),
         false,
         "127.0.0.1");
+    waitMixLimitsService(mix);
     testUtils.assertPoolEmpty(pool);
     testUtils.assertMix(0, 1, mix); // confirming
 
-    thrown.expect(AlreadyRegisteredInputException.class);
     registerInputService.registerInput(
         poolId,
         "user2",
@@ -345,7 +343,8 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
         txOutPoint.getHash(),
         txOutPoint.getIndex(),
         false,
-        "127.0.0.1");
+        "127.0.0.1"); // AlreadyRegisteredInputException thrown in background
+    waitMixLimitsService(mix);
     testUtils.assertPoolEmpty(pool);
     testUtils.assertMix(0, 1, mix); // not confirming twice
   }
@@ -375,6 +374,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
         txOutPoint.getIndex(),
         false,
         "127.0.0.1");
+    waitMixLimitsService(mix);
 
     // VERIFY
     testUtils.assertPoolEmpty(mix.getPool());
@@ -405,6 +405,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
         txOutPoint.getIndex(),
         false,
         "127.0.0.1");
+    waitMixLimitsService(mix);
 
     // VERIFY
     testUtils.assertMix(0, 1, mix); // mustMix confirming
@@ -435,6 +436,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
         txOutPoint.getIndex(),
         false,
         "127.0.0.1");
+    waitMixLimitsService(mix);
 
     // VERIFY
     testUtils.assertPoolEmpty(mix.getPool());
@@ -501,7 +503,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
 
     // liquidity
     registerInput(mix, "user2", MIN_CONFIRMATIONS_LIQUIDITY + 1, true);
-    testUtils.assertPool(0, 1, pool);
-    testUtils.assertMix(0, 1, mix);
+    testUtils.assertPoolEmpty(pool);
+    testUtils.assertMix(0, 2, mix);
   }
 }

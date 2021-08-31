@@ -33,6 +33,7 @@ public class MixServiceTest extends AbstractIntegrationTest {
     long minerFeeMin = 100;
     long minerFeeCap = 9500;
     long minerFeeMax = 10000;
+    long minRelayFee = 510;
     int mustMixMin = 1;
     int liquidityMin = 0;
     int anonymitySet = 2;
@@ -43,6 +44,7 @@ public class MixServiceTest extends AbstractIntegrationTest {
             minerFeeMin,
             minerFeeCap,
             minerFeeMax,
+            minRelayFee,
             mustMixMin,
             liquidityMin,
             anonymitySet);
@@ -87,6 +89,7 @@ public class MixServiceTest extends AbstractIntegrationTest {
     long minerFeeMin = 100;
     long minerFeeCap = 9500;
     long minerFeeMax = 10000;
+    long minRelayFee = 510;
     int mustMixMin = 1;
     int liquidityMin = 0;
     int anonymitySet = 2;
@@ -97,6 +100,7 @@ public class MixServiceTest extends AbstractIntegrationTest {
             minerFeeMin,
             minerFeeCap,
             minerFeeMax,
+            minRelayFee,
             mustMixMin,
             liquidityMin,
             anonymitySet);
@@ -169,6 +173,7 @@ public class MixServiceTest extends AbstractIntegrationTest {
     long minerFeeMin = 100;
     long minerFeeCap = 9500;
     long minerFeeMax = 10000;
+    long minRelayFee = 510;
     int mustMixMin = 1;
     int liquidityMin = 0;
     int anonymitySet = 2;
@@ -179,6 +184,7 @@ public class MixServiceTest extends AbstractIntegrationTest {
             minerFeeMin,
             minerFeeCap,
             minerFeeMax,
+            minRelayFee,
             mustMixMin,
             liquidityMin,
             anonymitySet);

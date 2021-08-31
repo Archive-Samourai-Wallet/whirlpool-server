@@ -34,6 +34,7 @@ public class WhirlpoolMultiMixIntegrationTest extends AbstractIntegrationTest {
     long minerFeeMin = 100;
     long minerFeeCap = 255;
     long minerFeeMax = 10000;
+    long minRelayFee = 510;
     int mustMixMin = 1;
     int liquidityMin = 0;
     int anonymitySet = NB_CLIENTS_FIRST_MIX;
@@ -44,9 +45,15 @@ public class WhirlpoolMultiMixIntegrationTest extends AbstractIntegrationTest {
             minerFeeMin,
             minerFeeCap,
             minerFeeMax,
+            minRelayFee,
             mustMixMin,
             liquidityMin,
             anonymitySet);
+
+    try {
+      Thread.sleep(1000);
+    } catch (Exception e) {
+    }
 
     AssertMultiClientManager multiClientManager = multiClientManager(NB_CLIENTS, mix);
 

@@ -2,8 +2,9 @@ package com.samourai.whirlpool.server.integration;
 
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
-import com.samourai.wallet.client.Bip84Wallet;
+import com.samourai.wallet.client.BipWalletAndAddressType;
 import com.samourai.wallet.segwit.SegwitAddress;
+import com.samourai.whirlpool.client.wallet.beans.WhirlpoolAccount;
 import com.samourai.whirlpool.protocol.websocket.notifications.MixStatus;
 import com.samourai.whirlpool.server.beans.ConfirmedInput;
 import com.samourai.whirlpool.server.beans.Mix;
@@ -384,6 +385,7 @@ public class Whirlpool5WalletsIntegrationTest extends AbstractIntegrationTest {
     long minerFeeMin = mixFee;
     long minerFeeCap = mixFee * 10 - 2;
     long minerFeeMax = mixFee * 10;
+    long minRelayFee = 510;
     int mustMixMin = NB_CLIENTS;
     int liquidityMin = 0;
     int anonymitySet = NB_CLIENTS;
@@ -394,6 +396,7 @@ public class Whirlpool5WalletsIntegrationTest extends AbstractIntegrationTest {
             minerFeeMin,
             minerFeeCap,
             minerFeeMax,
+            minRelayFee,
             mustMixMin,
             liquidityMin,
             anonymitySet);
@@ -417,7 +420,8 @@ public class Whirlpool5WalletsIntegrationTest extends AbstractIntegrationTest {
             int utxoIndex = Integer.parseInt(utxoHashSplit[1]);
 
             final String paymentCode = mixers.get(i);
-            final Bip84Wallet bip84Wallet = premixer.wallets.get(paymentCode).getBip84Wallet(0);
+            final BipWalletAndAddressType bip84Wallet =
+                premixer.wallets.get(paymentCode).getBip84Wallet(WhirlpoolAccount.DEPOSIT);
 
             multiClientManager.connectWithMock(
                 segwitAddress,

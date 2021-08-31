@@ -8,16 +8,13 @@ import com.samourai.whirlpool.cli.services.JavaHttpClientService;
 import com.samourai.whirlpool.cli.services.JavaStompClientService;
 import com.samourai.whirlpool.client.WhirlpoolClient;
 import com.samourai.whirlpool.client.mix.MixParams;
-import com.samourai.whirlpool.client.mix.handler.IPostmixHandler;
-import com.samourai.whirlpool.client.mix.handler.IPremixHandler;
-import com.samourai.whirlpool.client.mix.handler.PremixHandler;
-import com.samourai.whirlpool.client.mix.handler.UtxoWithBalance;
+import com.samourai.whirlpool.client.mix.handler.*;
 import com.samourai.whirlpool.client.mix.listener.MixFailReason;
+import com.samourai.whirlpool.client.mix.listener.MixStep;
 import com.samourai.whirlpool.client.wallet.beans.WhirlpoolServer;
 import com.samourai.whirlpool.client.whirlpool.ServerApi;
 import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientConfig;
 import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientImpl;
-import com.samourai.whirlpool.client.whirlpool.listener.AbstractWhirlpoolClientListener;
 import com.samourai.whirlpool.client.whirlpool.listener.WhirlpoolClientListener;
 import com.samourai.whirlpool.protocol.beans.Utxo;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
@@ -57,10 +54,15 @@ public class HealthService {
       WhirlpoolClient whirlpoolClient = new WhirlpoolClientImpl(config);
       MixParams mixParams = computeMixParams();
       WhirlpoolClientListener listener =
-          new AbstractWhirlpoolClientListener() {
+          new WhirlpoolClientListener() {
+            @Override
+            public void success(Utxo receiveUtxo) {}
+
+            @Override
+            public void progress(MixStep mixStep) {}
+
             @Override
             public void fail(MixFailReason reason, String notifiableError) {
-              super.fail(reason, notifiableError);
               if (notifiableError.equals(RegisterInputService.HEALTH_CHECK_SUCCESS)) {
                 // expected response
                 if (log.isTraceEnabled()) {
@@ -114,7 +116,13 @@ public class HealthService {
       ServerApi serverApi = new ServerApi(serverUrl, httpClientService);
       whirlpoolClientConfig =
           new WhirlpoolClientConfig(
-              httpClientService, stompClientService, serverApi, null, params, mobile);
+              httpClientService,
+              stompClientService,
+              cliTorClientService,
+              serverApi,
+              null,
+              params,
+              mobile);
     }
     return whirlpoolClientConfig;
   }
@@ -128,8 +136,8 @@ public class HealthService {
     IPostmixHandler postmixHandler =
         new IPostmixHandler() {
           @Override
-          public String computeReceiveAddress(NetworkParameters params) {
-            return "healthCheck";
+          public MixDestination computeDestination() throws Exception {
+            return null;
           }
 
           @Override
@@ -137,10 +145,15 @@ public class HealthService {
 
           @Override
           public void onMixFail() {}
+
+          @Override
+          public MixDestination getDestination() {
+            return null;
+          }
         };
     MixParams mixParams =
         new MixParams(
-            poolConfig.getId(), poolConfig.getDenomination(), premixHandler, postmixHandler);
+            poolConfig.getId(), poolConfig.getDenomination(), null, premixHandler, postmixHandler);
     return mixParams;
   }
 

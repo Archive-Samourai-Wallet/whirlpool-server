@@ -105,6 +105,7 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
         txOutPoint1.getIndex(),
         false,
         "127.0.0.1");
+    waitMixLimitsService(mix);
     testUtils.assertPoolEmpty(pool);
     testUtils.assertMix(0, 1, mix); // confirming
 
@@ -116,6 +117,7 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
         txOutPoint2.getIndex(),
         false,
         "127.0.0.1");
+    waitMixLimitsService(mix);
     testUtils.assertPoolEmpty(pool);
     testUtils.assertMix(0, 2, mix); // confirming
 
@@ -169,6 +171,7 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
         txOutPoint1.getIndex(),
         false,
         "127.0.0.1");
+    waitMixLimitsService(mix);
     testUtils.assertPoolEmpty(pool);
     testUtils.assertMix(0, 1, mix); // confirming
 
@@ -180,6 +183,7 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
         txOutPoint2.getIndex(),
         false,
         "127.0.0.1");
+    waitMixLimitsService(mix);
     testUtils.assertPoolEmpty(pool);
     testUtils.assertMix(0, 2, mix); // confirming
 
@@ -191,6 +195,7 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
     confirmInputService.confirmInputOrQueuePool(mixId, "user1", blindedBordereau, "userHash1");
     confirmInputService.confirmInputOrQueuePool(
         mixId, "user2", blindedBordereau, "userHash1"); // same userHash
+    waitMixLimitsService(mix);
 
     // VERIFY
     testUtils.assertMix(1, 0, mix); // 1 mustMix confirmed
@@ -237,12 +242,7 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
 
     // 1/1 liquidity
     registerInputAndConfirmInput(mix, "liquidity1", 999, true, null, null);
-    testUtils.assertMix(1, 0, mix); // liquidity queued
-    testUtils.assertPool(1, 1, pool);
-
-    // wait for liquidityWatcher to invite liquidity
-    Thread.sleep(serverConfig.getRegisterInput().getConfirmInterval() * 1000);
-    testUtils.assertMix(1, 1, mix); // liquidity confirming
+    testUtils.assertMix(2, 0, mix); // liquidity confirmed
     testUtils.assertPool(1, 0, pool);
   }
 }

@@ -27,7 +27,7 @@ public class PoolFee {
         return true;
       } else {
         log.warn(
-            "checkTx0FeePaid: invalid fee payment: feeAccept found for "
+            "checkTx0FeePaid: invalid fee payment: feeAccept found for tx0FeePaid="
                 + tx0FeePaid
                 + " but tx0Time="
                 + tx0Time
