@@ -66,17 +66,15 @@ public class InputValidationService {
     WhirlpoolFeeData feeData = feeValidationService.decodeFeeData(tx);
     if (feeData != null) {
       // this is a tx0 => mustMix
-      short scodePayload = feeData.getScodePayload();
       if (log.isTraceEnabled()) {
         log.trace(
             "Validating input: txid="
                 + tx.getHashAsString()
                 + ", value="
                 + inputValue
-                + ": feeIndice="
-                + feeData.getFeeIndice()
-                + ", scodePayload="
-                + scodePayload);
+                + ", feeData={"
+                + feeData
+                + "}");
       }
 
       // check fees paid
@@ -86,16 +84,16 @@ public class InputValidationService {
                 + tx.getHashAsString()
                 + ", x="
                 + feeData.getFeeIndice()
-                + ", scodePayload="
-                + scodePayload
-                + ")");
+                + ", feeData={"
+                + feeData
+                + "}");
         throw new IllegalInputException(
             "Input rejected (invalid fee for tx0="
                 + tx.getHashAsString()
                 + ", x="
                 + feeData.getFeeIndice()
                 + ", scodePayload="
-                + (scodePayload != 0 ? "yes" : "no")
+                + (feeData.getScodePayload() != FeePayloadService.SCODE_PAYLOAD_NONE ? "yes" : "no")
                 + ")");
       }
       return false; // mustMix

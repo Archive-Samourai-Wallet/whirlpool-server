@@ -9,6 +9,7 @@ import com.samourai.whirlpool.cli.services.JavaStompClientService;
 import com.samourai.whirlpool.client.WhirlpoolClient;
 import com.samourai.whirlpool.client.mix.MixParams;
 import com.samourai.whirlpool.client.mix.handler.*;
+import com.samourai.whirlpool.client.wallet.beans.IndexRange;
 import com.samourai.whirlpool.client.wallet.beans.WhirlpoolAccount;
 import com.samourai.whirlpool.client.whirlpool.ServerApi;
 import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientConfig;
@@ -82,7 +83,7 @@ public class AssertMultiClientManager extends MultiClientManager {
             new ServerApi(server, httpClientService),
             null,
             cryptoService.getNetworkParameters(),
-            false);
+            IndexRange.EVEN);
     return new WhirlpoolClientImpl(config);
   }
 
@@ -184,7 +185,7 @@ public class AssertMultiClientManager extends MultiClientManager {
     UtxoWithBalance utxo = new UtxoWithBalance(input.getHash(), input.getIndex(), input.getValue());
     IPremixHandler premixHandler =
         new PremixHandler(utxo, ecKey, "userPreHash" + input.getHash() + input.getIndex());
-    IPostmixHandler postmixHandler = new Bip84PostmixHandler(params, bip84Wallet, false);
+    IPostmixHandler postmixHandler = new Bip84PostmixHandler(params, bip84Wallet, IndexRange.EVEN);
 
     MixParams mixParams =
         new MixParams(

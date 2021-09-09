@@ -8,6 +8,7 @@ import com.samourai.wallet.segwit.bech32.Bech32UtilGeneric;
 import com.samourai.wallet.util.Callback;
 import com.samourai.wallet.util.TxUtil;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
+import com.samourai.whirlpool.server.beans.Partner;
 import com.samourai.whirlpool.server.beans.PoolFee;
 import com.samourai.whirlpool.server.beans.rpc.RpcTransaction;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
@@ -43,6 +44,7 @@ public class FeeValidationService {
   private BlockchainDataService blockchainDataService;
   private FeePayloadService feePayloadService;
   private XManagerClient xManagerClient;
+  private PartnerService partnerService;
 
   public FeeValidationService(
       CryptoService cryptoService,
@@ -52,7 +54,8 @@ public class FeeValidationService {
       TxUtil txUtil,
       BlockchainDataService blockchainDataService,
       FeePayloadService feePayloadService,
-      XManagerClient xManagerClient)
+      XManagerClient xManagerClient,
+      PartnerService partnerService)
       throws Exception {
     this.cryptoService = cryptoService;
     this.serverConfig = serverConfig;
@@ -63,6 +66,7 @@ public class FeeValidationService {
     this.blockchainDataService = blockchainDataService;
     this.feePayloadService = feePayloadService;
     this.xManagerClient = xManagerClient;
+    this.partnerService = partnerService;
   }
 
   private BIP47Account computeSecretAccount() throws Exception {
@@ -111,12 +115,21 @@ public class FeeValidationService {
       // no fee
       return true;
     }
+    // find partner
+    Partner partner = partnerService.getByPayload(feeData.getPartnerPayload());
+    XManagerService xmService = partner.getXmService();
+
     // validate for feeIndice with feePercent
-    return isTx0FeePaid(tx0, tx0Time, feeData.getFeeIndice(), poolFee, feePercent);
+    return isTx0FeePaid(tx0, tx0Time, feeData.getFeeIndice(), poolFee, feePercent, xmService);
   }
 
   protected boolean isTx0FeePaid(
-      Transaction tx0, long tx0Time, int x, PoolFee poolFee, int feeValuePercent)
+      Transaction tx0,
+      long tx0Time,
+      int x,
+      PoolFee poolFee,
+      int feeValuePercent,
+      XManagerService xmService)
       throws NotifiableException {
     if (x < 0) {
       log.error("Invalid samouraiFee indice: " + x);
@@ -136,8 +149,7 @@ public class FeeValidationService {
           boolean isFeeAddress = false;
           try {
             isFeeAddress =
-                xManagerClient.verifyAddressIndexResponseOrException(
-                    XManagerService.WHIRLPOOL, toAddress, x);
+                xManagerClient.verifyAddressIndexResponseOrException(xmService, toAddress, x);
           } catch (Exception e) {
             log.error("!!! XMANAGER UNAVAILABLE !!! unable to validate Tx0");
             isFeeAddress = true;
@@ -229,6 +241,10 @@ public class FeeValidationService {
 
   private WhirlpoolServerConfig.ScodeSamouraiFeeConfig validateScodePayload(
       short scodePayload, long tx0Time) {
+    if (scodePayload == FeePayloadService.SCODE_PAYLOAD_NONE) {
+      // no scode
+      return null;
+    }
     // search in configuration
     WhirlpoolServerConfig.ScodeSamouraiFeeConfig scodeConfig = getScodeByScodePayload(scodePayload);
     if (scodeConfig == null) {

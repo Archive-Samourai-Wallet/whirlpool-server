@@ -21,6 +21,7 @@ import com.samourai.whirlpool.server.beans.PoolFee;
 import com.samourai.whirlpool.server.beans.rpc.RpcTransaction;
 import com.samourai.whirlpool.server.integration.AbstractIntegrationTest;
 import com.samourai.whirlpool.server.services.fee.WhirlpoolFeeData;
+import com.samourai.xmanager.protocol.XManagerService;
 import java.lang.invoke.MethodHandles;
 import java.util.*;
 import java8.util.Lists;
@@ -155,7 +156,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
       throws NotifiableException {
     PoolFee poolFee = new PoolFee(minFees, feeAccept);
     return feeValidationService.isTx0FeePaid(
-        getTx(txid), txTime, xpubIndice, poolFee, feeValuePercent);
+        getTx(txid), txTime, xpubIndice, poolFee, feeValuePercent, XManagerService.WHIRLPOOL);
   }
 
   private Transaction getTx(String txid) {
@@ -222,7 +223,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
     String feeAddress = "tb1q9fj036sha0mv25qm6ruk7l85xy2wy6qp853yx0";
     byte[] feePayload = feePayloadService.encodeFeePayload(feeIndex, scodePayload, partnerPayload);
 
-    Tx0Data tx0Data = new Tx0Data(feePaymentCode, 0, 1111, 100, feePayload, feeAddress);
+    Tx0Data tx0Data = new Tx0Data(feePaymentCode, 0, 1111, 100, "test", feePayload, feeAddress);
 
     int nbPremix = 4;
     long tx0MinerFee = 2;
@@ -317,11 +318,11 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
     String feePaymentCode = feeValidationService.getFeePaymentCode();
     int feeIndex = 123456;
     short scodePayload = 111; // invalid scodePayload
-    short partnerPayload = 12345;
+    short partnerPayload = 0;
     byte[] feePayload = feePayloadService.encodeFeePayload(feeIndex, scodePayload, partnerPayload);
     String feeAddress = "tb1q9fj036sha0mv25qm6ruk7l85xy2wy6qp853yx0";
 
-    Tx0Data tx0Data = new Tx0Data(feePaymentCode, 0, FEES_VALID, 0, feePayload, feeAddress);
+    Tx0Data tx0Data = new Tx0Data(feePaymentCode, 0, FEES_VALID, 0, "test", feePayload, feeAddress);
 
     int nbPremix = 4;
     long tx0MinerFee = 2;
@@ -437,7 +438,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
         feePayloadService.encodeFeePayload(feeIndex, scodePayload, (short) 0); // no scodePayload
     String feeAddress = "tb1qcaerxclcmu9llc7ugh65hemqg6raaz4sul535f";
 
-    Tx0Data tx0Data = new Tx0Data(feePaymentCode, FEES_VALID, 0, 0, feePayload, feeAddress);
+    Tx0Data tx0Data = new Tx0Data(feePaymentCode, FEES_VALID, 0, 0, "test", feePayload, feeAddress);
 
     int nbPremix = 4;
     long tx0MinerFee = 2;
@@ -536,7 +537,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
         feePayloadService.encodeFeePayload(feeIndex, scodePayload, (short) 0); // no scodePayload
     String feeAddress = "tb1q9fj036sha0mv25qm6ruk7l85xy2wy6qp853yx0"; // invalid address
 
-    Tx0Data tx0Data = new Tx0Data(feePaymentCode, FEES_VALID, 0, 0, feePayload, feeAddress);
+    Tx0Data tx0Data = new Tx0Data(feePaymentCode, FEES_VALID, 0, 0, "test", feePayload, feeAddress);
 
     int nbPremix = 4;
     long tx0MinerFee = 2;

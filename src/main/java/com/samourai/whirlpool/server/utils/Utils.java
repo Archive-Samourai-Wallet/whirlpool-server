@@ -9,7 +9,6 @@ import com.samourai.whirlpool.server.services.rpc.JSONRpcClientServiceImpl;
 import com.samourai.whirlpool.server.services.rpc.RpcClientService;
 import java.lang.invoke.MethodHandles;
 import java.math.BigDecimal;
-import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -130,12 +129,6 @@ public class Utils {
       log.error("unable to find toAddress", e);
     }
     return null;
-  }
-
-  public static byte[] feePayloadShortToBytes(short feePayloadAsShort) {
-    return ByteBuffer.allocate(WhirlpoolProtocol.FEE_PAYLOAD_LENGTH)
-        .putShort(feePayloadAsShort)
-        .array();
   }
 
   public static String obfuscateString(String str, int offset) {

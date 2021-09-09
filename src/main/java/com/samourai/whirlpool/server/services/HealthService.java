@@ -11,6 +11,7 @@ import com.samourai.whirlpool.client.mix.MixParams;
 import com.samourai.whirlpool.client.mix.handler.*;
 import com.samourai.whirlpool.client.mix.listener.MixFailReason;
 import com.samourai.whirlpool.client.mix.listener.MixStep;
+import com.samourai.whirlpool.client.wallet.beans.IndexRange;
 import com.samourai.whirlpool.client.wallet.beans.WhirlpoolServer;
 import com.samourai.whirlpool.client.whirlpool.ServerApi;
 import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientConfig;
@@ -112,7 +113,6 @@ public class HealthService {
 
       String serverUrl = cliConfig.getServer().getServerUrlClear();
       NetworkParameters params = whirlpoolServerConfig.getNetworkParameters();
-      boolean mobile = false;
       ServerApi serverApi = new ServerApi(serverUrl, httpClientService);
       whirlpoolClientConfig =
           new WhirlpoolClientConfig(
@@ -122,7 +122,7 @@ public class HealthService {
               serverApi,
               null,
               params,
-              mobile);
+              IndexRange.FULL);
     }
     return whirlpoolClientConfig;
   }

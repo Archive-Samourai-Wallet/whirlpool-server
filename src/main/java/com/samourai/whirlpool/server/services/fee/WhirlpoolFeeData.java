@@ -23,4 +23,14 @@ public class WhirlpoolFeeData {
   public short getPartnerPayload() {
     return partnerPayload;
   }
+
+  @Override
+  public String toString() {
+    return "feeIndice="
+        + feeIndice
+        + ", scodePayload="
+        + scodePayload
+        + ", partnerPayload="
+        + partnerPayload;
+  }
 }

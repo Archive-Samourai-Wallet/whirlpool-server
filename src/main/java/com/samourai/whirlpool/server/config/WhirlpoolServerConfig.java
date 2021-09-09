@@ -3,6 +3,7 @@ package com.samourai.whirlpool.server.config;
 import com.samourai.javaserver.config.ServerConfig;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.server.utils.Utils;
+import com.samourai.xmanager.protocol.XManagerService;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,6 +34,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
   private RevealOutputConfig revealOutput;
   private BanConfig ban;
   private ExportConfig export;
+  private PartnerConfig[] partners;
   private PoolConfig[] pools;
   private long requestTimeout;
 
@@ -152,6 +154,14 @@ public class WhirlpoolServerConfig extends ServerConfig {
 
   public void setExport(ExportConfig export) {
     this.export = export;
+  }
+
+  public PartnerConfig[] getPartners() {
+    return partners;
+  }
+
+  public void setPartners(PartnerConfig[] partners) {
+    this.partners = partners;
   }
 
   public PoolConfig[] getPools() {
@@ -323,6 +333,53 @@ public class WhirlpoolServerConfig extends ServerConfig {
 
     public void setDirectory(String directory) {
       this.directory = directory;
+    }
+  }
+
+  public static class PartnerConfig {
+    @NotEmpty private String id;
+    @NotEmpty private short payload;
+    @NotEmpty private String xmService;
+
+    public void validate() throws Exception {
+      if (StringUtils.isEmpty(id)) {
+        throw new Exception("Invalid partner.id");
+      }
+      if (payload < 0) {
+        throw new Exception("Invalid partner.payload");
+      }
+      if (XManagerService.valueOf(xmService) == null) {
+        throw new Exception("Invalid partner.xmService");
+      }
+    }
+
+    public String getId() {
+      return id;
+    }
+
+    public void setId(String id) {
+      this.id = id;
+    }
+
+    public short getPayload() {
+      return payload;
+    }
+
+    public void setPayload(short payload) {
+      this.payload = payload;
+    }
+
+    public String getXmService() {
+      return xmService;
+    }
+
+    public void setXmService(String xmService) {
+      this.xmService = xmService;
+    }
+
+    @Override
+    public String toString() {
+      return "id=" + id + ", payload=" + payload + ", xmService=" + xmService;
     }
   }
 
@@ -663,6 +720,9 @@ public class WhirlpoolServerConfig extends ServerConfig {
     super.validate();
     samouraiFees.validate();
     minerFees.validate();
+    for (PartnerConfig partnerConfig : partners) {
+      partnerConfig.validate();
+    }
   }
 
   @Override
@@ -709,6 +769,9 @@ public class WhirlpoolServerConfig extends ServerConfig {
             + ban.period
             + ", expiration="
             + ban.expiration);
+    for (PartnerConfig partnerConfig : partners) {
+      configInfo.put("partners[" + partnerConfig.id + "]", partnerConfig.toString());
+    }
     for (PoolConfig poolConfig : pools) {
       configInfo.put("pools[" + poolConfig.id + "]", poolConfig.toString());
     }

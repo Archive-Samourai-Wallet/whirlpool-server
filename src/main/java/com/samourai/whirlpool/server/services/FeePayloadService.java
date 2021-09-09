@@ -15,6 +15,7 @@ public class FeePayloadService {
   private static final Logger log = LoggerFactory.getLogger(FeePayloadService.class);
 
   private static final short FEE_PAYLOAD_VERSION = 1;
+  public static final short SCODE_PAYLOAD_NONE = 0;
 
   private XorMask xorMask;
 

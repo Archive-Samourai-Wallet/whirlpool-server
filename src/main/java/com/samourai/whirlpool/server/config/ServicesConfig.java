@@ -105,7 +105,7 @@ public class ServicesConfig extends ServerServicesConfig {
   XManagerClient xManagerClient(
       WhirlpoolServerConfig serverConfig, JavaHttpClientService httpClient) {
     return new XManagerClient(
-        serverConfig.isTestnet(), false, httpClient.getHttpClient(HttpUsage.COORDINATOR_REST));
+        httpClient.getHttpClient(HttpUsage.COORDINATOR_REST), serverConfig.isTestnet(), false);
   }
 
   @Bean

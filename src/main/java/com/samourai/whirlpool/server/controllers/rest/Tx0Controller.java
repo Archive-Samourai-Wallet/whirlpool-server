@@ -6,6 +6,7 @@ import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.protocol.rest.Tx0DataResponseV1;
 import com.samourai.whirlpool.protocol.rest.Tx0DataResponseV2;
 import com.samourai.whirlpool.protocol.rest.Tx0NotifyRequest;
+import com.samourai.whirlpool.server.beans.Partner;
 import com.samourai.whirlpool.server.beans.PoolFee;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
@@ -15,6 +16,7 @@ import com.samourai.xmanager.client.XManagerClient;
 import com.samourai.xmanager.protocol.XManagerService;
 import com.samourai.xmanager.protocol.rest.AddressIndexResponse;
 import java.lang.invoke.MethodHandles;
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -30,6 +32,7 @@ public class Tx0Controller extends AbstractRestController {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private PoolService poolService;
+  private PartnerService partnerService;
   private FeeValidationService feeValidationService;
   private FeePayloadService feePayloadService;
   private ExportService exportService;
@@ -42,6 +45,7 @@ public class Tx0Controller extends AbstractRestController {
   @Autowired
   public Tx0Controller(
       PoolService poolService,
+      PartnerService partnerService,
       FeeValidationService feeValidationService,
       FeePayloadService feePayloadService,
       ExportService exportService,
@@ -51,6 +55,7 @@ public class Tx0Controller extends AbstractRestController {
       TaskService taskService,
       MetricService metricService) {
     this.poolService = poolService;
+    this.partnerService = partnerService;
     this.feeValidationService = feeValidationService;
     this.feePayloadService = feePayloadService;
     this.exportService = exportService;
@@ -93,15 +98,21 @@ public class Tx0Controller extends AbstractRestController {
   public Tx0DataResponseV2 tx0Data(
       HttpServletRequest request,
       @RequestParam(value = "poolId", required = true) String poolId,
-      @RequestParam(value = "scode", required = false) String scode)
+      @RequestParam(value = "scode", required = false) String scode,
+      @RequestParam(value = "partnerId", required = false) String partnerId)
       throws Exception {
 
     // prevent bruteforce attacks
-    Thread.sleep(1000);
+    Thread.sleep(700);
 
     if (StringUtils.isEmpty(scode) || "null".equals(scode)) {
       scode = null;
     }
+    if (StringUtils.isEmpty(partnerId) || "null".equals(partnerId)) {
+      partnerId = WhirlpoolProtocol.PARTNER_ID_SAMOURAI;
+    }
+
+    Partner partner = partnerService.getById(partnerId); // validate partner
 
     PoolFee poolFee = poolService.getPool(poolId).getPoolFee();
 
@@ -109,7 +120,6 @@ public class Tx0Controller extends AbstractRestController {
     WhirlpoolServerConfig.ScodeSamouraiFeeConfig scodeConfig =
         feeValidationService.getScodeConfigByScode(scode, System.currentTimeMillis());
     short scodePayload;
-    short partnerPayload = 0;
     long feeValue;
     int feeDiscountPercent;
     String message;
@@ -122,7 +132,7 @@ public class Tx0Controller extends AbstractRestController {
       message = scodeConfig.getMessage();
     } else {
       // no SCODE => 100% fee
-      scodePayload = 0;
+      scodePayload = FeePayloadService.SCODE_PAYLOAD_NONE;
       feeValue = poolFee.getFeeValue();
       feeDiscountPercent = 0;
       message = null;
@@ -138,8 +148,9 @@ public class Tx0Controller extends AbstractRestController {
     long feeChange;
     if (feeValue > 0) {
       // fees
+      XManagerService xManagerService = partner.getXmService();
       AddressIndexResponse addressIndexResponse =
-          xManagerClient.getAddressIndexOrDefault(XManagerService.WHIRLPOOL);
+          xManagerClient.getAddressIndexOrDefault(xManagerService);
       feeIndex = addressIndexResponse.index;
       feeAddress = addressIndexResponse.address;
       feeChange = 0;
@@ -150,7 +161,8 @@ public class Tx0Controller extends AbstractRestController {
       feeChange = computeRandomFeeChange(poolFee);
     }
 
-    byte[] feePayload = feePayloadService.encodeFeePayload(feeIndex, scodePayload, partnerPayload);
+    byte[] feePayload =
+        feePayloadService.encodeFeePayload(feeIndex, scodePayload, partner.getPayload());
     String feePayload64 = WhirlpoolProtocol.encodeBytes(feePayload);
 
     if (log.isDebugEnabled()) {
@@ -167,11 +179,14 @@ public class Tx0Controller extends AbstractRestController {
               + ", feeIndex="
               + feeIndex
               + ", feeAddress="
-              + (feeAddress != null ? feeAddress : ""));
+              + (feeAddress != null ? feeAddress : "")
+              + ", partnerId="
+              + partnerId);
     }
 
     // log activity
-    Map<String, String> details = ImmutableMap.of("scode", (scode != null ? scode : "null"));
+    Map<String, String> details =
+        ImmutableMap.of("scode", (scode != null ? scode : "null"), "partner", partnerId);
     ActivityCsv activityCsv = new ActivityCsv("TX0", poolId, null, details, request);
     exportService.exportActivity(activityCsv);
 
@@ -213,7 +228,7 @@ public class Tx0Controller extends AbstractRestController {
 
     if (scodeConfig != null) {
       // scode found => scodeConfig.feeValuePercent
-      byte[] feePayload = Utils.feePayloadShortToBytes(scodeConfig.getPayload());
+      byte[] feePayload = scodePayloadShortToBytesV1(scodeConfig.getPayload());
       feePayload64 = WhirlpoolProtocol.encodeBytes(feePayload);
       feeValue = poolFee.computeFeeValue(scodeConfig.getFeeValuePercent());
       feeDiscountPercent = 100 - scodeConfig.getFeeValuePercent();
@@ -281,6 +296,10 @@ public class Tx0Controller extends AbstractRestController {
             feeAddress,
             feeIndex);
     return tx0DataResponse;
+  }
+
+  public static byte[] scodePayloadShortToBytesV1(short feePayloadAsShort) {
+    return ByteBuffer.allocate(2).putShort(feePayloadAsShort).array();
   }
 
   private long computeRandomFeeChange(PoolFee poolFee) {
