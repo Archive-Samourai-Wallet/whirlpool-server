@@ -3,10 +3,12 @@ package com.samourai.whirlpool.server.controllers.rest;
 import com.google.common.collect.ImmutableMap;
 import com.samourai.whirlpool.protocol.WhirlpoolEndpoint;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
+import com.samourai.whirlpool.protocol.rest.Tx0DataRequestV2;
 import com.samourai.whirlpool.protocol.rest.Tx0DataResponseV1;
 import com.samourai.whirlpool.protocol.rest.Tx0DataResponseV2;
 import com.samourai.whirlpool.protocol.rest.Tx0NotifyRequest;
 import com.samourai.whirlpool.server.beans.Partner;
+import com.samourai.whirlpool.server.beans.Pool;
 import com.samourai.whirlpool.server.beans.PoolFee;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
@@ -17,6 +19,7 @@ import com.samourai.xmanager.protocol.XManagerService;
 import com.samourai.xmanager.protocol.rest.AddressIndexResponse;
 import java.lang.invoke.MethodHandles;
 import java.nio.ByteBuffer;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -94,36 +97,62 @@ public class Tx0Controller extends AbstractRestController {
     */
   }
 
-  @RequestMapping(value = WhirlpoolEndpoint.REST_TX0_DATA_V2, method = RequestMethod.GET)
+  @RequestMapping(value = WhirlpoolEndpoint.REST_TX0_DATA, method = RequestMethod.POST)
   public Tx0DataResponseV2 tx0Data(
-      HttpServletRequest request,
-      @RequestParam(value = "poolId", required = true) String poolId,
-      @RequestParam(value = "scode", required = false) String scode,
-      @RequestParam(value = "partnerId", required = false) String partnerId)
-      throws Exception {
+      HttpServletRequest request, @RequestBody Tx0DataRequestV2 tx0DataRequest) throws Exception {
 
     // prevent bruteforce attacks
     Thread.sleep(700);
 
+    String scode = tx0DataRequest.scode;
     if (StringUtils.isEmpty(scode) || "null".equals(scode)) {
       scode = null;
     }
+
+    String partnerId = tx0DataRequest.partnerId;
     if (StringUtils.isEmpty(partnerId) || "null".equals(partnerId)) {
       partnerId = WhirlpoolProtocol.PARTNER_ID_SAMOURAI;
     }
 
     Partner partner = partnerService.getById(partnerId); // validate partner
 
-    PoolFee poolFee = poolService.getPool(poolId).getPoolFee();
+    if (log.isDebugEnabled()) {
+      log.debug(
+          "Tx0Data: scode=" + (scode != null ? scode : "null") + ", partnerId=" + partner.getId());
+    }
 
-    String feePaymentCode = feeValidationService.getFeePaymentCode();
     WhirlpoolServerConfig.ScodeSamouraiFeeConfig scodeConfig =
         feeValidationService.getScodeConfigByScode(scode, System.currentTimeMillis());
+    if (scodeConfig == null && scode != null) {
+      log.warn("Tx0Data: Invalid SCODE: " + scode);
+    }
+
+    List<Tx0DataResponseV2.Tx0Data> tx0Datas = new LinkedList<>();
+    for (Pool pool : poolService.getPools()) {
+      Tx0DataResponseV2.Tx0Data tx0Data = computeTx0Data(pool.getPoolId(), scodeConfig, partner);
+      tx0Datas.add(tx0Data);
+    }
+
+    // log activity
+    Map<String, String> details =
+        ImmutableMap.of("scode", (scode != null ? scode : "null"), "partner", partnerId);
+    ActivityCsv activityCsv = new ActivityCsv("TX0", null, null, details, request);
+    exportService.exportActivity(activityCsv);
+
+    Tx0DataResponseV2 tx0DataResponse =
+        new Tx0DataResponseV2(tx0Datas.toArray(new Tx0DataResponseV2.Tx0Data[] {}));
+    return tx0DataResponse;
+  }
+
+  private Tx0DataResponseV2.Tx0Data computeTx0Data(
+      String poolId, WhirlpoolServerConfig.ScodeSamouraiFeeConfig scodeConfig, Partner partner)
+      throws Exception {
     short scodePayload;
     long feeValue;
     int feeDiscountPercent;
     String message;
 
+    PoolFee poolFee = poolService.getPool(poolId).getPoolFee();
     if (scodeConfig != null) {
       // scode found => apply discount
       scodePayload = scodeConfig.getPayload();
@@ -136,10 +165,6 @@ public class Tx0Controller extends AbstractRestController {
       feeValue = poolFee.getFeeValue();
       feeDiscountPercent = 0;
       message = null;
-
-      if (scode != null) {
-        log.warn("Invalid SCODE: " + scode);
-      }
     }
 
     // fetch feeAddress
@@ -166,10 +191,11 @@ public class Tx0Controller extends AbstractRestController {
     String feePayload64 = WhirlpoolProtocol.encodeBytes(feePayload);
 
     if (log.isDebugEnabled()) {
-      String scodeStr = !StringUtils.isEmpty(scode) ? scode : "null";
       log.debug(
-          "Tx0Data: scode="
-              + scodeStr
+          "Tx0Data["
+              + poolId
+              + "] feeValuePercent="
+              + (scodeConfig != null ? scodeConfig.getFeeValuePercent() + "%" : "null")
               + ", pool.feeValue="
               + poolFee.getFeeValue()
               + ", feeValue="
@@ -181,28 +207,21 @@ public class Tx0Controller extends AbstractRestController {
               + ", feeAddress="
               + (feeAddress != null ? feeAddress : "")
               + ", partnerId="
-              + partnerId);
+              + partner.getId());
     }
-
-    // log activity
-    Map<String, String> details =
-        ImmutableMap.of("scode", (scode != null ? scode : "null"), "partner", partnerId);
-    ActivityCsv activityCsv = new ActivityCsv("TX0", poolId, null, details, request);
-    exportService.exportActivity(activityCsv);
-
-    Tx0DataResponseV2 tx0DataResponse =
-        new Tx0DataResponseV2(
-            feePaymentCode,
-            feeValue,
-            feeChange,
-            feeDiscountPercent,
-            message,
-            feePayload64,
-            feeAddress);
-    return tx0DataResponse;
+    String feePaymentCode = feeValidationService.getFeePaymentCode();
+    return new Tx0DataResponseV2.Tx0Data(
+        poolId,
+        feePaymentCode,
+        feeValue,
+        feeChange,
+        feeDiscountPercent,
+        message,
+        feePayload64,
+        feeAddress);
   }
 
-  @RequestMapping(value = WhirlpoolEndpoint.REST_TX0_DATA_V1, method = RequestMethod.GET)
+  @RequestMapping(value = WhirlpoolEndpoint.REST_TX0_DATA, method = RequestMethod.GET)
   public Tx0DataResponseV1 tx0DataV1(
       HttpServletRequest request,
       @RequestParam(value = "poolId", required = true) String poolId,

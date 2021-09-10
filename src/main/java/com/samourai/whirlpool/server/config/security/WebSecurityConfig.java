@@ -39,8 +39,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         WhirlpoolEndpoint.REST_POOLS,
         WhirlpoolEndpoint.REST_CHECK_OUTPUT,
         WhirlpoolEndpoint.REST_REGISTER_OUTPUT,
-        WhirlpoolEndpoint.REST_TX0_DATA_V1,
-        WhirlpoolEndpoint.REST_TX0_DATA_V2,
+        WhirlpoolEndpoint.REST_TX0_DATA,
         WhirlpoolEndpoint.REST_TX0_NOTIFY,
         SystemController.ENDPOINT_HEALTH
       };
