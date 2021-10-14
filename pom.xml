@@ -36,9 +36,9 @@
             </exclusions>
         </dependency>
 		<dependency>
-			<groupId>io.samourai.code.whirlpool</groupId>
+			<groupId>io.samourai.code.wallet</groupId>
 			<artifactId>java-websocket-server</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
+			<version>1.0.1</version>
 			<exclusions>
 				<exclusion>
 					<groupId>io.samourai.code.wallet</groupId>
