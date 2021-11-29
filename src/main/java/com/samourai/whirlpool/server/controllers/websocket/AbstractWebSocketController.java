@@ -88,9 +88,7 @@ public abstract class AbstractWebSocketController {
         new String[] {"content-type", "content-length", "destination", "protocolVersion"};
 
     Map<String, String> clientDetails = new LinkedHashMap<>();
-    nativeHeaders
-        .entrySet()
-        .stream()
+    nativeHeaders.entrySet().stream()
         .filter(e -> !ArrayUtils.contains(ignoreHeaders, e.getKey()))
         .forEach(
             e -> {

@@ -93,8 +93,7 @@ public class BanService {
 
     // ignore expired blames
     List<BlameTO> activeBlames =
-        blames
-            .stream()
+        blames.stream()
             .filter(blameTO -> blameTO.getCreated().after(blameCreatedAfter))
             .collect(Collectors.toList());
     if (log.isDebugEnabled()) {
@@ -125,8 +124,7 @@ public class BanService {
     String blameReasons =
         String.join(
             ", ",
-            activeBlames
-                .stream()
+            activeBlames.stream()
                 .map(blameTO -> blameTO.getReason().name())
                 .collect(Collectors.toList()));
     String reason = countActiveBlames + " blames in " + blamePeriodMinutes + "min: " + blameReasons;

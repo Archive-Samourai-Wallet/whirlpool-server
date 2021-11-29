@@ -58,8 +58,7 @@ public class Utils {
   public static <K, V extends Comparable<? super V>> Map<K, V> sortMapByValue(Map<K, V> map) {
     Comparator<Map.Entry<K, V>> comparator = Map.Entry.comparingByValue();
     Map<K, V> sortedMap =
-        map.entrySet()
-            .stream()
+        map.entrySet().stream()
             .sorted(comparator)
             .collect(
                 Collectors.toMap(

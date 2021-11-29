@@ -4,7 +4,7 @@ import com.samourai.javaserver.web.models.DashboardTemplateModel;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 
 public class WhirlpoolDashboardTemplateModel extends DashboardTemplateModel {
-  public WhirlpoolDashboardTemplateModel(WhirlpoolServerConfig serverConfig) {
-    super(serverConfig.getName(), serverConfig.getName());
+  public WhirlpoolDashboardTemplateModel(WhirlpoolServerConfig serverConfig, String currentPage) {
+    super(serverConfig.getName(), serverConfig.getName(), currentPage);
   }
 }

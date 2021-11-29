@@ -45,9 +45,4 @@ public class ErrorController extends AbstractErrorWebController {
 
     return result;
   }
-
-  @Override
-  public String getErrorPath() {
-    return ENDPOINT;
-  }
 }

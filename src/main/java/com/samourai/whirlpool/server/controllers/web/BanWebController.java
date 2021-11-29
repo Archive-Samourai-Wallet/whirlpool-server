@@ -38,7 +38,7 @@ public class BanWebController {
   }
 
   @RequestMapping(value = ENDPOINT, method = RequestMethod.GET)
-  public String history(
+  public String ban(
       Model model,
       @PageableDefault(
               size = PAGE_SIZE,
@@ -46,7 +46,7 @@ public class BanWebController {
               direction = Sort.Direction.DESC)
           Pageable pageable)
       throws Exception {
-    new WhirlpoolDashboardTemplateModel(serverConfig).apply(model);
+    new WhirlpoolDashboardTemplateModel(serverConfig, "ban").apply(model);
 
     Page<BanTO> page = banService.findActiveBans(pageable);
     model.addAttribute("page", page);

@@ -75,7 +75,6 @@ public class FeeValidationService {
         hdWalletFactory.restoreWallet(
             secretWallet.getWords(),
             secretWallet.getPassphrase(),
-            1,
             cryptoService.getNetworkParameters());
     return hdWalletFactory
         .getBIP47(hdw.getSeedHex(), hdw.getPassphrase(), cryptoService.getNetworkParameters())
@@ -282,11 +281,7 @@ public class FeeValidationService {
   protected WhirlpoolServerConfig.ScodeSamouraiFeeConfig getScodeByScodePayload(
       short scodePayload) {
     Optional<Entry<String, WhirlpoolServerConfig.ScodeSamouraiFeeConfig>> feePayloadEntry =
-        serverConfig
-            .getSamouraiFees()
-            .getScodes()
-            .entrySet()
-            .stream()
+        serverConfig.getSamouraiFees().getScodes().entrySet().stream()
             .filter(e -> e.getValue().getPayload() == scodePayload)
             .findFirst();
     if (!feePayloadEntry.isPresent()) {

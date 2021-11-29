@@ -47,7 +47,7 @@ public class HistoryWebController {
               direction = Sort.Direction.DESC)
           Pageable pageable)
       throws Exception {
-    new WhirlpoolDashboardTemplateModel(serverConfig).apply(model);
+    new WhirlpoolDashboardTemplateModel(serverConfig, "history").apply(model);
 
     Page<MixTO> page = dbService.findMixs(pageable);
     model.addAttribute("page", page);

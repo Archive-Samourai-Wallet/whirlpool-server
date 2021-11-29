@@ -324,11 +324,7 @@ public class Tx0Controller extends AbstractRestController {
   private long computeRandomFeeChange(PoolFee poolFee) {
     // random SCODE
     List<WhirlpoolServerConfig.ScodeSamouraiFeeConfig> nonZeroScodes =
-        serverConfig
-            .getSamouraiFees()
-            .getScodes()
-            .values()
-            .stream()
+        serverConfig.getSamouraiFees().getScodes().values().stream()
             .filter(c -> c.getFeeValuePercent() > 0)
             .collect(Collectors.toList());
     if (nonZeroScodes.isEmpty()) {

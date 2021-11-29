@@ -30,7 +30,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         ConfigWebController.ENDPOINT,
         BanWebController.ENDPOINT,
         SystemWebController.ENDPOINT,
-        MetricsWebController.ENDPOINT_WHIRLPOOL,
+        MetricsWebController.ENDPOINT_APP,
         MetricsWebController.ENDPOINT_SYSTEM
       };
 

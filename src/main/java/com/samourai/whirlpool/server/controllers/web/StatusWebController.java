@@ -45,7 +45,7 @@ public class StatusWebController {
 
   @RequestMapping(value = ENDPOINT, method = RequestMethod.GET)
   public String status(Model model) throws Exception {
-    new WhirlpoolDashboardTemplateModel(serverConfig).apply(model);
+    new WhirlpoolDashboardTemplateModel(serverConfig, "status").apply(model);
 
     List<Map<String, Object>> pools = new ArrayList<>();
     poolService

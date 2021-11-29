@@ -179,18 +179,14 @@ public class Mix {
   }
 
   public Optional<ConfirmedInput> getInputByUsername(String username) {
-    return inputsById
-        .values()
-        .stream()
+    return inputsById.values().stream()
         .filter(
             confirmedInput -> confirmedInput.getRegisteredInput().getUsername().equals(username))
         .findFirst();
   }
 
   public Optional<ConfirmedInput> getInputByAddress(String address) {
-    return inputsById
-        .values()
-        .stream()
+    return inputsById.values().stream()
         .filter(
             confirmedInput ->
                 confirmedInput
@@ -330,9 +326,7 @@ public class Mix {
   }
 
   public long computeAmountIn() {
-    return inputsById
-        .values()
-        .stream()
+    return inputsById.values().stream()
         .mapToLong(input -> input.getRegisteredInput().getOutPoint().getValue())
         .sum();
   }

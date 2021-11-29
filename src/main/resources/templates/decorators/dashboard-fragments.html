@@ -6,43 +6,43 @@
 
 <ul th:fragment="menu" class="nav flex-column">
     <li class="nav-item">
-        <a th:class="${currentPage == 'status'} ? 'nav-link active' : 'nav-link'" href="/status/status">
+        <a th:class="${dashboardModel.currentPage == 'status'} ? 'nav-link active' : 'nav-link'" href="/status/status">
             <span data-feather="play"></span>
             Status
         </a>
     </li>
     <li class="nav-item">
-        <a th:class="${currentPage == 'metricsWhirlpool'} ? 'nav-link active' : 'nav-link'" href="/status/metrics/whirlpool">
+        <a th:class="${dashboardModel.currentPage == 'metricsApp'} ? 'nav-link active' : 'nav-link'" href="/status/metrics/app">
             <span data-feather="bar-chart"></span>
             Live status
         </a>
     </li>
     <li class="nav-item">
-        <a th:class="${currentPage == 'history'} ? 'nav-link active' : 'nav-link'" href="/status/history">
+        <a th:class="${dashboardModel.currentPage == 'history'} ? 'nav-link active' : 'nav-link'" href="/status/history">
             <span data-feather="list"></span>
             History
         </a>
     </li>
     <li class="nav-item">
-        <a th:class="${currentPage == 'ban'} ? 'nav-link active' : 'nav-link'" href="/status/ban">
+        <a th:class="${dashboardModel.currentPage == 'ban'} ? 'nav-link active' : 'nav-link'" href="/status/ban">
             <span data-feather="slash"></span>
             Banned inputs
         </a>
     </li>
     <li class="nav-item">
-        <a th:class="${currentPage == 'config'} ? 'nav-link active' : 'nav-link'" href="/status/config">
+        <a th:class="${dashboardModel.currentPage == 'config'} ? 'nav-link active' : 'nav-link'" href="/status/config">
             <span data-feather="settings"></span>
             Configuration
         </a>
     </li>
     <li class="nav-item">
-        <a th:class="${currentPage == 'system'} ? 'nav-link active' : 'nav-link'" href="/status/system">
+        <a th:class="${dashboardModel.currentPage == 'system'} ? 'nav-link active' : 'nav-link'" href="/status/system">
             <span data-feather="activity"></span>
             System
         </a>
     </li>
     <li class="nav-item">
-        <a th:class="${currentPage == 'metricsSystem'} ? 'nav-link active' : 'nav-link'" href="/status/metrics/system">
+        <a th:class="${dashboardModel.currentPage == 'metricsSystem'} ? 'nav-link active' : 'nav-link'" href="/status/metrics/system">
             <span data-feather="bar-chart"></span>
             Live system
         </a>

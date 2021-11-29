@@ -166,9 +166,7 @@ public abstract class AbstractIntegrationTest {
 
     // find pool
     Optional<Pool> poolOpt =
-        poolService
-            .getPools()
-            .stream()
+        poolService.getPools().stream()
             .filter(p -> p.getDenomination() == denomination)
             .findFirst();
     String poolId = poolOpt.isPresent() ? poolOpt.get().getPoolId() : "pool-" + denomination;

@@ -24,7 +24,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
   private boolean testMode;
   private boolean testnet;
   private boolean mixEnabled;
-  private String metricsUrlWhirlpool;
+  private String metricsUrlApp;
   private String metricsUrlSystem;
   private NetworkParameters networkParameters;
   private RpcClientConfig rpcClient;
@@ -70,12 +70,12 @@ public class WhirlpoolServerConfig extends ServerConfig {
     this.mixEnabled = mixEnabled;
   }
 
-  public String getMetricsUrlWhirlpool() {
-    return metricsUrlWhirlpool;
+  public String getMetricsUrlApp() {
+    return metricsUrlApp;
   }
 
-  public void setMetricsUrlWhirlpool(String metricsUrlWhirlpool) {
-    this.metricsUrlWhirlpool = metricsUrlWhirlpool;
+  public void setMetricsUrlApp(String metricsUrlApp) {
+    this.metricsUrlApp = metricsUrlApp;
   }
 
   public String getMetricsUrlSystem() {
