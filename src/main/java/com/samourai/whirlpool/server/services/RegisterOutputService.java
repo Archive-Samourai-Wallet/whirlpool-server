@@ -70,6 +70,7 @@ public class RegisterOutputService {
 
     // verify output not revoked
     if (dbService.hasMixOutput(receiveAddress)) {
+      log.info("Rejecting output already registered: " + receiveAddress);
       throw new IllegalInputException("Output already registered");
     }
   }

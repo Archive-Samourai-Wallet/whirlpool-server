@@ -62,7 +62,7 @@ public abstract class AbstractWebSocketController {
     // skip healthCheck
     if (!RegisterInputService.HEALTH_CHECK_SUCCESS.equals(message)) {
       if (noStackTrace(e)) {
-        log.warn("handleException: " + e.getMessage());
+        // already logged by WSMessageService
       } else {
         log.error("handleException", e);
       }

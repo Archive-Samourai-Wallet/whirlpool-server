@@ -130,11 +130,27 @@ public class InputValidationService {
     // verify signature of message for address
     if (!messageSignUtil.verifySignedMessage(
         txOutPoint.getToAddress(), message, signature, cryptoService.getNetworkParameters())) {
+      log.warn(
+          "Invalid signature: verifySignedMessage() failed for input="
+              + txOutPoint.toKey()
+              + ", message="
+              + message
+              + ", signature="
+              + signature
+              + ", address="
+              + txOutPoint.getToAddress());
       throw new IllegalInputException("Invalid signature");
     }
 
     ECKey pubkey = messageSignUtil.signedMessageToKey(message, signature);
     if (pubkey == null) {
+      log.warn(
+          "Invalid signature: signedMessageToKey() failed for input="
+              + txOutPoint.toKey()
+              + ", message="
+              + message
+              + ", signature="
+              + signature);
       throw new IllegalInputException("Invalid signature");
     }
     return pubkey;

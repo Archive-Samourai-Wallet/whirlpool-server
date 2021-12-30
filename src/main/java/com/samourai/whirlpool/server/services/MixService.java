@@ -461,7 +461,7 @@ public class MixService {
     try {
       txUtil.verifySignInput(tx, inputIndex, txOutPoint.getValue(), txOutPoint.getScriptBytes());
     } catch (Exception e) {
-      log.error("Invalid signature", e);
+      log.error("Invalid signature: verifySignInput failed", e);
       throw new IllegalInputException("Invalid signature");
     }
 
