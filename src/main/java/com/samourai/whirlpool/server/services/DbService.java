@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class DbService {
@@ -79,6 +80,12 @@ public class DbService {
 
   public boolean hasMixOutput(String receiveAddress) {
     return mixOutputRepository.findByAddress(receiveAddress).isPresent();
+  }
+
+  @Transactional
+  public void deleteMixOutput(String receiveAddress) {
+    mixOutputRepository.deleteByAddress(receiveAddress);
+    log.info("deleteMixOutput: " + receiveAddress);
   }
 
   // txid

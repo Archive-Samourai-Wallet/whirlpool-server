@@ -81,7 +81,7 @@ public class RegisterInputController extends AbstractWebSocketController {
       getExportService().exportActivity(activityCsv);
     } catch (AlreadyRegisteredInputException e) {
       // silent error
-      log.warn("", e);
+      log.warn(e.getMessage());
     }
   }
 

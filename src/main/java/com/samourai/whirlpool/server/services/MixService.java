@@ -728,6 +728,12 @@ public class MixService {
   }
 
   public void goFail(Mix mix, FailReason failReason, String failInfo) {
+    // clear failed mix outputs
+    log.warn("Deleting failed mixOutputs: " + mix.getReceiveAddresses().size());
+    for (String mixOutput : mix.getReceiveAddresses()) {
+      dbService.deleteMixOutput(mixOutput);
+    }
+
     mix.setFailReason(failReason);
     mix.setFailInfo(failInfo);
     changeMixStatus(mix.getMixId(), MixStatus.FAIL);
