@@ -9,12 +9,11 @@ import com.samourai.wallet.client.indexHandler.MemoryIndexHandler;
 import com.samourai.wallet.hd.AddressType;
 import com.samourai.wallet.hd.HD_Wallet;
 import com.samourai.wallet.send.provider.SimpleUtxoKeyProvider;
-import com.samourai.whirlpool.client.tx0.Tx0;
-import com.samourai.whirlpool.client.tx0.Tx0Config;
-import com.samourai.whirlpool.client.tx0.Tx0Preview;
-import com.samourai.whirlpool.client.tx0.Tx0Service;
+import com.samourai.whirlpool.client.tx0.*;
 import com.samourai.whirlpool.client.wallet.WhirlpoolWalletConfig;
+import com.samourai.whirlpool.client.wallet.beans.Tx0FeeTarget;
 import com.samourai.whirlpool.client.wallet.beans.WhirlpoolAccount;
+import com.samourai.whirlpool.client.wallet.data.minerFee.BasicMinerFeeSupplier;
 import com.samourai.whirlpool.client.whirlpool.beans.Pool;
 import com.samourai.whirlpool.client.whirlpool.beans.Tx0Data;
 import com.samourai.whirlpool.server.beans.PoolFee;
@@ -52,6 +51,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
 
   private WhirlpoolWalletConfig whirlpoolWalletConfig;
   private SimpleUtxoKeyProvider utxoKeyProvider;
+  private Tx0PreviewService tx0PreviewService;
 
   @Override
   public void setUp() throws Exception {
@@ -66,6 +66,8 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
 
     whirlpoolWalletConfig = computeWhirlpoolWalletConfig();
     utxoKeyProvider = new SimpleUtxoKeyProvider();
+    tx0PreviewService =
+        new Tx0PreviewService(new BasicMinerFeeSupplier(1, 9999), whirlpoolWalletConfig);
   }
 
   private void assertFeeData(String txid, int feeIndice, short scodePayload) {
@@ -174,7 +176,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
     Collection<UnspentOutput> spendFroms = Lists.of(spendFrom);
     HD_Wallet bip84w =
         hdWalletFactory.restoreWallet(
-            "all all all all all all all all all all all all", "test", 1, params);
+            "all all all all all all all all all all all all", "test", params);
 
     BipWallet depositWallet =
         new BipWallet(
@@ -223,7 +225,8 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
     String feeAddress = "tb1q9fj036sha0mv25qm6ruk7l85xy2wy6qp853yx0";
     byte[] feePayload = feePayloadService.encodeFeePayload(feeIndex, scodePayload, partnerPayload);
 
-    Tx0Data tx0Data = new Tx0Data(feePaymentCode, 0, 1111, 100, "test", feePayload, feeAddress);
+    Tx0Data tx0Data =
+        new Tx0Data("foo", feePaymentCode, 0, 1111, 100, "test", feePayload, feeAddress);
 
     int nbPremix = 4;
     long tx0MinerFee = 2;
@@ -235,6 +238,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
         new Tx0Preview(
             pool,
             tx0Data,
+            123,
             tx0MinerFee,
             premixMinerFee,
             mixMinerFee,
@@ -244,14 +248,19 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
             changeValue,
             nbPremix);
     Tx0 tx0 =
-        new Tx0Service(whirlpoolWalletConfig)
+        new Tx0Service(whirlpoolWalletConfig, tx0PreviewService)
             .tx0(
                 spendFroms,
                 depositWallet,
                 premixWallet,
                 postmixWallet,
                 badBankWallet,
-                new Tx0Config(),
+                new Tx0Config(
+                    tx0PreviewService,
+                    Lists.of(pool),
+                    Tx0FeeTarget.BLOCKS_2,
+                    Tx0FeeTarget.BLOCKS_2,
+                    WhirlpoolAccount.DEPOSIT),
                 tx0Preview,
                 utxoKeyProvider);
 
@@ -271,7 +280,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
     Collection<UnspentOutput> spendFroms = Lists.of(spendFrom);
     HD_Wallet bip84w =
         hdWalletFactory.restoreWallet(
-            "all all all all all all all all all all all all", "test", 1, params);
+            "all all all all all all all all all all all all", "test", params);
 
     BipWallet depositWallet =
         new BipWallet(
@@ -322,7 +331,8 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
     byte[] feePayload = feePayloadService.encodeFeePayload(feeIndex, scodePayload, partnerPayload);
     String feeAddress = "tb1q9fj036sha0mv25qm6ruk7l85xy2wy6qp853yx0";
 
-    Tx0Data tx0Data = new Tx0Data(feePaymentCode, 0, FEES_VALID, 0, "test", feePayload, feeAddress);
+    Tx0Data tx0Data =
+        new Tx0Data("foo", feePaymentCode, 0, FEES_VALID, 0, "test", feePayload, feeAddress);
 
     int nbPremix = 4;
     long tx0MinerFee = 2;
@@ -334,6 +344,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
         new Tx0Preview(
             pool,
             tx0Data,
+            123,
             tx0MinerFee,
             premixMinerFee,
             mixMinerFee,
@@ -344,14 +355,19 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
             nbPremix);
 
     Tx0 tx0 =
-        new Tx0Service(whirlpoolWalletConfig)
+        new Tx0Service(whirlpoolWalletConfig, tx0PreviewService)
             .tx0(
                 spendFroms,
                 depositWallet,
                 premixWallet,
                 postmixWallet,
                 badBankWallet,
-                new Tx0Config(),
+                new Tx0Config(
+                    tx0PreviewService,
+                    Lists.of(pool),
+                    Tx0FeeTarget.BLOCKS_2,
+                    Tx0FeeTarget.BLOCKS_2,
+                    WhirlpoolAccount.DEPOSIT),
                 tx0Preview,
                 utxoKeyProvider);
 
@@ -387,7 +403,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
     Collection<UnspentOutput> spendFroms = Lists.of(spendFrom);
     HD_Wallet bip84w =
         hdWalletFactory.restoreWallet(
-            "all all all all all all all all all all all all", "test", 1, params);
+            "all all all all all all all all all all all all", "test", params);
 
     BipWallet depositWallet =
         new BipWallet(
@@ -438,7 +454,8 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
         feePayloadService.encodeFeePayload(feeIndex, scodePayload, (short) 0); // no scodePayload
     String feeAddress = "tb1qcaerxclcmu9llc7ugh65hemqg6raaz4sul535f";
 
-    Tx0Data tx0Data = new Tx0Data(feePaymentCode, FEES_VALID, 0, 0, "test", feePayload, feeAddress);
+    Tx0Data tx0Data =
+        new Tx0Data("foo", feePaymentCode, FEES_VALID, 0, 0, "test", feePayload, feeAddress);
 
     int nbPremix = 4;
     long tx0MinerFee = 2;
@@ -450,6 +467,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
         new Tx0Preview(
             pool,
             tx0Data,
+            123,
             tx0MinerFee,
             premixMinerFee,
             mixMinerFee,
@@ -460,14 +478,19 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
             nbPremix);
 
     Tx0 tx0 =
-        new Tx0Service(whirlpoolWalletConfig)
+        new Tx0Service(whirlpoolWalletConfig, tx0PreviewService)
             .tx0(
                 spendFroms,
                 depositWallet,
                 premixWallet,
                 postmixWallet,
                 badBankWallet,
-                new Tx0Config(),
+                new Tx0Config(
+                    tx0PreviewService,
+                    Lists.of(pool),
+                    Tx0FeeTarget.BLOCKS_2,
+                    Tx0FeeTarget.BLOCKS_2,
+                    WhirlpoolAccount.DEPOSIT),
                 tx0Preview,
                 utxoKeyProvider);
 
@@ -486,7 +509,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
     Collection<UnspentOutput> spendFroms = Lists.of(spendFrom);
     HD_Wallet bip84w =
         hdWalletFactory.restoreWallet(
-            "all all all all all all all all all all all all", "test", 1, params);
+            "all all all all all all all all all all all all", "test", params);
 
     BipWallet depositWallet =
         new BipWallet(
@@ -537,7 +560,8 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
         feePayloadService.encodeFeePayload(feeIndex, scodePayload, (short) 0); // no scodePayload
     String feeAddress = "tb1q9fj036sha0mv25qm6ruk7l85xy2wy6qp853yx0"; // invalid address
 
-    Tx0Data tx0Data = new Tx0Data(feePaymentCode, FEES_VALID, 0, 0, "test", feePayload, feeAddress);
+    Tx0Data tx0Data =
+        new Tx0Data("foo", feePaymentCode, FEES_VALID, 0, 0, "test", feePayload, feeAddress);
 
     int nbPremix = 4;
     long tx0MinerFee = 2;
@@ -549,6 +573,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
         new Tx0Preview(
             pool,
             tx0Data,
+            123,
             tx0MinerFee,
             premixMinerFee,
             mixMinerFee,
@@ -559,14 +584,19 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
             nbPremix);
 
     Tx0 tx0 =
-        new Tx0Service(whirlpoolWalletConfig)
+        new Tx0Service(whirlpoolWalletConfig, tx0PreviewService)
             .tx0(
                 spendFroms,
                 depositWallet,
                 premixWallet,
                 postmixWallet,
                 badBankWallet,
-                new Tx0Config(),
+                new Tx0Config(
+                    tx0PreviewService,
+                    Lists.of(pool),
+                    Tx0FeeTarget.BLOCKS_2,
+                    Tx0FeeTarget.BLOCKS_2,
+                    WhirlpoolAccount.DEPOSIT),
                 tx0Preview,
                 utxoKeyProvider);
 

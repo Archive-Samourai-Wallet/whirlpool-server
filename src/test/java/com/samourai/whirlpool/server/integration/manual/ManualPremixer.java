@@ -60,7 +60,7 @@ public class ManualPremixer {
     for (int i = 0; i < nbMixes; i++) {
       // init BIP44 wallet
       HD_Wallet hdw =
-          hdWalletFactory.restoreWallet(words, "all" + Integer.toString(10 + i), 1, params);
+          hdWalletFactory.restoreWallet(words, "all" + Integer.toString(10 + i), params);
       // init BIP84 wallet for input
       HD_Wallet hdw84 =
           hdWalletFactory.getHD(
@@ -143,11 +143,8 @@ public class ManualPremixer {
       JSONArray spendTos = new JSONArray();
       for (int j = 0; j < nbMixes; j++) {
         String toAddress =
-            bech32Util.toBech32(
-                hdw84.getAccountAt(Integer.MAX_VALUE - 2).getChain(0).getAddressAt(j), params);
-        toPrivKeys.put(
-            toAddress,
-            hdw84.getAccountAt(Integer.MAX_VALUE - 2).getChain(0).getAddressAt(j).getECKey());
+            bech32Util.toBech32(hdw84.getAddressAt(Integer.MAX_VALUE - 2, 0, j), params);
+        toPrivKeys.put(toAddress, hdw84.getAddressAt(Integer.MAX_VALUE - 2, 0, j).getECKey());
         spendTos.put(toAddress);
         mixables.put(toAddress, pcode);
       }

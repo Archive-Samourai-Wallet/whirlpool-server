@@ -66,7 +66,7 @@ public class TestUtils {
         hdWalletFactory.getHD(44, seed, passphrase, cryptoService.getNetworkParameters());
 
     // init BIP47 wallet
-    BIP47Wallet bip47InputWallet = new BIP47Wallet(47, inputWallet, 1);
+    BIP47Wallet bip47InputWallet = new BIP47Wallet(inputWallet);
 
     return new BIP47WalletAndHDWallet(bip47InputWallet, inputWallet);
   }

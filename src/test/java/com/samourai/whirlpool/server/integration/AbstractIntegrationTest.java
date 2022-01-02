@@ -286,6 +286,9 @@ public abstract class AbstractIntegrationTest {
           public IHttpClient getHttpClient(HttpUsage httpUsage) {
             return null;
           }
+
+          @Override
+          public void stop() {}
         };
     WhirlpoolWalletConfig config =
         new WhirlpoolWalletConfig(

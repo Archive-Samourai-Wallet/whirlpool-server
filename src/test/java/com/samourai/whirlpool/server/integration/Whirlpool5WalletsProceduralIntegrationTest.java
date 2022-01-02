@@ -312,10 +312,10 @@ public class Whirlpool5WalletsProceduralIntegrationTest extends AbstractIntegrat
     //
     for (int i = 0; i < nbMixes; i++) {
       // init BIP84 wallet for input
-      HD_Wallet hdw84 = walletFactory.restoreWallet(words, "all", 1, params);
+      HD_Wallet hdw84 = walletFactory.restoreWallet(words, "all", params);
 
       // init BIP47 wallet for input
-      BIP47Wallet bip47w = new BIP47Wallet(47, hdw84, 1);
+      BIP47Wallet bip47w = new BIP47Wallet(hdw84);
 
       //
       // collect addresses for tx0 utxos
@@ -385,11 +385,8 @@ public class Whirlpool5WalletsProceduralIntegrationTest extends AbstractIntegrat
       JSONArray spendTos = new JSONArray();
       for (int j = 0; j < nbMixes; j++) {
         String toAddress =
-            bech32Util.toBech32(
-                hdw84.getAccountAt(Integer.MAX_VALUE - 2).getChain(0).getAddressAt(j), params);
-        toPrivKeys.put(
-            toAddress,
-            hdw84.getAccountAt(Integer.MAX_VALUE - 2).getChain(0).getAddressAt(j).getECKey());
+            bech32Util.toBech32(hdw84.getAddressAt(Integer.MAX_VALUE - 2, 0, j), params);
+        toPrivKeys.put(toAddress, hdw84.getAddressAt(Integer.MAX_VALUE - 2, 0, j).getECKey());
         spendTos.put(toAddress);
         mixables.put(toAddress, pcode);
       }
