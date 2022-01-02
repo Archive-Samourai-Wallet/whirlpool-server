@@ -46,13 +46,23 @@ public class RegisterOutputService {
     }
 
     // validate
-    validate(receiveAddress);
+    try {
+      validate(receiveAddress);
+    } catch (IllegalInputException e) {
+      log.info("checkOutput failed for " + receiveAddress + ": " + e.getMessage());
+      throw e;
+    }
   }
 
   public synchronized Mix registerOutput(
       String inputsHash, byte[] unblindedSignedBordereau, String receiveAddress) throws Exception {
     // validate
-    validate(receiveAddress);
+    try {
+      validate(receiveAddress);
+    } catch (IllegalInputException e) {
+      log.info("registerOutput failed for " + receiveAddress + ": " + e.getMessage());
+      throw e;
+    }
 
     // register
     Mix mix = mixService.registerOutput(inputsHash, unblindedSignedBordereau, receiveAddress);
@@ -70,7 +80,6 @@ public class RegisterOutputService {
 
     // verify output not revoked
     if (dbService.hasMixOutput(receiveAddress)) {
-      log.info("Rejecting output already registered: " + receiveAddress);
       throw new IllegalInputException("Output already registered");
     }
   }
