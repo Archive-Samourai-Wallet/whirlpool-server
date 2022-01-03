@@ -3,6 +3,8 @@ package com.samourai.whirlpool.server.controllers.websocket;
 import com.samourai.whirlpool.protocol.WhirlpoolEndpoint;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.protocol.websocket.messages.ConfirmInputRequest;
+import com.samourai.whirlpool.server.beans.FailMode;
+import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.services.ConfirmInputService;
 import com.samourai.whirlpool.server.services.ExportService;
 import com.samourai.whirlpool.server.services.WSMessageService;
@@ -23,14 +25,17 @@ public class ConfirmInputController extends AbstractWebSocketController {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private ConfirmInputService confirmInputService;
+  private WhirlpoolServerConfig serverConfig;
 
   @Autowired
   public ConfirmInputController(
       WSMessageService WSMessageService,
       ExportService exportService,
-      ConfirmInputService confirmInputService) {
+      ConfirmInputService confirmInputService,
+      WhirlpoolServerConfig serverConfig) {
     super(WSMessageService, exportService);
     this.confirmInputService = confirmInputService;
+    this.serverConfig = serverConfig;
   }
 
   @MessageMapping(WhirlpoolEndpoint.WS_CONFIRM_INPUT)
@@ -46,6 +51,9 @@ public class ConfirmInputController extends AbstractWebSocketController {
     if (log.isDebugEnabled()) {
       log.debug("(<) [" + payload.mixId + "] " + username + " " + headers.getDestination());
     }
+
+    // failMode
+    serverConfig.checkFailMode(FailMode.CONFIRM_INPUT);
 
     // confirm input and send back signed bordereau, or enqueue back to pool
     byte[] blindedBordereau = WhirlpoolProtocol.decodeBytes(payload.blindedBordereau64);

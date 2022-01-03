@@ -108,9 +108,11 @@ server.export.activity.filename
 ```
 server.rpc-client.mock-tx-broadcast = false
 server.test-mode = false
+server.fail-mode = DISABLED
 ```
-For testing purpose, *server.rpc-client.mock-tx-broadcast* can be enabled to mock txs instead of broadcasting it.
-When enabled, *server.test-mode* allows client to bypass tx0 checks.
+For testing purpose, *server.rpc-client.mock-tx-broadcast* can be enabled to mock txs instead of broadcasting it.  
+When enabled, *server.test-mode* allows client to bypass tx0 checks.  
+When enabled, *server.fail-mode* triggers mixing failures.
 
 java -jar -Dspring.profiles.active=test target/whirlpool-server-develop-SNAPSHOT.jar --debug --spring.config.location=classpath:application.properties,/path/to/application-default.properties
 

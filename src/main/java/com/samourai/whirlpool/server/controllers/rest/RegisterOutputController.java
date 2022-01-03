@@ -4,8 +4,10 @@ import com.samourai.whirlpool.protocol.WhirlpoolEndpoint;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.protocol.rest.CheckOutputRequest;
 import com.samourai.whirlpool.protocol.rest.RegisterOutputRequest;
+import com.samourai.whirlpool.server.beans.FailMode;
 import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;
+import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.services.ExportService;
 import com.samourai.whirlpool.server.services.RegisterOutputService;
 import java.lang.invoke.MethodHandles;
@@ -24,12 +26,16 @@ public class RegisterOutputController extends AbstractRestController {
 
   private RegisterOutputService registerOutputService;
   private ExportService exportService;
+  private WhirlpoolServerConfig serverConfig;
 
   @Autowired
   public RegisterOutputController(
-      RegisterOutputService registerOutputService, ExportService exportService) {
+      RegisterOutputService registerOutputService,
+      ExportService exportService,
+      WhirlpoolServerConfig serverConfig) {
     this.registerOutputService = registerOutputService;
     this.exportService = exportService;
+    this.serverConfig = serverConfig;
   }
 
   @RequestMapping(value = WhirlpoolEndpoint.REST_CHECK_OUTPUT, method = RequestMethod.POST)
@@ -49,6 +55,9 @@ public class RegisterOutputController extends AbstractRestController {
     if (log.isDebugEnabled()) {
       log.debug("(<) " + WhirlpoolEndpoint.REST_REGISTER_OUTPUT);
     }
+
+    // failMode
+    serverConfig.checkFailMode(FailMode.REGISTER_OUTPUT);
 
     // register output
     byte[] unblindedSignedBordereau =

@@ -1,7 +1,9 @@
 package com.samourai.whirlpool.server.config;
 
 import com.samourai.javaserver.config.ServerConfig;
+import com.samourai.whirlpool.client.exception.NotifiableException;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
+import com.samourai.whirlpool.server.beans.FailMode;
 import com.samourai.whirlpool.server.utils.Utils;
 import com.samourai.xmanager.protocol.XManagerService;
 import java.util.Date;
@@ -22,6 +24,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
   private SamouraiFeeConfig samouraiFees;
   private MinerFeeConfig minerFees;
   private boolean testMode;
+  private FailMode failMode;
   private boolean testnet;
   private boolean mixEnabled;
   private String metricsUrlApp;
@@ -60,6 +63,14 @@ public class WhirlpoolServerConfig extends ServerConfig {
 
   public void setTestMode(boolean testMode) {
     this.testMode = testMode;
+  }
+
+  public FailMode getFailMode() {
+    return failMode;
+  }
+
+  public void setFailMode(FailMode failMode) {
+    this.failMode = failMode;
   }
 
   public boolean isMixEnabled() {
@@ -729,6 +740,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
   public Map<String, String> getConfigInfo() {
     Map<String, String> configInfo = super.getConfigInfo();
     configInfo.put("testMode", String.valueOf(testMode));
+    configInfo.put("failMode", String.valueOf(failMode));
     configInfo.put(
         "rpcClient",
         rpcClient.getHost() + ":" + rpcClient.getPort() + "," + networkParameters.getId());
@@ -789,5 +801,12 @@ public class WhirlpoolServerConfig extends ServerConfig {
       i++;
     }
     return configInfo;
+  }
+
+  public void checkFailMode(FailMode value) throws NotifiableException {
+    // fail mode?
+    if (failMode.equals(value)) {
+      throw new NotifiableException("serverConfig.failMode=" + failMode);
+    }
   }
 }

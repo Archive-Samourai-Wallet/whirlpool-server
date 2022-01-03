@@ -3,8 +3,10 @@ package com.samourai.whirlpool.server.controllers.websocket;
 import com.samourai.javawsserver.interceptors.JWSSIpHandshakeInterceptor;
 import com.samourai.whirlpool.protocol.WhirlpoolEndpoint;
 import com.samourai.whirlpool.protocol.websocket.messages.RegisterInputRequest;
+import com.samourai.whirlpool.server.beans.FailMode;
 import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;
+import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.exceptions.AlreadyRegisteredInputException;
 import com.samourai.whirlpool.server.services.ExportService;
 import com.samourai.whirlpool.server.services.RegisterInputService;
@@ -27,14 +29,17 @@ public class RegisterInputController extends AbstractWebSocketController {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private RegisterInputService registerInputService;
+  private WhirlpoolServerConfig serverConfig;
 
   @Autowired
   public RegisterInputController(
       WSMessageService WSMessageService,
       ExportService exportService,
-      RegisterInputService registerInputService) {
+      RegisterInputService registerInputService,
+      WhirlpoolServerConfig serverConfig) {
     super(WSMessageService, exportService);
     this.registerInputService = registerInputService;
+    this.serverConfig = serverConfig;
   }
 
   @MessageMapping(WhirlpoolEndpoint.WS_REGISTER_INPUT)
@@ -61,6 +66,9 @@ public class RegisterInputController extends AbstractWebSocketController {
               + ":"
               + payload.utxoIndex);
     }
+
+    // failMode
+    serverConfig.checkFailMode(FailMode.REGISTER_INPUT);
 
     // register input in pool
     try {
