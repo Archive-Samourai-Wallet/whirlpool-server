@@ -78,7 +78,7 @@ public class Tx0Controller extends AbstractRestController {
 
     if (log.isDebugEnabled()) {
       log.debug(
-          "(<) " + WhirlpoolEndpoint.REST_TX0_NOTIFY + " [" + payload.poolId + "]" + payload.txid);
+          "(<) " + WhirlpoolEndpoint.REST_TX0_NOTIFY + " [" + payload.poolId + "] " + payload.txid);
     }
 
     // TODO validate & metric

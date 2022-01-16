@@ -4,7 +4,6 @@ import com.samourai.whirlpool.protocol.WhirlpoolEndpoint;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.protocol.rest.CheckOutputRequest;
 import com.samourai.whirlpool.protocol.rest.RegisterOutputRequest;
-import com.samourai.whirlpool.server.beans.FailMode;
 import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
@@ -55,9 +54,6 @@ public class RegisterOutputController extends AbstractRestController {
     if (log.isDebugEnabled()) {
       log.debug("(<) " + WhirlpoolEndpoint.REST_REGISTER_OUTPUT);
     }
-
-    // failMode
-    serverConfig.checkFailMode(FailMode.REGISTER_OUTPUT);
 
     // register output
     byte[] unblindedSignedBordereau =

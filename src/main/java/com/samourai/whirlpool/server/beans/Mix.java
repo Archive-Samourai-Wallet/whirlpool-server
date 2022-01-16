@@ -38,6 +38,7 @@ public class Mix {
   private Map<String, ConfirmedInput> inputsById;
 
   private Set<String> receiveAddresses;
+  private Set<String> receiveAddressesRejected;
   private Map<String, String> revealedReceiveAddressesByUsername;
   private Map<String, Boolean> signed;
 
@@ -65,6 +66,7 @@ public class Mix {
     this.inputsById = new ConcurrentHashMap<>();
 
     this.receiveAddresses = new HashSet<>();
+    this.receiveAddressesRejected = new HashSet<>();
     this.revealedReceiveAddressesByUsername = new ConcurrentHashMap<>();
     this.signed = new ConcurrentHashMap<>();
 
@@ -262,6 +264,17 @@ public class Mix {
 
   public synchronized void registerOutput(String receiveAddress) {
     receiveAddresses.add(receiveAddress);
+  }
+
+  public synchronized void registerOutputInvalid(String receiveAddress) {
+    receiveAddressesRejected.add(receiveAddress);
+  }
+
+  public String getRegisterOutputRejected() {
+    if (MixStatus.REGISTER_OUTPUT.equals(mixStatus) && !receiveAddressesRejected.isEmpty()) {
+      return receiveAddressesRejected.iterator().next();
+    }
+    return null;
   }
 
   public long getElapsedTime() {

@@ -3,6 +3,7 @@ package com.samourai.whirlpool.server.services;
 import com.samourai.javaserver.exceptions.NotifiableException;
 import com.samourai.wallet.util.FormatsUtilGeneric;
 import com.samourai.wallet.util.MessageSignUtilGeneric;
+import com.samourai.whirlpool.server.beans.FailMode;
 import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
@@ -56,11 +57,15 @@ public class RegisterOutputService {
 
   public synchronized Mix registerOutput(
       String inputsHash, byte[] unblindedSignedBordereau, String receiveAddress) throws Exception {
-    // validate
     try {
+      // validate
       validate(receiveAddress);
-    } catch (IllegalInputException e) {
+
+      // failMode
+      whirlpoolServerConfig.checkFailMode(FailMode.REGISTER_OUTPUT);
+    } catch (Exception e) {
       log.info("registerOutput failed for " + receiveAddress + ": " + e.getMessage());
+      mixService.registerOutputFailure(inputsHash, receiveAddress);
       throw e;
     }
 

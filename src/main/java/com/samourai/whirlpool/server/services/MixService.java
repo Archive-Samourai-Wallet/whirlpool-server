@@ -301,6 +301,13 @@ public class MixService {
     return true;
   }
 
+  public synchronized void registerOutputFailure(String inputsHash, String receiveAddress)
+      throws Exception {
+    Mix mix = getMixByInputsHash(inputsHash, MixStatus.REGISTER_OUTPUT);
+    mix.registerOutputInvalid(receiveAddress);
+    log.info("[" + mix.getMixId() + "] registered output failure: " + receiveAddress);
+  }
+
   public synchronized Mix registerOutput(
       String inputsHash, byte[] unblindedSignedBordereau, String receiveAddress) throws Exception {
     Mix mix = getMixByInputsHash(inputsHash, MixStatus.REGISTER_OUTPUT);
@@ -727,7 +734,13 @@ public class MixService {
     return outpointKeysToBlameStr;
   }
 
-  public void goFail(Mix mix, FailReason failReason, String failInfo) {
+  public synchronized void goFail(Mix mix, FailReason failReason, String failInfo) {
+    if (MixStatus.FAIL.equals(mix.getMixStatus())) {
+      // may happen when multiple inputs disconnect simultaneously
+      log.info("Ignoring goFail(): mix already failed");
+      return;
+    }
+
     // clear failed mix outputs
     log.warn("Deleting failed mixOutputs: " + mix.getReceiveAddresses().size());
     for (String mixOutput : mix.getReceiveAddresses()) {
@@ -747,27 +760,42 @@ public class MixService {
     Map<String, String> clientDetails = ImmutableMap.of("u", username);
 
     for (Mix mix : getCurrentMixs()) {
-      Collection<ConfirmedInput> confirmedInputsToBlame = mix.onDisconnect(username);
-      if (!confirmedInputsToBlame.isEmpty()) {
-        confirmedInputsToBlame.forEach(
-            confirmedInput -> {
-              // blame
-              blameService.blame(confirmedInput, BlameReason.DISCONNECT, mix);
+      if (!MixStatus.FAIL.equals(mix.getMixStatus())) {
+        String registerOutputRejected = mix.getRegisterOutputRejected();
 
-              // log activity
-              ActivityCsv activityCsv =
-                  new ActivityCsv(
-                      "DISCONNECT",
-                      mix.getPool().getPoolId(),
-                      confirmedInput.getRegisteredInput(),
-                      null,
-                      clientDetails);
-              exportService.exportActivity(activityCsv);
-            });
+        Collection<ConfirmedInput> confirmedInputsToBlame = mix.onDisconnect(username);
+        if (!confirmedInputsToBlame.isEmpty()) {
+          confirmedInputsToBlame.forEach(
+              confirmedInput -> {
+                // blame
+                BlameReason blameReason = BlameReason.DISCONNECT;
+                Map<String, String> detailsParam = null;
+                if (registerOutputRejected != null) {
+                  blameReason = BlameReason.REJECTED_OUTPUT;
+                  detailsParam = ImmutableMap.of("receiveAddress", registerOutputRejected);
+                }
+                blameService.blame(confirmedInput, blameReason, mix);
 
-        // restart mix
-        String outpointKeysToBlame = computeOutpointKeysToBlame(confirmedInputsToBlame);
-        goFail(mix, FailReason.DISCONNECT, outpointKeysToBlame);
+                // log activity
+                ActivityCsv activityCsv =
+                    new ActivityCsv(
+                        blameReason.name(),
+                        mix.getPool().getPoolId(),
+                        confirmedInput.getRegisteredInput(),
+                        detailsParam,
+                        clientDetails);
+                exportService.exportActivity(activityCsv);
+              });
+
+          // restart mix
+          String failInfo = computeOutpointKeysToBlame(confirmedInputsToBlame);
+          FailReason failReason = FailReason.DISCONNECT;
+          if (registerOutputRejected != null) {
+            failReason = FailReason.REJECTED_OUTPUT;
+            failInfo += " " + registerOutputRejected;
+          }
+          goFail(mix, failReason, failInfo);
+        }
       }
     }
   }

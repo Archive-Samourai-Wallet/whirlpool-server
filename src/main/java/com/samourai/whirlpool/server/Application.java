@@ -4,6 +4,7 @@ import com.samourai.javaserver.config.ServerConfig;
 import com.samourai.javaserver.run.ServerApplication;
 import com.samourai.javaserver.utils.LogbackUtils;
 import com.samourai.javaserver.utils.ServerUtils;
+import com.samourai.whirlpool.cli.utils.CliUtils;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.services.ExportService;
@@ -65,11 +66,14 @@ public class Application extends ServerApplication {
 
   @Override
   protected void setLoggerDebug() {
+    CliUtils.setLogLevel(true, false);
     Utils.setLoggerDebug();
 
     // skip noisy logs
     LogbackUtils.setLogLevel(
         "org.springframework.web.socket.config.WebSocketMessageBrokerStats",
         Level.ERROR.toString());
+
+    LogbackUtils.setLogLevel("com.samourai.javawsserver.config", Level.INFO.toString());
   }
 }
