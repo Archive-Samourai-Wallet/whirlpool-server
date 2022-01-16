@@ -6,19 +6,16 @@ import com.samourai.whirlpool.server.integration.AbstractJsonRpcClientTest;
 import com.samourai.whirlpool.server.services.rpc.MockRpcClientServiceImpl;
 import com.samourai.whirlpool.server.services.rpc.RpcRawTransactionResponse;
 import java.util.Optional;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
 /** Utility for RPC testing. */
-@RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-@Ignore
+@Disabled
 public class MockRpcApplication extends AbstractJsonRpcClientTest {
   private static final Logger log = LoggerFactory.getLogger(MockRpcApplication.class);
 
@@ -54,7 +51,7 @@ public class MockRpcApplication extends AbstractJsonRpcClientTest {
   private void mockRpcTx(String txid) throws Exception {
     try {
       Optional<RpcRawTransactionResponse> rpcTxResponse = rpcClientService.getRawTransaction(txid);
-      Assert.assertTrue(rpcTxResponse.isPresent());
+      Assertions.assertTrue(rpcTxResponse.isPresent());
       ((MockRpcClientServiceImpl) rpcClientService)
           .writeMockRpc(txid, rpcTxResponse.get().getHex());
     } catch (Exception e) {

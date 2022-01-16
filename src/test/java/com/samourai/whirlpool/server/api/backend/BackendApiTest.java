@@ -8,13 +8,11 @@ import com.samourai.wallet.api.backend.BackendServer;
 import com.samourai.wallet.api.backend.beans.WalletResponse;
 import com.samourai.whirlpool.server.integration.AbstractIntegrationTest;
 import com.samourai.whirlpool.server.services.JavaHttpClientService;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public class BackendApiTest extends AbstractIntegrationTest {
   private static final String VPUB =
@@ -23,6 +21,7 @@ public class BackendApiTest extends AbstractIntegrationTest {
 
   public BackendApiTest() {}
 
+  @BeforeEach
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -37,6 +36,6 @@ public class BackendApiTest extends AbstractIntegrationTest {
   @Test
   public void fetchWallet() throws Exception {
     WalletResponse walletResponse = backendApi.fetchWallet(VPUB);
-    Assert.assertEquals(VPUB, walletResponse.addresses[0].address);
+    Assertions.assertEquals(VPUB, walletResponse.addresses[0].address);
   }
 }

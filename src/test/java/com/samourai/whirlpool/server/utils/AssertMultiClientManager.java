@@ -28,7 +28,7 @@ import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.Utils;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -145,7 +145,7 @@ public class AssertMultiClientManager extends MultiClientManager {
       connectWithMock(inputBalance, cliConfig);
     } catch (Exception e) {
       log.error("", e);
-      Assert.assertTrue(false);
+      Assertions.assertTrue(false);
     }
   }
 
@@ -219,7 +219,7 @@ public class AssertMultiClientManager extends MultiClientManager {
     // debug on failure
     log.info(
         "# (LAST) Waiting for registered inputs: " + mix.getNbInputs() + " " + nbInputsExpected);
-    Assert.assertEquals(nbInputsExpected, mix.getNbInputs());
+    Assertions.assertEquals(nbInputsExpected, mix.getNbInputs());
   }
 
   public void waitLiquiditiesInPool(int nbLiquiditiesInPoolExpected) throws Exception {
@@ -252,7 +252,7 @@ public class AssertMultiClientManager extends MultiClientManager {
             + liquidityPool.getSize()
             + " vs "
             + nbLiquiditiesInPoolExpected);
-    Assert.assertEquals(nbLiquiditiesInPoolExpected, liquidityPool.getSize());
+    Assertions.assertEquals(nbLiquiditiesInPoolExpected, liquidityPool.getSize());
   }
 
   public void waitMixStatus(MixStatus mixStatusExpected) throws Exception {
@@ -278,12 +278,12 @@ public class AssertMultiClientManager extends MultiClientManager {
     }
 
     log.info("# (LAST) Waiting for mixStatus: " + mix.getMixStatus() + " vs " + mixStatusExpected);
-    Assert.assertEquals(mixStatusExpected, mix.getMixStatus());
+    Assertions.assertEquals(mixStatusExpected, mix.getMixStatus());
   }
 
   public void setMixNext() {
     Mix nextMix = mix.getPool().getCurrentMix();
-    Assert.assertNotEquals(mix, nextMix);
+    Assertions.assertNotEquals(mix, nextMix);
     this.mix = nextMix;
     log.info("============= NEW MIX DETECTED: " + nextMix.getMixId() + " =============");
   }
@@ -297,9 +297,9 @@ public class AssertMultiClientManager extends MultiClientManager {
     System.out.println("=> mixStatus=" + mix.getMixStatus() + ", nbInputs=" + mix.getNbInputs());
 
     // all clients should have registered their outputs
-    Assert.assertEquals(MixStatus.CONFIRM_INPUT, mix.getMixStatus());
-    Assert.assertEquals(nbInputsExpected, mix.getNbInputs());
-    Assert.assertEquals(hasLiquidityExpected, liquidityPool.hasInputs());
+    Assertions.assertEquals(MixStatus.CONFIRM_INPUT, mix.getMixStatus());
+    Assertions.assertEquals(nbInputsExpected, mix.getNbInputs());
+    Assertions.assertEquals(hasLiquidityExpected, liquidityPool.hasInputs());
   }
 
   public void assertMixStatusSuccess(int nbAllRegisteredExpected, boolean hasLiquidityExpected)
@@ -311,17 +311,17 @@ public class AssertMultiClientManager extends MultiClientManager {
 
     // mix automatically switches to REGISTER_OUTPUTS, then SIGNING, then SUCCESS
     waitMixStatus(MixStatus.SUCCESS);
-    Assert.assertEquals(MixStatus.SUCCESS, mix.getMixStatus());
-    Assert.assertEquals(nbAllRegisteredExpected, mix.getNbInputs());
+    Assertions.assertEquals(MixStatus.SUCCESS, mix.getMixStatus());
+    Assertions.assertEquals(nbAllRegisteredExpected, mix.getNbInputs());
 
     InputPool liquidityPool = mix.getPool().getLiquidityQueue();
-    Assert.assertEquals(hasLiquidityExpected, liquidityPool.hasInputs());
+    Assertions.assertEquals(hasLiquidityExpected, liquidityPool.hasInputs());
 
     // all clients should have registered their outputs
-    Assert.assertEquals(nbAllRegisteredExpected, mix.getReceiveAddresses().size());
+    Assertions.assertEquals(nbAllRegisteredExpected, mix.getReceiveAddresses().size());
 
     // all clients should have signed
-    Assert.assertEquals(nbAllRegisteredExpected, mix.getNbSignatures());
+    Assertions.assertEquals(nbAllRegisteredExpected, mix.getNbSignatures());
 
     // all clients should be SUCCESS
     assertClientsSuccess(nbAllRegisteredExpected);
@@ -331,13 +331,13 @@ public class AssertMultiClientManager extends MultiClientManager {
     Transaction tx = mix.getTx();
     String txHash = tx.getHashAsString();
     String txHex = Utils.HEX.encode(tx.bitcoinSerialize());
-    Assert.assertEquals(expectedTxHash, txHash);
-    Assert.assertEquals(expectedTxHex, txHex);
+    Assertions.assertEquals(expectedTxHash, txHash);
+    Assertions.assertEquals(expectedTxHex, txHex);
   }
 
   private void assertClientsSuccess(int nbSuccessExpected) {
     waitDone(nbSuccessExpected);
-    Assert.assertTrue(getNbSuccess() == nbSuccessExpected);
+    Assertions.assertTrue(getNbSuccess() == nbSuccessExpected);
   }
 
   public void exit() {

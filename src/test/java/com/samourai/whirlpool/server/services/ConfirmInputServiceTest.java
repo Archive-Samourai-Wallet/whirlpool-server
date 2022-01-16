@@ -12,21 +12,19 @@ import com.samourai.whirlpool.server.integration.AbstractMixIntegrationTest;
 import java.lang.invoke.MethodHandles;
 import org.bitcoinj.core.ECKey;
 import org.bouncycastle.crypto.params.RSABlindingParameters;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  @Before
+  @BeforeEach
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     serverConfig.setTestMode(true);
@@ -56,12 +54,12 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
 
     // REGISTER_OUTPUT
     mix.setMixStatusAndTime(MixStatus.REGISTER_OUTPUT);
-    Assert.assertEquals(0, mix.getReceiveAddresses().size());
+    Assertions.assertEquals(0, mix.getReceiveAddresses().size());
     byte[] unblindedSignedBordereau =
         clientCryptoService.unblind(signedBlindedBordereau, blindingParams);
     registerOutputService.registerOutput(
         mix.computeInputsHash(), unblindedSignedBordereau, receiveAddress);
-    Assert.assertEquals(1, mix.getReceiveAddresses().size());
+    Assertions.assertEquals(1, mix.getReceiveAddresses().size());
 
     // TEST
 
@@ -92,9 +90,9 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
     TxOutPoint txOutPoint1 = blockchainDataService.getOutPoint(rpcTransaction, 0);
     TxOutPoint txOutPoint2 = blockchainDataService.getOutPoint(rpcTransaction, 1);
 
-    Assert.assertEquals(txOutPoint1.getHash(), txOutPoint2.getHash());
-    Assert.assertEquals(0, txOutPoint1.getIndex());
-    Assert.assertEquals(1, txOutPoint2.getIndex());
+    Assertions.assertEquals(txOutPoint1.getHash(), txOutPoint2.getHash());
+    Assertions.assertEquals(0, txOutPoint1.getIndex());
+    Assertions.assertEquals(1, txOutPoint2.getIndex());
 
     // TEST
     registerInputService.registerInput(
@@ -158,9 +156,9 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
     TxOutPoint txOutPoint1 = blockchainDataService.getOutPoint(rpcTransaction, 0);
     TxOutPoint txOutPoint2 = blockchainDataService.getOutPoint(rpcTransaction2, 1);
 
-    Assert.assertEquals(txOutPoint1.getHash(), txOutPoint2.getHash());
-    Assert.assertEquals(0, txOutPoint1.getIndex());
-    Assert.assertEquals(1, txOutPoint2.getIndex());
+    Assertions.assertEquals(txOutPoint1.getHash(), txOutPoint2.getHash());
+    Assertions.assertEquals(0, txOutPoint1.getIndex());
+    Assertions.assertEquals(1, txOutPoint2.getIndex());
 
     // TEST
     registerInputService.registerInput(

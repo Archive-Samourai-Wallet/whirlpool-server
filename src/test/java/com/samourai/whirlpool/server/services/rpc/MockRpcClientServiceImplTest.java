@@ -6,15 +6,12 @@ import com.samourai.whirlpool.server.integration.AbstractIntegrationTest;
 import java.lang.invoke.MethodHandles;
 import java.util.HashMap;
 import java.util.Map;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public class MockRpcClientServiceImplTest extends AbstractIntegrationTest {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -39,8 +36,8 @@ public class MockRpcClientServiceImplTest extends AbstractIntegrationTest {
 
       // VERIFY
       RpcRawTransactionResponse rawTxResponse = rpcClientService.getRawTransaction(txid).get();
-      Assert.assertEquals(txhex, rawTxResponse.getHex());
-      Assert.assertEquals(rawTxResponse.getConfirmations(), CONFIRMATIONS);
+      Assertions.assertEquals(txhex, rawTxResponse.getHex());
+      Assertions.assertEquals(rawTxResponse.getConfirmations(), CONFIRMATIONS);
     }
   }
 
@@ -52,14 +49,14 @@ public class MockRpcClientServiceImplTest extends AbstractIntegrationTest {
     rpcClientService.mock(txid, txhex, 1234);
 
     // unspent by default
-    Assert.assertTrue(rpcClientService.isTxOutUnspent(txid, 0));
-    Assert.assertTrue(rpcClientService.isTxOutUnspent(txid, 1));
+    Assertions.assertTrue(rpcClientService.isTxOutUnspent(txid, 0));
+    Assertions.assertTrue(rpcClientService.isTxOutUnspent(txid, 1));
 
     // mock one output as spent
     rpcClientService.mockSpentOutput(txid, 0);
 
     // verify
-    Assert.assertFalse(rpcClientService.isTxOutUnspent(txid, 0)); // spent
-    Assert.assertTrue(rpcClientService.isTxOutUnspent(txid, 1));
+    Assertions.assertFalse(rpcClientService.isTxOutUnspent(txid, 0)); // spent
+    Assertions.assertTrue(rpcClientService.isTxOutUnspent(txid, 1));
   }
 }

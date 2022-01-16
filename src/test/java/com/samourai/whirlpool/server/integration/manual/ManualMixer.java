@@ -11,26 +11,13 @@ import com.samourai.wallet.segwit.bech32.Bech32UtilGeneric;
 import com.samourai.wallet.util.FormatsUtilGeneric;
 import com.samourai.whirlpool.server.utils.BIP47WalletAndHDWallet;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import org.apache.commons.lang3.tuple.Pair;
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionInput;
-import org.bitcoinj.core.TransactionOutPoint;
-import org.bitcoinj.core.TransactionOutput;
-import org.bitcoinj.core.TransactionWitness;
+import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 import org.bouncycastle.util.encoders.Hex;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 
 public class ManualMixer {
   private Bech32UtilGeneric bech32Util = Bech32UtilGeneric.getInstance();
@@ -145,7 +132,7 @@ public class ManualMixer {
       // receiver can calculate from privkey
       String addressToReceiver =
           bech32Util.toBech32(receiveAddress.getReceiveECKey().getPubKey(), params);
-      Assert.assertEquals(addressFromSender, addressToReceiver);
+      Assertions.assertEquals(addressFromSender, addressToReceiver);
 
       Pair<Byte, byte[]> pair = Bech32Segwit.decode(isTestnet ? "tb" : "bc", addressToReceiver);
       byte[] scriptPubKey = Bech32Segwit.getScriptPubkey(pair.getLeft(), pair.getRight());
@@ -238,7 +225,7 @@ public class ManualMixer {
       witness.setPush(1, ecKey.getPubKey());
       tx.setWitness(i, witness);
 
-      Assert.assertEquals(0, tx.getInput(i).getScriptBytes().length);
+      Assertions.assertEquals(0, tx.getInput(i).getScriptBytes().length);
     }
 
     tx.verify();

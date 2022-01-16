@@ -5,15 +5,12 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 import com.samourai.whirlpool.server.beans.ConfirmedInput;
 import com.samourai.whirlpool.server.integration.AbstractIntegrationTest;
 import java.lang.invoke.MethodHandles;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public class UtilsTest extends AbstractIntegrationTest {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -27,7 +24,7 @@ public class UtilsTest extends AbstractIntegrationTest {
     // mustmix => should ban TX0
     String expected = "cb2fad88ae75fdabb2bcc131b2f4f0ff2c82af22b6dd804dc341900195fb6187";
     String actual = Utils.computeBlameIdentitifer(confirmedInput);
-    Assert.assertEquals(actual, actual);
+    Assertions.assertEquals(actual, actual);
   }
 
   @Test
@@ -39,6 +36,6 @@ public class UtilsTest extends AbstractIntegrationTest {
     // liquidity => should ban UTXO
     String expected = "cb2fad88ae75fdabb2bcc131b2f4f0ff2c82af22b6dd804dc341900195fb6187:2";
     String actual = Utils.computeBlameIdentitifer(confirmedInput);
-    Assert.assertEquals(actual, actual);
+    Assertions.assertEquals(actual, actual);
   }
 }

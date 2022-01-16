@@ -19,17 +19,14 @@ import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Transaction;
 import org.bouncycastle.crypto.params.RSABlindingParameters;
 import org.bouncycastle.crypto.params.RSAKeyParameters;
-import org.junit.Assert;
-import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public class SigningServiceTest extends AbstractIntegrationTest {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -40,6 +37,7 @@ public class SigningServiceTest extends AbstractIntegrationTest {
 
   @Autowired private RegisterOutputService registerOutputService;
 
+  @BeforeEach
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -70,7 +68,7 @@ public class SigningServiceTest extends AbstractIntegrationTest {
     mixService.registerSignature(mix.getMixId(), username, witness64);
 
     // verify
-    Assert.assertEquals(MixStatus.SUCCESS, mix.getMixStatus());
+    Assertions.assertEquals(MixStatus.SUCCESS, mix.getMixStatus());
   }
 
   @Test
@@ -99,11 +97,11 @@ public class SigningServiceTest extends AbstractIntegrationTest {
       Assertions.assertTrue(false);
     } catch (IllegalInputException e) {
       // verify
-      Assert.assertEquals("Input not found for signing username=dummy", e.getMessage());
-      Assert.assertEquals(MixStatus.SIGNING, mix.getMixStatus());
+      Assertions.assertEquals("Input not found for signing username=dummy", e.getMessage());
+      Assertions.assertEquals(MixStatus.SIGNING, mix.getMixStatus());
       return;
     }
-    Assert.assertTrue(false); // IllegalInputException expected
+    Assertions.assertTrue(false); // IllegalInputException expected
   }
 
   @Test
@@ -149,11 +147,11 @@ public class SigningServiceTest extends AbstractIntegrationTest {
       Assertions.assertTrue(false);
     } catch (IllegalInputException e) {
       // verify
-      Assert.assertEquals("User already signed, username=" + username, e.getMessage());
-      Assert.assertEquals(MixStatus.SIGNING, mix.getMixStatus());
+      Assertions.assertEquals("User already signed, username=" + username, e.getMessage());
+      Assertions.assertEquals(MixStatus.SIGNING, mix.getMixStatus());
       return;
     }
-    Assert.assertTrue(false); // IllegalInputException expected
+    Assertions.assertTrue(false); // IllegalInputException expected
   }
 
   @Test
@@ -183,10 +181,10 @@ public class SigningServiceTest extends AbstractIntegrationTest {
       Assertions.assertTrue(false);
     } catch (IllegalInputException e) {
       // verify
-      Assert.assertEquals("Invalid signature", e.getMessage());
+      Assertions.assertEquals("Invalid signature", e.getMessage());
       return;
     }
-    Assert.assertTrue(false); // IllegalInputException expected
+    Assertions.assertTrue(false); // IllegalInputException expected
   }
 
   private String[] doSigning(

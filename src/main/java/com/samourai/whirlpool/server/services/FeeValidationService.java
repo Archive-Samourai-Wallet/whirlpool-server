@@ -147,8 +147,7 @@ public class FeeValidationService {
           // validate fee address
           boolean isFeeAddress = false;
           try {
-            isFeeAddress =
-                xManagerClient.verifyAddressIndexResponseOrException(xmService, toAddress, x);
+            isFeeAddress = xManagerClient.verifyAddressIndexResponse(xmService, toAddress, x);
           } catch (Exception e) {
             log.error("!!! XMANAGER UNAVAILABLE !!! unable to validate Tx0");
             isFeeAddress = true;

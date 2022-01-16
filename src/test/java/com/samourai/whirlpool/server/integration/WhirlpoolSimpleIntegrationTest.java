@@ -16,19 +16,18 @@ import java.lang.invoke.MethodHandles;
 import java.util.Date;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public class WhirlpoolSimpleIntegrationTest extends AbstractIntegrationTest {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
+  @BeforeEach
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -56,7 +55,7 @@ public class WhirlpoolSimpleIntegrationTest extends AbstractIntegrationTest {
     String inputPCodeMessage = inputPCode.toString() + ":" + new Date().toString();
     String inputPCodeSig = messageSignUtil.signMessage(inputNotifAddressECKey, inputPCodeMessage);
     // server validates sender's message with payment code notification address pubkey
-    Assert.assertTrue(
+    Assertions.assertTrue(
         messageSignUtil.verifySignedMessage(
             inputPCode.notificationAddress(params).getAddressString(),
             inputPCodeMessage,
@@ -71,7 +70,7 @@ public class WhirlpoolSimpleIntegrationTest extends AbstractIntegrationTest {
     String outputPCodeSig =
         messageSignUtil.signMessage(outputNotifAddressECKey, outputPCodeMessage);
     // server validates receiver's message with payment code notification address pubkey
-    Assert.assertTrue(
+    Assertions.assertTrue(
         messageSignUtil.verifySignedMessage(
             outputPCode.notificationAddress(params).getAddressString(),
             outputPCodeMessage,

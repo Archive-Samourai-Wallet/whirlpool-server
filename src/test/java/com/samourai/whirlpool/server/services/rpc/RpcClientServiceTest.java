@@ -5,16 +5,13 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 import com.samourai.whirlpool.server.integration.AbstractJsonRpcClientTest;
 import java.util.HashMap;
 import java.util.Map;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-@Ignore
+@Disabled
 public class RpcClientServiceTest extends AbstractJsonRpcClientTest {
 
   @Test
@@ -41,11 +38,11 @@ public class RpcClientServiceTest extends AbstractJsonRpcClientTest {
       RpcRawTransactionResponse rawTxResponse = rpcClientService.getRawTransaction(txid).get();
 
       // VERIFY
-      Assert.assertEquals(txhex, rawTxResponse.getHex());
-      Assert.assertTrue(rawTxResponse.getConfirmations() > 80);
+      Assertions.assertEquals(txhex, rawTxResponse.getHex());
+      Assertions.assertTrue(rawTxResponse.getConfirmations() > 80);
 
       long expectedTime = expectedTimes.get(txid);
-      Assert.assertEquals(expectedTime, rawTxResponse.getTxTime());
+      Assertions.assertEquals(expectedTime, rawTxResponse.getTxTime());
     }
   }
 }

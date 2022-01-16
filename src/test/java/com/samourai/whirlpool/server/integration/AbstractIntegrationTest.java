@@ -34,11 +34,9 @@ import java.lang.invoke.MethodHandles;
 import java.util.Optional;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.params.TestNet3Params;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,8 +49,6 @@ public abstract class AbstractIntegrationTest {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   @LocalServerPort protected int port;
-
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Autowired protected WhirlpoolServerConfig serverConfig;
 
@@ -108,14 +104,15 @@ public abstract class AbstractIntegrationTest {
 
   protected CliConfig cliConfig;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     // enable debug
     Utils.setLoggerDebug();
 
     serverConfig.validate();
 
-    Assert.assertTrue(MockRpcClientServiceImpl.class.isAssignableFrom(rpcClientService.getClass()));
+    Assertions.assertTrue(
+        MockRpcClientServiceImpl.class.isAssignableFrom(rpcClientService.getClass()));
     this.params = cryptoService.getNetworkParameters();
 
     cliConfig = new CliConfig();
@@ -218,7 +215,7 @@ public abstract class AbstractIntegrationTest {
     return pool.getCurrentMix();
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     if (multiClientManager != null) {
       multiClientManager.exit();

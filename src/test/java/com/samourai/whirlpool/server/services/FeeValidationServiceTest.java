@@ -25,15 +25,13 @@ import java.lang.invoke.MethodHandles;
 import java.util.*;
 import java8.util.Lists;
 import org.bitcoinj.core.Transaction;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public class FeeValidationServiceTest extends AbstractIntegrationTest {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -53,6 +51,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
   private SimpleUtxoKeyProvider utxoKeyProvider;
   private Tx0PreviewService tx0PreviewService;
 
+  @BeforeEach
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -76,8 +75,8 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
             .getRpcTransaction(txid)
             .orElseThrow(() -> new NoSuchElementException());
     WhirlpoolFeeData feeData = feeValidationService.decodeFeeData(rpcTransaction.getTx());
-    Assert.assertEquals(feeIndice, feeData.getFeeIndice());
-    Assert.assertEquals(scodePayload, feeData.getScodePayload());
+    Assertions.assertEquals(feeIndice, feeData.getFeeIndice());
+    Assertions.assertEquals(scodePayload, feeData.getScodePayload());
   }
 
   private void assertFeeDataNull(String txid) {
@@ -86,7 +85,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
             .getRpcTransaction(txid)
             .orElseThrow(() -> new NoSuchElementException());
     WhirlpoolFeeData feeData = feeValidationService.decodeFeeData(rpcTransaction.getTx());
-    Assert.assertNull(feeData);
+    Assertions.assertNull(feeData);
   }
 
   @Test
@@ -115,20 +114,20 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
     String txid = "6588946af1d9d92b402fd672360fd12217abfaf6382ce644d358e8174781f0ce";
 
     // accept when paid exact fee
-    Assert.assertTrue(doIsTx0FeePaid(txid, 1234, FEES_VALID_50K, 0, null, 100));
+    Assertions.assertTrue(doIsTx0FeePaid(txid, 1234, FEES_VALID_50K, 0, null, 100));
 
     // reject when paid more than fee
-    Assert.assertFalse(doIsTx0FeePaid(txid, 1234, FEES_VALID_50K - 1, 0, null, 100));
-    Assert.assertFalse(doIsTx0FeePaid(txid, 1234, 1, 0, null, 100));
+    Assertions.assertFalse(doIsTx0FeePaid(txid, 1234, FEES_VALID_50K - 1, 0, null, 100));
+    Assertions.assertFalse(doIsTx0FeePaid(txid, 1234, 1, 0, null, 100));
 
     // reject when paid less than fee
-    Assert.assertFalse(doIsTx0FeePaid(txid, 1234, FEES_VALID_50K + 1, 0, null, 100));
-    Assert.assertFalse(doIsTx0FeePaid(txid, 1234, 1000000, 0, null, 100));
+    Assertions.assertFalse(doIsTx0FeePaid(txid, 1234, FEES_VALID_50K + 1, 0, null, 100));
+    Assertions.assertFalse(doIsTx0FeePaid(txid, 1234, 1000000, 0, null, 100));
 
     // reject when paid to wrong xpub indice
-    Assert.assertFalse(doIsTx0FeePaid(txid, 234, FEES_VALID_50K, 1, null, 100));
-    Assert.assertFalse(doIsTx0FeePaid(txid, 234, FEES_VALID_50K, 2, null, 100));
-    Assert.assertFalse(doIsTx0FeePaid(txid, 234, FEES_VALID_50K, 10, null, 100));
+    Assertions.assertFalse(doIsTx0FeePaid(txid, 234, FEES_VALID_50K, 1, null, 100));
+    Assertions.assertFalse(doIsTx0FeePaid(txid, 234, FEES_VALID_50K, 2, null, 100));
+    Assertions.assertFalse(doIsTx0FeePaid(txid, 234, FEES_VALID_50K, 10, null, 100));
   }
 
   @Test
@@ -138,14 +137,14 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
     feeAccept.put(FEES_VALID_50K, 11111111L);
 
     // reject when no feeAccept
-    Assert.assertFalse(doIsTx0FeePaid(txid, 1234, FEES_VALID_50K + 10, 0, null, 100));
+    Assertions.assertFalse(doIsTx0FeePaid(txid, 1234, FEES_VALID_50K + 10, 0, null, 100));
 
     // accept when tx0Time <= feeAccept.maxTime
-    Assert.assertTrue(doIsTx0FeePaid(txid, 11111110L, FEES_VALID_50K + 10, 0, feeAccept, 100));
-    Assert.assertTrue(doIsTx0FeePaid(txid, 11110L, FEES_VALID_50K + 10, 0, feeAccept, 100));
+    Assertions.assertTrue(doIsTx0FeePaid(txid, 11111110L, FEES_VALID_50K + 10, 0, feeAccept, 100));
+    Assertions.assertTrue(doIsTx0FeePaid(txid, 11110L, FEES_VALID_50K + 10, 0, feeAccept, 100));
 
     // reject when tx0Time > feeAccept.maxTime
-    Assert.assertFalse(doIsTx0FeePaid(txid, 11111112L, FEES_VALID_50K + 10, 0, feeAccept, 100));
+    Assertions.assertFalse(doIsTx0FeePaid(txid, 11111112L, FEES_VALID_50K + 10, 0, feeAccept, 100));
   }
 
   private boolean doIsTx0FeePaid(
@@ -265,12 +264,12 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
                 utxoKeyProvider);
 
     WhirlpoolFeeData feeData = feeValidationService.decodeFeeData(tx0.getTx());
-    Assert.assertEquals(feeIndex, feeData.getFeeIndice());
-    Assert.assertEquals(scodePayload, feeData.getScodePayload());
-    Assert.assertEquals(partnerPayload, feeData.getPartnerPayload());
+    Assertions.assertEquals(feeIndex, feeData.getFeeIndice());
+    Assertions.assertEquals(scodePayload, feeData.getScodePayload());
+    Assertions.assertEquals(partnerPayload, feeData.getPartnerPayload());
 
     PoolFee poolFee = new PoolFee(FEES_VALID, null);
-    Assert.assertTrue(feeValidationService.isValidTx0(tx0.getTx(), 1234, feeData, poolFee));
+    Assertions.assertTrue(feeValidationService.isValidTx0(tx0.getTx(), 1234, feeData, poolFee));
   }
 
   @Test
@@ -372,12 +371,12 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
                 utxoKeyProvider);
 
     WhirlpoolFeeData feeData = feeValidationService.decodeFeeData(tx0.getTx());
-    Assert.assertEquals(feeIndex, feeData.getFeeIndice());
-    Assert.assertEquals(scodePayload, feeData.getScodePayload());
-    Assert.assertEquals(partnerPayload, feeData.getPartnerPayload());
+    Assertions.assertEquals(feeIndex, feeData.getFeeIndice());
+    Assertions.assertEquals(scodePayload, feeData.getScodePayload());
+    Assertions.assertEquals(partnerPayload, feeData.getPartnerPayload());
 
     PoolFee poolFee = new PoolFee(FEES_VALID, null);
-    Assert.assertFalse(feeValidationService.isValidTx0(tx0.getTx(), 1234, feeData, poolFee));
+    Assertions.assertFalse(feeValidationService.isValidTx0(tx0.getTx(), 1234, feeData, poolFee));
   }
 
   @Test
@@ -387,12 +386,12 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
     PoolFee poolFee = new PoolFee(FEES_VALID, null);
 
     Transaction tx = getTx(txid);
-    Assert.assertFalse(
+    Assertions.assertFalse(
         feeValidationService.isValidTx0(tx, 1234, feeValidationService.decodeFeeData(tx), poolFee));
 
     // accept when valid feePayload
     setScodeConfig("myscode", (short) 12345, 0, null);
-    Assert.assertTrue(
+    Assertions.assertTrue(
         feeValidationService.isValidTx0(tx, 1234, feeValidationService.decodeFeeData(tx), poolFee));
   }
 
@@ -495,11 +494,11 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
                 utxoKeyProvider);
 
     WhirlpoolFeeData feeData = feeValidationService.decodeFeeData(tx0.getTx());
-    Assert.assertEquals(feeIndex, feeData.getFeeIndice());
-    Assert.assertEquals(scodePayload, feeData.getScodePayload());
+    Assertions.assertEquals(feeIndex, feeData.getFeeIndice());
+    Assertions.assertEquals(scodePayload, feeData.getScodePayload());
 
     PoolFee poolFee = new PoolFee(FEES_VALID, null);
-    Assert.assertTrue(feeValidationService.isValidTx0(tx0.getTx(), 1234, feeData, poolFee));
+    Assertions.assertTrue(feeValidationService.isValidTx0(tx0.getTx(), 1234, feeData, poolFee));
   }
 
   @Test
@@ -601,53 +600,53 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
                 utxoKeyProvider);
 
     WhirlpoolFeeData feeData = feeValidationService.decodeFeeData(tx0.getTx());
-    Assert.assertEquals(feeIndex, feeData.getFeeIndice());
-    Assert.assertEquals(scodePayload, feeData.getScodePayload());
+    Assertions.assertEquals(feeIndex, feeData.getFeeIndice());
+    Assertions.assertEquals(scodePayload, feeData.getScodePayload());
 
     PoolFee poolFee = new PoolFee(FEES_VALID, null);
-    Assert.assertFalse(feeValidationService.isValidTx0(tx0.getTx(), 1234, feeData, poolFee));
+    Assertions.assertFalse(feeValidationService.isValidTx0(tx0.getTx(), 1234, feeData, poolFee));
   }
 
   @Test
   public void getFeePayloadByScode() throws Exception {
     long now = System.currentTimeMillis();
-    Assert.assertEquals(
+    Assertions.assertEquals(
         0, (int) feeValidationService.getScodeConfigByScode(SCODE_FOO_0, now).getFeeValuePercent());
-    Assert.assertEquals(
+    Assertions.assertEquals(
         25,
         (int) feeValidationService.getScodeConfigByScode(SCODE_BAR_25, now).getFeeValuePercent());
-    Assert.assertEquals(
+    Assertions.assertEquals(
         50,
         (int) feeValidationService.getScodeConfigByScode(SCODE_MIN_50, now).getFeeValuePercent());
-    Assert.assertEquals(
+    Assertions.assertEquals(
         80,
         (int) feeValidationService.getScodeConfigByScode(SCODE_MAX_80, now).getFeeValuePercent());
     // case non-sensitive
-    Assert.assertEquals(
+    Assertions.assertEquals(
         80, (int) feeValidationService.getScodeConfigByScode("MaX", now).getFeeValuePercent());
-    Assert.assertEquals(
+    Assertions.assertEquals(
         80, (int) feeValidationService.getScodeConfigByScode("max", now).getFeeValuePercent());
-    Assert.assertEquals(
+    Assertions.assertEquals(
         80, (int) feeValidationService.getScodeConfigByScode("MAX", now).getFeeValuePercent());
-    Assert.assertEquals(null, feeValidationService.getScodeConfigByScode("invalid", now));
+    Assertions.assertEquals(null, feeValidationService.getScodeConfigByScode("invalid", now));
   }
 
   @Test
   public void getScodeByFeePayload() throws Exception {
-    Assert.assertEquals(
+    Assertions.assertEquals(
         SCODE_FOO_PAYLOAD,
         (short) feeValidationService.getScodeByScodePayload(SCODE_FOO_PAYLOAD).getPayload());
-    Assert.assertEquals(
+    Assertions.assertEquals(
         SCODE_BAR_PAYLOAD,
         (short) feeValidationService.getScodeByScodePayload(SCODE_BAR_PAYLOAD).getPayload());
-    Assert.assertEquals(
+    Assertions.assertEquals(
         SCODE_MIN_PAYLOAD,
         (short) feeValidationService.getScodeByScodePayload(SCODE_MIN_PAYLOAD).getPayload());
-    Assert.assertEquals(
+    Assertions.assertEquals(
         SCODE_MAX_PAYLOAD,
         (short) feeValidationService.getScodeByScodePayload(SCODE_MAX_PAYLOAD).getPayload());
 
-    Assert.assertEquals(null, feeValidationService.getScodeByScodePayload((short) 0));
-    Assert.assertEquals(null, feeValidationService.getScodeByScodePayload((short) -1));
+    Assertions.assertEquals(null, feeValidationService.getScodeByScodePayload((short) 0));
+    Assertions.assertEquals(null, feeValidationService.getScodeByScodePayload((short) -1));
   }
 }

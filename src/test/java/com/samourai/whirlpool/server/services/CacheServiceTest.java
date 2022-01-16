@@ -5,16 +5,13 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 import com.samourai.whirlpool.server.beans.CachedResult;
 import com.samourai.whirlpool.server.integration.AbstractIntegrationTest;
 import java.lang.invoke.MethodHandles;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public class CacheServiceTest extends AbstractIntegrationTest {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -30,21 +27,21 @@ public class CacheServiceTest extends AbstractIntegrationTest {
     // TEST: first call => not cached
     final CacheServiceTest spy = Mockito.spy(this);
     int nbCallsExpected = 0;
-    Assert.assertEquals(
+    Assertions.assertEquals(
         "result111",
         cacheService.getOrPut(CACHE_NAME, "111", String.class, (v) -> spy.foo("result111")));
     // VERIFY
     Mockito.verify(spy, Mockito.times(++nbCallsExpected)).foo(Mockito.anyString());
 
     // TEST: second call => cached
-    Assert.assertEquals(
+    Assertions.assertEquals(
         "result111",
         cacheService.getOrPut(CACHE_NAME, "111", String.class, (v) -> spy.foo("result111")));
     // VERIFY
     Mockito.verify(spy, Mockito.times(nbCallsExpected)).foo(Mockito.anyString());
 
     // TEST: second call on different cacheName => not cached
-    Assert.assertEquals(
+    Assertions.assertEquals(
         "result111",
         cacheService.getOrPut(
             "AnotherCacheName", "111", String.class, (v) -> spy.foo("result111")));
@@ -52,21 +49,21 @@ public class CacheServiceTest extends AbstractIntegrationTest {
     Mockito.verify(spy, Mockito.times(++nbCallsExpected)).foo(Mockito.anyString());
 
     // TEST: different call => not cached
-    Assert.assertEquals(
+    Assertions.assertEquals(
         "result222",
         cacheService.getOrPut(CACHE_NAME, "222", String.class, (v) -> spy.foo("result222")));
     // VERIFY
     Mockito.verify(spy, Mockito.times(++nbCallsExpected)).foo(Mockito.anyString());
 
     // TEST: different call again => cached
-    Assert.assertEquals(
+    Assertions.assertEquals(
         "result222",
         cacheService.getOrPut(CACHE_NAME, "222", String.class, (v) -> spy.foo("result222")));
     // VERIFY
     Mockito.verify(spy, Mockito.times(nbCallsExpected)).foo(Mockito.anyString());
 
     // TEST: first call again => still cached
-    Assert.assertEquals(
+    Assertions.assertEquals(
         "result111",
         cacheService.getOrPut(CACHE_NAME, "111", String.class, (v) -> spy.foo("result111")));
     // VERIFY
@@ -84,7 +81,7 @@ public class CacheServiceTest extends AbstractIntegrationTest {
     // TEST: first call => not cached
     final CacheServiceTest spy = Mockito.spy(this);
     int nbCallsExpected = 0;
-    Assert.assertEquals(
+    Assertions.assertEquals(
         "result111",
         cacheService.getOrPutCachedResult(
             CACHE_NAME, "111", (v) -> spy.fooCachedResult("result111")));
@@ -92,7 +89,7 @@ public class CacheServiceTest extends AbstractIntegrationTest {
     Mockito.verify(spy, Mockito.times(++nbCallsExpected)).fooCachedResult(Mockito.anyString());
 
     // TEST: second call => cached
-    Assert.assertEquals(
+    Assertions.assertEquals(
         "result111",
         cacheService.getOrPutCachedResult(
             CACHE_NAME, "111", (v) -> spy.fooCachedResult("result111")));
@@ -116,9 +113,9 @@ public class CacheServiceTest extends AbstractIntegrationTest {
           CACHE_NAME,
           "222",
           (v) -> spy.fooCachedResult(new Exception("222"))); // exception expected
-      Assert.assertTrue(false);
+      Assertions.assertTrue(false);
     } catch (Exception e) {
-      Assert.assertEquals("222", e.getMessage());
+      Assertions.assertEquals("222", e.getMessage());
     }
     // VERIFY
     Mockito.verify(spy, Mockito.times(++nbCallsExpected))
@@ -130,9 +127,9 @@ public class CacheServiceTest extends AbstractIntegrationTest {
           CACHE_NAME,
           "222",
           (v) -> spy.fooCachedResult(new Exception("222"))); // exception expected
-      Assert.assertTrue(false);
+      Assertions.assertTrue(false);
     } catch (Exception e) {
-      Assert.assertEquals("222", e.getMessage());
+      Assertions.assertEquals("222", e.getMessage());
     }
     // VERIFY
     Mockito.verify(spy, Mockito.times(nbCallsExpected))

@@ -9,16 +9,13 @@ import java.security.PublicKey;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.params.RSABlindingParameters;
 import org.bouncycastle.crypto.params.RSAKeyParameters;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public class CryptoServiceTest extends AbstractIntegrationTest {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -53,7 +50,8 @@ public class CryptoServiceTest extends AbstractIntegrationTest {
           + "FSqZ7pgeAply9rggFR+TQ/g=\n"
           + "-----END PRIVATE KEY-----\n";
 
-  @Before
+  @BeforeEach
+  @Override
   public void setUp() throws Exception {
     super.setUp();
   }
@@ -65,7 +63,7 @@ public class CryptoServiceTest extends AbstractIntegrationTest {
     String pem = testUtils.computePkPEM(pk);
 
     // VERIFY
-    Assert.assertEquals(PK_PEM, pem);
+    Assertions.assertEquals(PK_PEM, pem);
   }
 
   @Test
@@ -76,7 +74,7 @@ public class CryptoServiceTest extends AbstractIntegrationTest {
     PublicKey pubKey = cryptoService.computePublicKey(pk);
 
     // VERIFY
-    Assert.assertEquals(
+    Assertions.assertEquals(
         "fOfuHfBXi)dUZGG{ydc70r&D9F=VzZfOfuj0!HBN0j]oYj@ix!8n.OZ]F[0!k374y4T&}+p#*(/jLcI$C2N]@tWXSJdLhDlb1JKjDe=)40z7!WBR:-lxE7=OX@[<=&/bugVzhtlVEAQ*fN=>rsa<K5bsJ3ZkSe7+6=^izOFaG4(JQhh+wCeZtx4h#gzPv@Q08)[U*ntw=pY%z5XR=!k[#n@)X4((k.$&W6P[1#xFEAG)OxOaCC4$y/bPekjQq6e]20(Xn$tW?T{y/G{k5b6S6PuA]Aj7=Og#po)T>=GbZ%lny}Mkp6A]-&px7^dYwIr5A*JRe.3JwHk{^vQG42APennPpZ(baeyDM0iFHN#:IVOFh03q05JjfE#6^K#8vg^V*t0v2t4lPPf+2b=xd&V/YcHL97w@bD4/4Fj/P*hcaz5WcEgf@/aLLAT6iaW&!Vm[bf?u=8&514&R(&oz#heHMnkn*eOq$BMebWba(i^[YSF*v7Y(f7]a3m=CCsFlcKH76VQf5!.wCNc!Jp2]z-VB7qD.VLv=kreZxE[fs[@5(%Zh<hYzInyRi&YY>Xknto.&}eg-tVLMajtO8jENyNrEa>})]#=AxbLzb+*s5n:NLz[4]}>1HHg0WvhH26Lb}swgiV5-Qxi4R385EVWLP28l.DrAZo{DHUO4A:VO31W-K0OHtq2",
         WhirlpoolProtocol.encodeBytes(pubKey.getEncoded()));
   }
@@ -100,7 +98,7 @@ public class CryptoServiceTest extends AbstractIntegrationTest {
         clientCryptoService.unblind(signedBlindedBordereau, blindingParams);
 
     // verify
-    Assert.assertTrue(
+    Assertions.assertTrue(
         cryptoService.verifyUnblindedSignedBordereau(
             receiveAddress, unblindedSignedBordereau, serverKeyPair));
   }
@@ -125,7 +123,7 @@ public class CryptoServiceTest extends AbstractIntegrationTest {
 
     // verify
     String fakeReceiveAddress = "fakeReceiveAddress";
-    Assert.assertFalse(
+    Assertions.assertFalse(
         cryptoService.verifyUnblindedSignedBordereau(
             fakeReceiveAddress, unblindedSignedBordereau, serverKeyPair)); // reject
   }
@@ -153,7 +151,7 @@ public class CryptoServiceTest extends AbstractIntegrationTest {
             signedBlindedBordereau, fakeBlindingParams); // unblind from different blindingParams
 
     // verify
-    Assert.assertFalse(
+    Assertions.assertFalse(
         cryptoService.verifyUnblindedSignedBordereau(
             receiveAddress, unblindedSignedBordereau, serverKeyPair)); // reject
   }
@@ -179,7 +177,7 @@ public class CryptoServiceTest extends AbstractIntegrationTest {
         clientCryptoService.unblind(signedBlindedBordereau, blindingParams);
 
     // verify
-    Assert.assertFalse(
+    Assertions.assertFalse(
         cryptoService.verifyUnblindedSignedBordereau(
             receiveAddress, unblindedSignedBordereau, serverKeyPair)); // reject
   }

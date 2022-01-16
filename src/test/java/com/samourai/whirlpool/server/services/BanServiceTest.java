@@ -9,16 +9,13 @@ import com.samourai.whirlpool.server.integration.AbstractIntegrationTest;
 import com.samourai.whirlpool.server.persistence.repositories.BlameRepository;
 import java.lang.invoke.MethodHandles;
 import java.sql.Timestamp;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public class BanServiceTest extends AbstractIntegrationTest {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -47,39 +44,39 @@ public class BanServiceTest extends AbstractIntegrationTest {
             mix.getPool().getPoolId(), UTXO_HASH, UTXO_INDEX, liquidity);
 
     // not banned yet
-    Assert.assertFalse(banService.findActiveBan(UTXO_HASH, UTXO_INDEX).isPresent());
+    Assertions.assertFalse(banService.findActiveBan(UTXO_HASH, UTXO_INDEX).isPresent());
 
     // blame 1/2 => not banned yet
     blameService.blame(confirmedInput, BlameReason.DISCONNECT, mix);
-    Assert.assertFalse(banService.findActiveBan(UTXO_HASH, UTXO_INDEX).isPresent());
+    Assertions.assertFalse(banService.findActiveBan(UTXO_HASH, UTXO_INDEX).isPresent());
 
     // blame 2/2 => banned
     blameService.blame(confirmedInput, BlameReason.DISCONNECT, mix);
-    Assert.assertTrue(banService.findActiveBan(UTXO_HASH, UTXO_INDEX).isPresent());
+    Assertions.assertTrue(banService.findActiveBan(UTXO_HASH, UTXO_INDEX).isPresent());
 
     // inputs from same HASH are banned too
-    Assert.assertTrue(banService.findActiveBan(UTXO_HASH, 0).isPresent());
-    Assert.assertTrue(banService.findActiveBan(UTXO_HASH, 1).isPresent());
-    Assert.assertTrue(banService.findActiveBan(UTXO_HASH, 100).isPresent());
+    Assertions.assertTrue(banService.findActiveBan(UTXO_HASH, 0).isPresent());
+    Assertions.assertTrue(banService.findActiveBan(UTXO_HASH, 1).isPresent());
+    Assertions.assertTrue(banService.findActiveBan(UTXO_HASH, 100).isPresent());
 
     // other inputs are not banned
-    Assert.assertFalse(banService.findActiveBan("foo", UTXO_INDEX).isPresent());
+    Assertions.assertFalse(banService.findActiveBan("foo", UTXO_INDEX).isPresent());
 
     // ban still active before expiration
     Timestamp beforeExpiration = new Timestamp(System.currentTimeMillis() + EXPIRATION_MS - 10000);
-    Assert.assertTrue(
+    Assertions.assertTrue(
         banService.findActiveBan(UTXO_HASH, UTXO_INDEX, beforeExpiration).isPresent());
 
     // other inputs are not banned
-    Assert.assertFalse(banService.findActiveBan("foo", UTXO_INDEX).isPresent());
+    Assertions.assertFalse(banService.findActiveBan("foo", UTXO_INDEX).isPresent());
 
     // ban disabled after expiration
     Timestamp afterExpiration = new Timestamp(System.currentTimeMillis() + EXPIRATION_MS);
-    Assert.assertFalse(
+    Assertions.assertFalse(
         banService.findActiveBan(UTXO_HASH, UTXO_INDEX, afterExpiration).isPresent());
 
     afterExpiration = new Timestamp(System.currentTimeMillis() + EXPIRATION_MS + 10000);
-    Assert.assertFalse(
+    Assertions.assertFalse(
         banService.findActiveBan(UTXO_HASH, UTXO_INDEX, afterExpiration).isPresent());
   }
 
@@ -99,39 +96,39 @@ public class BanServiceTest extends AbstractIntegrationTest {
             mix.getPool().getPoolId(), UTXO_HASH, UTXO_INDEX, liquidity);
 
     // not banned yet
-    Assert.assertFalse(banService.findActiveBan(UTXO_HASH, UTXO_INDEX).isPresent());
+    Assertions.assertFalse(banService.findActiveBan(UTXO_HASH, UTXO_INDEX).isPresent());
 
     // blame 1/2 => not banned yet
     blameService.blame(confirmedInput, BlameReason.DISCONNECT, mix);
-    Assert.assertFalse(banService.findActiveBan(UTXO_HASH, UTXO_INDEX).isPresent());
+    Assertions.assertFalse(banService.findActiveBan(UTXO_HASH, UTXO_INDEX).isPresent());
 
     // blame 2/2 => banned
     blameService.blame(confirmedInput, BlameReason.DISCONNECT, mix);
-    Assert.assertTrue(banService.findActiveBan(UTXO_HASH, UTXO_INDEX).isPresent());
+    Assertions.assertTrue(banService.findActiveBan(UTXO_HASH, UTXO_INDEX).isPresent());
 
     // other inputs are not banned
-    Assert.assertFalse(banService.findActiveBan("foo", UTXO_INDEX).isPresent());
+    Assertions.assertFalse(banService.findActiveBan("foo", UTXO_INDEX).isPresent());
 
     // inputs from same HASH are not banned
-    Assert.assertFalse(banService.findActiveBan(UTXO_HASH, 0).isPresent());
-    Assert.assertFalse(banService.findActiveBan(UTXO_HASH, 1).isPresent());
-    Assert.assertFalse(banService.findActiveBan(UTXO_HASH, 100).isPresent());
+    Assertions.assertFalse(banService.findActiveBan(UTXO_HASH, 0).isPresent());
+    Assertions.assertFalse(banService.findActiveBan(UTXO_HASH, 1).isPresent());
+    Assertions.assertFalse(banService.findActiveBan(UTXO_HASH, 100).isPresent());
 
     // ban still active before expiration
     Timestamp beforeExpiration = new Timestamp(System.currentTimeMillis() + EXPIRATION_MS - 10000);
-    Assert.assertTrue(
+    Assertions.assertTrue(
         banService.findActiveBan(UTXO_HASH, UTXO_INDEX, beforeExpiration).isPresent());
 
     // other inputs are not banned
-    Assert.assertFalse(banService.findActiveBan("foo", UTXO_INDEX).isPresent());
+    Assertions.assertFalse(banService.findActiveBan("foo", UTXO_INDEX).isPresent());
 
     // ban disabled after expiration
     Timestamp afterExpiration = new Timestamp(System.currentTimeMillis() + EXPIRATION_MS);
-    Assert.assertFalse(
+    Assertions.assertFalse(
         banService.findActiveBan(UTXO_HASH, UTXO_INDEX, afterExpiration).isPresent());
 
     afterExpiration = new Timestamp(System.currentTimeMillis() + EXPIRATION_MS + 10000);
-    Assert.assertFalse(
+    Assertions.assertFalse(
         banService.findActiveBan(UTXO_HASH, UTXO_INDEX, afterExpiration).isPresent());
   }
 
@@ -152,36 +149,36 @@ public class BanServiceTest extends AbstractIntegrationTest {
     String identifier = Utils.computeBlameIdentitifer(confirmedInput);
 
     // not banned yet
-    Assert.assertFalse(banService.findActiveBan(UTXO_HASH, UTXO_INDEX).isPresent());
+    Assertions.assertFalse(banService.findActiveBan(UTXO_HASH, UTXO_INDEX).isPresent());
 
     // permanent ban
     banService.banPermanent(identifier, null, null);
 
     // banned
-    Assert.assertTrue(banService.findActiveBan(UTXO_HASH, UTXO_INDEX).isPresent());
+    Assertions.assertTrue(banService.findActiveBan(UTXO_HASH, UTXO_INDEX).isPresent());
 
     // other inputs are not banned
-    Assert.assertFalse(banService.findActiveBan("foo", UTXO_INDEX).isPresent());
+    Assertions.assertFalse(banService.findActiveBan("foo", UTXO_INDEX).isPresent());
 
     // inputs from same HASH are banned too
-    Assert.assertTrue(banService.findActiveBan(UTXO_HASH, 0).isPresent());
-    Assert.assertTrue(banService.findActiveBan(UTXO_HASH, 1).isPresent());
-    Assert.assertTrue(banService.findActiveBan(UTXO_HASH, 100).isPresent());
+    Assertions.assertTrue(banService.findActiveBan(UTXO_HASH, 0).isPresent());
+    Assertions.assertTrue(banService.findActiveBan(UTXO_HASH, 1).isPresent());
+    Assertions.assertTrue(banService.findActiveBan(UTXO_HASH, 100).isPresent());
 
     // ban still active before expiration
     Timestamp beforeExpiration = new Timestamp(System.currentTimeMillis() + EXPIRATION_MS - 10000);
-    Assert.assertTrue(
+    Assertions.assertTrue(
         banService.findActiveBan(UTXO_HASH, UTXO_INDEX, beforeExpiration).isPresent());
 
     // ban still after expiration
     Timestamp afterExpiration = new Timestamp(System.currentTimeMillis() + EXPIRATION_MS);
-    Assert.assertTrue(banService.findActiveBan(UTXO_HASH, UTXO_INDEX, afterExpiration).isPresent());
+    Assertions.assertTrue(banService.findActiveBan(UTXO_HASH, UTXO_INDEX, afterExpiration).isPresent());
 
     afterExpiration = new Timestamp(System.currentTimeMillis() + EXPIRATION_MS + 10000);
-    Assert.assertTrue(banService.findActiveBan(UTXO_HASH, UTXO_INDEX, afterExpiration).isPresent());
+    Assertions.assertTrue(banService.findActiveBan(UTXO_HASH, UTXO_INDEX, afterExpiration).isPresent());
 
     // other inputs are not banned
-    Assert.assertFalse(banService.findActiveBan("foo", UTXO_INDEX).isPresent());
+    Assertions.assertFalse(banService.findActiveBan("foo", UTXO_INDEX).isPresent());
   }
 
   @Test
@@ -199,44 +196,44 @@ public class BanServiceTest extends AbstractIntegrationTest {
     String identifier = Utils.computeBlameIdentitifer(confirmedInput);
 
     // not banned yet
-    Assert.assertFalse(banService.findActiveBan(UTXO_HASH, UTXO_INDEX).isPresent());
+    Assertions.assertFalse(banService.findActiveBan(UTXO_HASH, UTXO_INDEX).isPresent());
 
     // permanent ban
     banService.banPermanent(identifier, null, null);
 
     // banned
-    Assert.assertTrue(banService.findActiveBan(UTXO_HASH, UTXO_INDEX).isPresent());
+    Assertions.assertTrue(banService.findActiveBan(UTXO_HASH, UTXO_INDEX).isPresent());
 
     // other inputs are not banned
-    Assert.assertFalse(banService.findActiveBan("foo", UTXO_INDEX).isPresent());
+    Assertions.assertFalse(banService.findActiveBan("foo", UTXO_INDEX).isPresent());
 
     // inputs from same HASH are not
-    Assert.assertFalse(banService.findActiveBan(UTXO_HASH, 0).isPresent());
-    Assert.assertFalse(banService.findActiveBan(UTXO_HASH, 1).isPresent());
-    Assert.assertFalse(banService.findActiveBan(UTXO_HASH, 100).isPresent());
+    Assertions.assertFalse(banService.findActiveBan(UTXO_HASH, 0).isPresent());
+    Assertions.assertFalse(banService.findActiveBan(UTXO_HASH, 1).isPresent());
+    Assertions.assertFalse(banService.findActiveBan(UTXO_HASH, 100).isPresent());
 
     // ban still active before expiration
     Timestamp beforeExpiration = new Timestamp(System.currentTimeMillis() + EXPIRATION_MS - 10000);
-    Assert.assertTrue(
+    Assertions.assertTrue(
         banService.findActiveBan(UTXO_HASH, UTXO_INDEX, beforeExpiration).isPresent());
-    Assert.assertFalse(banService.findActiveBan(UTXO_HASH, 0).isPresent());
-    Assert.assertFalse(banService.findActiveBan(UTXO_HASH, 1).isPresent());
-    Assert.assertFalse(banService.findActiveBan(UTXO_HASH, 100).isPresent());
+    Assertions.assertFalse(banService.findActiveBan(UTXO_HASH, 0).isPresent());
+    Assertions.assertFalse(banService.findActiveBan(UTXO_HASH, 1).isPresent());
+    Assertions.assertFalse(banService.findActiveBan(UTXO_HASH, 100).isPresent());
 
     // ban still after expiration
     Timestamp afterExpiration = new Timestamp(System.currentTimeMillis() + EXPIRATION_MS);
-    Assert.assertTrue(banService.findActiveBan(UTXO_HASH, UTXO_INDEX, afterExpiration).isPresent());
-    Assert.assertFalse(banService.findActiveBan(UTXO_HASH, 0).isPresent());
-    Assert.assertFalse(banService.findActiveBan(UTXO_HASH, 1).isPresent());
-    Assert.assertFalse(banService.findActiveBan(UTXO_HASH, 100).isPresent());
+    Assertions.assertTrue(banService.findActiveBan(UTXO_HASH, UTXO_INDEX, afterExpiration).isPresent());
+    Assertions.assertFalse(banService.findActiveBan(UTXO_HASH, 0).isPresent());
+    Assertions.assertFalse(banService.findActiveBan(UTXO_HASH, 1).isPresent());
+    Assertions.assertFalse(banService.findActiveBan(UTXO_HASH, 100).isPresent());
 
     afterExpiration = new Timestamp(System.currentTimeMillis() + EXPIRATION_MS + 10000);
-    Assert.assertTrue(banService.findActiveBan(UTXO_HASH, UTXO_INDEX, afterExpiration).isPresent());
-    Assert.assertFalse(banService.findActiveBan(UTXO_HASH, 0).isPresent());
-    Assert.assertFalse(banService.findActiveBan(UTXO_HASH, 1).isPresent());
-    Assert.assertFalse(banService.findActiveBan(UTXO_HASH, 100).isPresent());
+    Assertions.assertTrue(banService.findActiveBan(UTXO_HASH, UTXO_INDEX, afterExpiration).isPresent());
+    Assertions.assertFalse(banService.findActiveBan(UTXO_HASH, 0).isPresent());
+    Assertions.assertFalse(banService.findActiveBan(UTXO_HASH, 1).isPresent());
+    Assertions.assertFalse(banService.findActiveBan(UTXO_HASH, 100).isPresent());
 
     // other inputs are not banned
-    Assert.assertFalse(banService.findActiveBan("foo", UTXO_INDEX).isPresent());
+    Assertions.assertFalse(banService.findActiveBan("foo", UTXO_INDEX).isPresent());
   }*/
 }

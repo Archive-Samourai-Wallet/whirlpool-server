@@ -8,21 +8,19 @@ import com.samourai.whirlpool.server.integration.AbstractMixIntegrationTest;
 import java.lang.invoke.MethodHandles;
 import org.bouncycastle.crypto.params.RSABlindingParameters;
 import org.bouncycastle.crypto.params.RSAKeyParameters;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public class RegisterOutputServiceTest extends AbstractMixIntegrationTest {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  @Before
+  @BeforeEach
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     serverConfig.setTestMode(true);
@@ -45,7 +43,7 @@ public class RegisterOutputServiceTest extends AbstractMixIntegrationTest {
 
     // go REGISTER_OUTPUT
     mix.setMixStatusAndTime(MixStatus.REGISTER_OUTPUT);
-    Assert.assertEquals(0, mix.getReceiveAddresses().size());
+    Assertions.assertEquals(0, mix.getReceiveAddresses().size());
 
     // REGISTER_OUTPUT
     byte[] unblindedSignedBordereau =
@@ -54,7 +52,7 @@ public class RegisterOutputServiceTest extends AbstractMixIntegrationTest {
         mix.computeInputsHash(), unblindedSignedBordereau, receiveAddress);
 
     // VERIFY
-    Assert.assertEquals(1, mix.getReceiveAddresses().size()); // output registered
+    Assertions.assertEquals(1, mix.getReceiveAddresses().size()); // output registered
   }
 
   @Test
@@ -74,7 +72,7 @@ public class RegisterOutputServiceTest extends AbstractMixIntegrationTest {
 
     // go REGISTER_OUTPUT
     mix.setMixStatusAndTime(MixStatus.REGISTER_OUTPUT);
-    Assert.assertEquals(0, mix.getReceiveAddresses().size());
+    Assertions.assertEquals(0, mix.getReceiveAddresses().size());
 
     // TEST
     byte[] unblindedSignedBordereau =
@@ -82,14 +80,14 @@ public class RegisterOutputServiceTest extends AbstractMixIntegrationTest {
     try {
       registerOutputService.registerOutput(
           mix.computeInputsHash(), unblindedSignedBordereau, receiveAddress);
-      Assert.assertTrue(false); // should throw exception
+      Assertions.assertTrue(false); // should throw exception
     } catch (Exception e) {
       // exception expected
-      Assert.assertEquals("Invalid unblindedSignedBordereau", e.getMessage());
+      Assertions.assertEquals("Invalid unblindedSignedBordereau", e.getMessage());
     }
 
     // VERIFY
-    Assert.assertEquals(0, mix.getReceiveAddresses().size()); // output NOT registered
+    Assertions.assertEquals(0, mix.getReceiveAddresses().size()); // output NOT registered
   }
 
   @Test
@@ -119,7 +117,7 @@ public class RegisterOutputServiceTest extends AbstractMixIntegrationTest {
 
     // go REGISTER_OUTPUT
     mix.setMixStatusAndTime(MixStatus.REGISTER_OUTPUT);
-    Assert.assertEquals(0, mix.getReceiveAddresses().size());
+    Assertions.assertEquals(0, mix.getReceiveAddresses().size());
 
     // TEST: unblindedSignedBordereau from FIRST mix should be REJECTED
     byte[] unblindedSignedBordereauFirstMix =
@@ -127,14 +125,14 @@ public class RegisterOutputServiceTest extends AbstractMixIntegrationTest {
     try {
       registerOutputService.registerOutput(
           mix.computeInputsHash(), unblindedSignedBordereauFirstMix, receiveAddress);
-      Assert.assertTrue(false); // should throw exception
+      Assertions.assertTrue(false); // should throw exception
     } catch (Exception e) {
       // exception expected
-      Assert.assertEquals("Invalid unblindedSignedBordereau", e.getMessage());
+      Assertions.assertEquals("Invalid unblindedSignedBordereau", e.getMessage());
     }
 
     // VERIFY
-    Assert.assertEquals(0, mix.getReceiveAddresses().size()); // output NOT registered
+    Assertions.assertEquals(0, mix.getReceiveAddresses().size()); // output NOT registered
 
     // TEST: unblindedSignedBordereau from SECOND mix should be ACCEPTED
     byte[] unblindedSignedBordereauSecondMix =
@@ -143,7 +141,7 @@ public class RegisterOutputServiceTest extends AbstractMixIntegrationTest {
         mix.computeInputsHash(), unblindedSignedBordereauSecondMix, receiveAddress);
 
     // VERIFY
-    Assert.assertEquals(1, mix.getReceiveAddresses().size()); // output registered
+    Assertions.assertEquals(1, mix.getReceiveAddresses().size()); // output registered
   }
 
   @Test
@@ -163,7 +161,7 @@ public class RegisterOutputServiceTest extends AbstractMixIntegrationTest {
 
     // go REGISTER_OUTPUT
     mix.setMixStatusAndTime(MixStatus.REGISTER_OUTPUT);
-    Assert.assertEquals(0, mix.getReceiveAddresses().size());
+    Assertions.assertEquals(0, mix.getReceiveAddresses().size());
 
     // REGISTER_OUTPUT
     byte[] unblindedSignedBordereau =
@@ -173,20 +171,20 @@ public class RegisterOutputServiceTest extends AbstractMixIntegrationTest {
     try {
       registerOutputService.registerOutput(
           "invalidInputsHash", unblindedSignedBordereau, receiveAddress); // INVALID inputsHash
-      Assert.assertTrue(false);
+      Assertions.assertTrue(false);
     } catch (Exception e) {
-      Assert.assertEquals("Mix failed", e.getMessage());
+      Assertions.assertEquals("Mix failed", e.getMessage());
     }
-    Assert.assertEquals(0, mix.getReceiveAddresses().size()); // output NOT registered
+    Assertions.assertEquals(0, mix.getReceiveAddresses().size()); // output NOT registered
 
     // - fail on invalid bordereau
     try {
       byte[] fakeSignedBordereau = "invalidBordereau".getBytes(); // INVALID bordereau
       registerOutputService.registerOutput(
           mix.computeInputsHash(), fakeSignedBordereau, receiveAddress);
-      Assert.assertTrue(false);
+      Assertions.assertTrue(false);
     } catch (Exception e) {
-      Assert.assertEquals("Invalid unblindedSignedBordereau", e.getMessage());
+      Assertions.assertEquals("Invalid unblindedSignedBordereau", e.getMessage());
     }
 
     // - fail on receiveAddress not related to bordereau
@@ -195,15 +193,15 @@ public class RegisterOutputServiceTest extends AbstractMixIntegrationTest {
           mix.computeInputsHash(),
           unblindedSignedBordereau,
           "tb1qnfhmn4vfgprfnsnz2fadfr48cquydjkz4wpfgq"); // INVALID receiveAddress
-      Assert.assertTrue(false);
+      Assertions.assertTrue(false);
     } catch (Exception e) {
-      Assert.assertEquals("Invalid unblindedSignedBordereau", e.getMessage());
+      Assertions.assertEquals("Invalid unblindedSignedBordereau", e.getMessage());
     }
 
     // - success when valid
     registerOutputService.registerOutput(
         mix.computeInputsHash(), unblindedSignedBordereau, receiveAddress);
-    Assert.assertEquals(1, mix.getReceiveAddresses().size()); // output registered
+    Assertions.assertEquals(1, mix.getReceiveAddresses().size()); // output registered
   }
 
   @Test
@@ -223,7 +221,7 @@ public class RegisterOutputServiceTest extends AbstractMixIntegrationTest {
 
     // go REGISTER_OUTPUT
     mix.setMixStatusAndTime(MixStatus.REGISTER_OUTPUT);
-    Assert.assertEquals(0, mix.getReceiveAddresses().size());
+    Assertions.assertEquals(0, mix.getReceiveAddresses().size());
 
     // REGISTER_OUTPUT
     byte[] unblindedSignedBordereau =
@@ -237,9 +235,9 @@ public class RegisterOutputServiceTest extends AbstractMixIntegrationTest {
           mix.computeInputsHash(),
           unblindedSignedBordereau,
           reusedAddress); // INVALID receiveAddress
-      Assert.assertTrue(false);
+      Assertions.assertTrue(false);
     } catch (Exception e) {
-      Assert.assertEquals("output already registered as input", e.getMessage());
+      Assertions.assertEquals("output already registered as input", e.getMessage());
     }
   }
 }

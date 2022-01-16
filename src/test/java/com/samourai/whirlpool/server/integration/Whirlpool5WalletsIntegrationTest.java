@@ -20,16 +20,13 @@ import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.script.Script;
 import org.bouncycastle.util.encoders.Hex;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public class Whirlpool5WalletsIntegrationTest extends AbstractIntegrationTest {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -284,7 +281,7 @@ public class Whirlpool5WalletsIntegrationTest extends AbstractIntegrationTest {
     return expectedToUTXO;
   }
 
-  @Ignore
+  @Disabled
   @Test
   public void whirlpool_manual() throws Exception {
     Map<String, String> expectedMixables = expectedMixables();
@@ -306,15 +303,17 @@ public class Whirlpool5WalletsIntegrationTest extends AbstractIntegrationTest {
     // System.out.println("mixables"+Arrays.toString(mixables.values().toArray()));
     System.out.println("toUTXO" + Arrays.toString(premixer.toUTXO.keySet().toArray()));
     System.out.println("toUTXO" + Arrays.toString(premixer.toUTXO.values().toArray()));
-    Assert.assertArrayEquals(
+    Assertions.assertArrayEquals(
         expectedMixables.keySet().toArray(), premixer.mixables.keySet().toArray());
-    Assert.assertArrayEquals(
+    Assertions.assertArrayEquals(
         expectedMixables.values().toArray(), premixer.mixables.values().toArray());
 
-    Assert.assertArrayEquals(expectedToUTXO.keySet().toArray(), premixer.toUTXO.keySet().toArray());
-    Assert.assertArrayEquals(expectedToUTXO.values().toArray(), premixer.toUTXO.values().toArray());
+    Assertions.assertArrayEquals(
+        expectedToUTXO.keySet().toArray(), premixer.toUTXO.keySet().toArray());
+    Assertions.assertArrayEquals(
+        expectedToUTXO.values().toArray(), premixer.toUTXO.values().toArray());
 
-    Assert.assertEquals(expectedMixables.size(), premixer.toPrivKeys.size());
+    Assertions.assertEquals(expectedMixables.size(), premixer.toPrivKeys.size());
 
     // if there are more mixables than needed, keep first ones
     Map<String, String> firstMixables = getFirstEntries(premixer.mixables, nbMixes);
@@ -328,14 +327,14 @@ public class Whirlpool5WalletsIntegrationTest extends AbstractIntegrationTest {
     mixer.__setDeterministPaymentCodeMatching(true);
     mixer.mix(firstMixables, premixer.biUnitSpendAmount, premixer.biUnitReceiveAmount);
 
-    Assert.assertEquals(expectedUnsignedStrTxHash, mixer.unsignedStrTxHash);
-    Assert.assertEquals(expectedUnsignedHexTx, mixer.unsignedHexTx);
+    Assertions.assertEquals(expectedUnsignedStrTxHash, mixer.unsignedStrTxHash);
+    Assertions.assertEquals(expectedUnsignedHexTx, mixer.unsignedHexTx);
 
-    Assert.assertEquals(expectedStrTxHash, mixer.strTxHash);
-    Assert.assertEquals(expectedHexTx, mixer.hexTx);
+    Assertions.assertEquals(expectedStrTxHash, mixer.strTxHash);
+    Assertions.assertEquals(expectedHexTx, mixer.hexTx);
   }
 
-  @Ignore
+  @Disabled
   @Test
   public void whirlpool() throws Exception {
     Map<String, String> expectedMixables = expectedMixables();
@@ -350,20 +349,22 @@ public class Whirlpool5WalletsIntegrationTest extends AbstractIntegrationTest {
      */
     ManualPremixer premixer = new ManualPremixer(params, nbMixes);
     premixer.initWallets();
-    Assert.assertEquals(nbMixes, premixer.wallets.size());
+    Assertions.assertEquals(nbMixes, premixer.wallets.size());
 
     premixer.premix(utxos, swFee, selectedAmount, unitSpendAmount, unitReceiveAmount, premixFee);
 
     // verify premix result
-    Assert.assertArrayEquals(
+    Assertions.assertArrayEquals(
         expectedMixables.keySet().toArray(), premixer.mixables.keySet().toArray());
-    Assert.assertArrayEquals(
+    Assertions.assertArrayEquals(
         expectedMixables.values().toArray(), premixer.mixables.values().toArray());
 
-    Assert.assertArrayEquals(expectedToUTXO.keySet().toArray(), premixer.toUTXO.keySet().toArray());
-    Assert.assertArrayEquals(expectedToUTXO.values().toArray(), premixer.toUTXO.values().toArray());
+    Assertions.assertArrayEquals(
+        expectedToUTXO.keySet().toArray(), premixer.toUTXO.keySet().toArray());
+    Assertions.assertArrayEquals(
+        expectedToUTXO.values().toArray(), premixer.toUTXO.values().toArray());
 
-    Assert.assertEquals(expectedMixables.size(), premixer.toPrivKeys.size());
+    Assertions.assertEquals(expectedMixables.size(), premixer.toPrivKeys.size());
 
     // there are more mixables than needed, keep first ones
     Map<String, String> firstMixables = getFirstEntries(premixer.mixables, nbMixes);
@@ -432,7 +433,7 @@ public class Whirlpool5WalletsIntegrationTest extends AbstractIntegrationTest {
                 cliConfig);
           } catch (Exception e) {
             log.error("", e);
-            Assert.assertTrue(false);
+            Assertions.assertTrue(false);
           }
           return null;
         };
@@ -447,8 +448,8 @@ public class Whirlpool5WalletsIntegrationTest extends AbstractIntegrationTest {
 
     // connected clients should have registered their inputs...
     Thread.sleep(2000);
-    Assert.assertEquals(MixStatus.CONFIRM_INPUT, mix.getMixStatus());
-    Assert.assertEquals(NB_CLIENTS - 1, mix.getInputs().size());
+    Assertions.assertEquals(MixStatus.CONFIRM_INPUT, mix.getMixStatus());
+    Assertions.assertEquals(NB_CLIENTS - 1, mix.getInputs().size());
 
     // connect last client
     Thread.sleep(500);
@@ -457,13 +458,13 @@ public class Whirlpool5WalletsIntegrationTest extends AbstractIntegrationTest {
     Thread.sleep(5000);
 
     // all clients should have registered their inputs
-    Assert.assertEquals(NB_CLIENTS, mix.getNbInputs());
+    Assertions.assertEquals(NB_CLIENTS, mix.getNbInputs());
 
     for (ConfirmedInput confirmedInput : mix.getInputs()) {
       RegisteredInput registeredInput = confirmedInput.getRegisteredInput();
       String txOutPointStr =
           registeredInput.getOutPoint().getHash() + "-" + registeredInput.getOutPoint().getIndex();
-      Assert.assertTrue(premixer.toUTXO.values().contains(txOutPointStr));
+      Assertions.assertTrue(premixer.toUTXO.values().contains(txOutPointStr));
     }
 
     // mix automatically switches to REGISTER_OUTPUTS, then SIGNING

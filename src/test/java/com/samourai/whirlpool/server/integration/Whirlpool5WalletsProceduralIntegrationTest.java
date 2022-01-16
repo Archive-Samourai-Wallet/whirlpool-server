@@ -16,7 +16,10 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import org.apache.commons.lang3.tuple.Pair;
 import org.bitcoinj.core.*;
-import org.bitcoinj.crypto.*;
+import org.bitcoinj.crypto.ChildNumber;
+import org.bitcoinj.crypto.DeterministicKey;
+import org.bitcoinj.crypto.HDKeyDerivation;
+import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
@@ -24,16 +27,13 @@ import org.bitcoinj.script.ScriptOpCodes;
 import org.bouncycastle.util.encoders.Hex;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public class Whirlpool5WalletsProceduralIntegrationTest extends AbstractIntegrationTest {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -288,7 +288,7 @@ public class Whirlpool5WalletsProceduralIntegrationTest extends AbstractIntegrat
     return expectedToUTXO;
   }
 
-  @Ignore
+  @Disabled
   @Test
   public void whirlpool_procedural() throws Exception {
     Map<String, String> expectedMixables = expectedMixables();
@@ -532,7 +532,7 @@ public class Whirlpool5WalletsProceduralIntegrationTest extends AbstractIntegrat
       // receiver can calculate from privkey
       String addressToReceiver =
           bech32Util.toBech32(receiveAddress.getReceiveECKey().getPubKey(), params);
-      Assert.assertEquals(addressFromSender, addressToReceiver);
+      Assertions.assertEquals(addressFromSender, addressToReceiver);
 
       Pair<Byte, byte[]> pair = Bech32Segwit.decode(isTestnet ? "tb" : "bc", addressToReceiver);
       byte[] scriptPubKey = Bech32Segwit.getScriptPubkey(pair.getLeft(), pair.getRight());
@@ -624,7 +624,7 @@ public class Whirlpool5WalletsProceduralIntegrationTest extends AbstractIntegrat
       witness.setPush(1, ecKey.getPubKey());
       tx.setWitness(i, witness);
 
-      Assert.assertEquals(0, tx.getInput(i).getScriptBytes().length);
+      Assertions.assertEquals(0, tx.getInput(i).getScriptBytes().length);
     }
 
     tx.verify();
@@ -642,20 +642,20 @@ public class Whirlpool5WalletsProceduralIntegrationTest extends AbstractIntegrat
     // System.out.println("mixables"+Arrays.toString(mixables.values().toArray()));
     System.out.println("toUTXO" + Arrays.toString(toUTXO.keySet().toArray()));
     System.out.println("toUTXO" + Arrays.toString(toUTXO.values().toArray()));
-    Assert.assertArrayEquals(expectedMixables.keySet().toArray(), mixables.keySet().toArray());
-    Assert.assertArrayEquals(expectedMixables.values().toArray(), mixables.values().toArray());
+    Assertions.assertArrayEquals(expectedMixables.keySet().toArray(), mixables.keySet().toArray());
+    Assertions.assertArrayEquals(expectedMixables.values().toArray(), mixables.values().toArray());
 
-    Assert.assertArrayEquals(expectedToUTXO.keySet().toArray(), toUTXO.keySet().toArray());
-    Assert.assertArrayEquals(expectedToUTXO.values().toArray(), toUTXO.values().toArray());
+    Assertions.assertArrayEquals(expectedToUTXO.keySet().toArray(), toUTXO.keySet().toArray());
+    Assertions.assertArrayEquals(expectedToUTXO.values().toArray(), toUTXO.values().toArray());
 
-    Assert.assertEquals(expectedMixables.size(), toPrivKeys.size());
+    Assertions.assertEquals(expectedMixables.size(), toPrivKeys.size());
 
     // verify transaction to sign
-    Assert.assertEquals(expectedUnsignedStrTxHash, unsignedStrTxHash);
-    Assert.assertEquals(expectedUnsignedHexTx, unsignedHexTx);
+    Assertions.assertEquals(expectedUnsignedStrTxHash, unsignedStrTxHash);
+    Assertions.assertEquals(expectedUnsignedHexTx, unsignedHexTx);
 
     // verify final transaction
-    Assert.assertEquals(expectedStrTxHash, strTxHash);
-    Assert.assertEquals(expectedHexTx, hexTx);
+    Assertions.assertEquals(expectedStrTxHash, strTxHash);
+    Assertions.assertEquals(expectedHexTx, hexTx);
   }
 }

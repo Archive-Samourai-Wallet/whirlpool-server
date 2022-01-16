@@ -11,21 +11,20 @@ import java.util.HashMap;
 import java.util.Map;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.Utils;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public class RpcTransactionTest extends AbstractIntegrationTest {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private static final Map<String, String> expectedHexs = new HashMap<>();
   private static final Map<String, String> expectedJson = new HashMap<>();
 
+  @BeforeEach
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -66,13 +65,13 @@ public class RpcTransactionTest extends AbstractIntegrationTest {
           new RpcTransaction(rawTxResponse, cryptoService.getNetworkParameters());
 
       // VERIFY
-      Assert.assertEquals(txid, rpcTransaction.getTx().getHashAsString());
-      Assert.assertEquals(CONFIRMATIONS, rpcTransaction.getConfirmations());
+      Assertions.assertEquals(txid, rpcTransaction.getTx().getHashAsString());
+      Assertions.assertEquals(CONFIRMATIONS, rpcTransaction.getConfirmations());
 
       // verify RpcTransaction structure
       String expectedRpcTransactionJson = expectedJson.get(txid);
       String rpcTransactionJson = ServerUtils.getInstance().toJsonString(rpcTransaction);
-      Assert.assertEquals(expectedRpcTransactionJson, rpcTransactionJson);
+      Assertions.assertEquals(expectedRpcTransactionJson, rpcTransactionJson);
     }
   }
 
@@ -91,8 +90,8 @@ public class RpcTransactionTest extends AbstractIntegrationTest {
       log.info("txid=" + txid + ":\n" + tx.toString());
 
       // VERIFY
-      Assert.assertEquals(txid, tx.getHashAsString());
-      Assert.assertEquals(txhex, Utils.HEX.encode(tx.bitcoinSerialize()));
+      Assertions.assertEquals(txid, tx.getHashAsString());
+      Assertions.assertEquals(txhex, Utils.HEX.encode(tx.bitcoinSerialize()));
 
       // verify structure
       RpcRawTransactionResponse rawTxResponse =
@@ -100,8 +99,8 @@ public class RpcTransactionTest extends AbstractIntegrationTest {
       RpcTransaction rpcTransaction =
           new RpcTransaction(rawTxResponse, cryptoService.getNetworkParameters());
 
-      Assert.assertEquals(tx.getHashAsString(), rpcTransaction.getTx().getHashAsString());
-      Assert.assertEquals(rawTxResponse.getConfirmations(), rpcTransaction.getConfirmations());
+      Assertions.assertEquals(tx.getHashAsString(), rpcTransaction.getTx().getHashAsString());
+      Assertions.assertEquals(rawTxResponse.getConfirmations(), rpcTransaction.getConfirmations());
     }
   }
 }

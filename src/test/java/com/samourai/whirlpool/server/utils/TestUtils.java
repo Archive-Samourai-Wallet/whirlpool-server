@@ -31,7 +31,7 @@ import org.bouncycastle.util.encoders.Hex;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemReader;
 import org.bouncycastle.util.io.pem.PemWriter;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -77,8 +77,8 @@ public class TestUtils {
   }
 
   public void assertPool(int nbMustMix, int nbLiquidity, Pool pool) {
-    Assert.assertEquals(nbMustMix, pool.getMustMixQueue().getSize());
-    Assert.assertEquals(nbLiquidity, pool.getLiquidityQueue().getSize());
+    Assertions.assertEquals(nbMustMix, pool.getMustMixQueue().getSize());
+    Assertions.assertEquals(nbLiquidity, pool.getLiquidityQueue().getSize());
   }
 
   public void assertPoolEmpty(Pool pool) {
@@ -86,8 +86,8 @@ public class TestUtils {
   }
 
   public void assertMix(int nbInputsConfirmed, int confirming, Mix mix) {
-    Assert.assertEquals(nbInputsConfirmed, mix.getNbInputs());
-    Assert.assertEquals(confirming, mix.getNbConfirmingInputs());
+    Assertions.assertEquals(nbInputsConfirmed, mix.getNbInputs());
+    Assertions.assertEquals(confirming, mix.getNbConfirmingInputs());
   }
 
   public void assertMix(int nbInputs, Mix mix) {
