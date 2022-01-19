@@ -279,6 +279,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
     private int blames;
     private long period;
     private long expiration;
+    private int recidivismFactor;
 
     public int getBlames() {
       return blames;
@@ -302,6 +303,14 @@ public class WhirlpoolServerConfig extends ServerConfig {
 
     public void setExpiration(long expiration) {
       this.expiration = expiration;
+    }
+
+    public int getRecidivismFactor() {
+      return recidivismFactor;
+    }
+
+    public void setRecidivismFactor(int recidivismFactor) {
+      this.recidivismFactor = recidivismFactor;
     }
   }
 
@@ -780,7 +789,9 @@ public class WhirlpoolServerConfig extends ServerConfig {
             + ", period="
             + ban.period
             + ", expiration="
-            + ban.expiration);
+            + ban.expiration
+            + ", recidivismFactor="
+            + ban.recidivismFactor);
     for (PartnerConfig partnerConfig : partners) {
       configInfo.put("partners[" + partnerConfig.id + "]", partnerConfig.toString());
     }

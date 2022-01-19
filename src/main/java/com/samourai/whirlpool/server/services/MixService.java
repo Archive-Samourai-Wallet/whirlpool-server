@@ -95,6 +95,14 @@ public class MixService {
       throws QueueInputException, IllegalInputException {
     Pool pool = mix.getPool();
 
+    // failMode
+    try {
+      whirlpoolServerConfig.checkFailMode(FailMode.CONFIRM_INPUT_BLAME);
+    } catch (Exception e) {
+      blameService.blame(registeredInput, BlameReason.DISCONNECT, mix);
+      throw new IllegalInputException(e.getMessage());
+    }
+
     // check mix didn't start yet
     if (!MixStatus.CONFIRM_INPUT.equals(mix.getMixStatus())) {
       // confirming input too late => enqueue in pool
@@ -398,7 +406,7 @@ public class MixService {
 
       if (mixAlreadyStarted) {
         // blame
-        blameService.blame(spentInput, BlameReason.SPENT, mix);
+        blameService.blame(spentInput.getRegisteredInput(), BlameReason.SPENT, mix);
       }
     }
     if (mixAlreadyStarted) {
@@ -718,7 +726,8 @@ public class MixService {
                 input -> !mix.hasRevealedOutputUsername(input.getRegisteredInput().getUsername()))
             .collect(Collectors.toSet());
     for (ConfirmedInput confirmedInputToBlame : confirmedInputsToBlame) {
-      blameService.blame(confirmedInputToBlame, BlameReason.REGISTER_OUTPUT, mix);
+      blameService.blame(
+          confirmedInputToBlame.getRegisteredInput(), BlameReason.REGISTER_OUTPUT, mix);
     }
     // reset mix
     String outpointKeysToBlameStr = computeOutpointKeysToBlame(confirmedInputsToBlame);
@@ -774,7 +783,7 @@ public class MixService {
                   blameReason = BlameReason.REJECTED_OUTPUT;
                   detailsParam = ImmutableMap.of("receiveAddress", registerOutputRejected);
                 }
-                blameService.blame(confirmedInput, blameReason, mix);
+                blameService.blame(confirmedInput.getRegisteredInput(), blameReason, mix);
 
                 // log activity
                 ActivityCsv activityCsv =

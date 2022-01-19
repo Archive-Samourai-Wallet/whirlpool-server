@@ -9,6 +9,7 @@ import com.samourai.whirlpool.server.persistence.to.*;
 import java.lang.invoke.MethodHandles;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -117,18 +118,25 @@ public class DbService {
 
   // ban
 
-  public BanTO saveBan(String identifier, Timestamp expiration, String response, String notes) {
+  public BanTO saveBan(
+      Timestamp created, String identifier, Timestamp expiration, String response, String notes) {
     BanTO banTO = new BanTO(identifier, expiration, response, notes);
     log.warn("+ban: " + banTO);
+    banRepository.save(banTO);
+    banTO.__setCreated(created); // force exact created time
     return banRepository.save(banTO);
   }
 
-  public List<BanTO> findByIdentifierAndExpirationAfterOrNull(
+  public Optional<BanTO> findBanByIdentifierLast(String identifier) {
+    return banRepository.findFirstByIdentifierOrderByExpirationDesc(identifier);
+  }
+
+  public List<BanTO> findBanByIdentifierAndExpirationAfterOrNull(
       String identifier, Timestamp expirationMin) {
     return banRepository.findByIdentifierAndExpirationAfterOrNull(identifier, expirationMin);
   }
 
-  public Page<BanTO> findByExpirationAfterOrNull(Timestamp expirationMin, Pageable pageable) {
+  public Page<BanTO> findBanByExpirationAfterOrNull(Timestamp expirationMin, Pageable pageable) {
     return banRepository.findByExpirationAfterOrNull(expirationMin, pageable);
   }
 

@@ -1,7 +1,7 @@
 package com.samourai.whirlpool.server.services;
 
 import com.google.common.collect.ImmutableMap;
-import com.samourai.whirlpool.server.beans.ConfirmedInput;
+import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.persistence.to.BanTO;
@@ -39,19 +39,39 @@ public class BanService {
     this.metricService = metricService;
   }
 
-  public void banTemporary(String identifier, String response, String notes) {
+  public BanTO banTemporary(String identifier, String response, String notes) {
+    Timestamp created = new Timestamp(System.currentTimeMillis());
+    return banTemporary(created, identifier, response, notes);
+  }
+
+  protected BanTO banTemporary(
+      Timestamp created, String identifier, String response, String notes) {
+    // find last ban if any
+    Optional<BanTO> lastBan = dbService.findBanByIdentifierLast(identifier);
+
     long expirationDelay = serverConfig.getBan().getExpiration() * 1000;
-    banTemporary(identifier, response, notes, expirationDelay);
+    if (lastBan.isPresent()) {
+      // enforce recidivismFactor
+      long lastBanDuration = lastBan.get().getDuration();
+      expirationDelay = lastBanDuration * serverConfig.getBan().getRecidivismFactor();
+      if (log.isDebugEnabled()) {
+        log.debug(
+            "ban recidivism "
+                + identifier
+                + ": lastBanDuration="
+                + (lastBanDuration / 1000 / 60)
+                + "min -> "
+                + (expirationDelay / 1000 / 60)
+                + "min");
+      }
+    }
+    return banTemporary(created, identifier, response, notes, expirationDelay);
   }
 
-  private void banTemporary(
-      String identifier, String response, String notes, long expirationDelay) {
-    Timestamp expiration = new Timestamp(System.currentTimeMillis() + expirationDelay);
-    ban(identifier, response, notes, expiration);
-  }
-
-  private void ban(String identifier, String response, String notes, Timestamp expiration) {
-    dbService.saveBan(identifier, expiration, response, notes);
+  protected BanTO banTemporary(
+      Timestamp created, String identifier, String response, String notes, long expirationDelay) {
+    Timestamp expiration = new Timestamp(created.getTime() + expirationDelay);
+    return dbService.saveBan(created, identifier, expiration, response, notes);
   }
 
   public Optional<BanTO> findActiveBan(String utxoHash, long utxoIndex) {
@@ -75,17 +95,17 @@ public class BanService {
   }
 
   protected Optional<BanTO> findActiveBan(String identifier, Timestamp now) {
-    List<BanTO> activeBans = dbService.findByIdentifierAndExpirationAfterOrNull(identifier, now);
+    List<BanTO> activeBans = dbService.findBanByIdentifierAndExpirationAfterOrNull(identifier, now);
     return (!activeBans.isEmpty() ? Optional.of(activeBans.get(0)) : Optional.empty());
   }
 
   public Page<BanTO> findActiveBans(Pageable pageable) {
     Timestamp now = new Timestamp(System.currentTimeMillis());
-    Page<BanTO> bans = dbService.findByExpirationAfterOrNull(now, pageable);
+    Page<BanTO> bans = dbService.findBanByExpirationAfterOrNull(now, pageable);
     return bans;
   }
 
-  public void onBlame(ConfirmedInput confirmedInput, String identifier, List<BlameTO> blames) {
+  public void onBlame(RegisteredInput registeredInput, String identifier, List<BlameTO> blames) {
     int maxBlames = serverConfig.getBan().getBlames();
 
     long blamePeriodMs = serverConfig.getBan().getPeriod() * 1000;
@@ -134,11 +154,11 @@ public class BanService {
     ActivityCsv activityCsv =
         new ActivityCsv(
             "BAN",
-            confirmedInput.getRegisteredInput().getPoolId(),
-            confirmedInput.getRegisteredInput(),
+            registeredInput.getPoolId(),
+            registeredInput,
             ImmutableMap.of("reason", reason),
             null);
     exportService.exportActivity(activityCsv);
-    metricService.onBan(confirmedInput.getRegisteredInput());
+    metricService.onBan(registeredInput);
   }
 }

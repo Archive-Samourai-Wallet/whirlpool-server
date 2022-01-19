@@ -220,7 +220,7 @@ public class MixServiceTest extends AbstractIntegrationTest {
     Assertions.assertTrue(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(2, mix.getNbInputs());
 
-    String blameIdentifierMustMix1 = Utils.computeBlameIdentitifer(mustMix1);
+    String blameIdentifierMustMix1 = Utils.computeBlameIdentitifer(mustMix1.getRegisteredInput());
     Assertions.assertTrue(dbService.findBlames(blameIdentifierMustMix1).isEmpty()); // no blame
 
     // mustMix spent in meantime => false
@@ -263,7 +263,7 @@ public class MixServiceTest extends AbstractIntegrationTest {
     Assertions.assertEquals(out3.getHash() + ":" + out3.getIndex(), mix.getFailInfo());
 
     // blame as mix was already started
-    String blameIdentifierMustMix3 = Utils.computeBlameIdentitifer(mustMix3);
+    String blameIdentifierMustMix3 = Utils.computeBlameIdentitifer(mustMix3.getRegisteredInput());
     Assertions.assertEquals(dbService.findBlames(blameIdentifierMustMix3).size(), 1);
   }
 

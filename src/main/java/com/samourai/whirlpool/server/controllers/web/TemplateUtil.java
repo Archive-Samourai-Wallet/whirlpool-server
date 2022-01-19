@@ -12,6 +12,10 @@ public class TemplateUtil {
   }
 
   public String duration(int seconds) {
+    return duration(seconds, true);
+  }
+
+  public String duration(int seconds, boolean withSeconds) {
     StringBuffer sb = new StringBuffer();
     if (seconds > 60) {
       int minutes = (int) Math.floor(seconds / 60);
@@ -25,7 +29,9 @@ public class TemplateUtil {
       sb.append(minutes + "m");
       seconds -= minutes * 60;
     }
-    sb.append(seconds + "s");
+    if (withSeconds) {
+      sb.append(seconds + "s");
+    }
     return sb.toString();
   }
 }

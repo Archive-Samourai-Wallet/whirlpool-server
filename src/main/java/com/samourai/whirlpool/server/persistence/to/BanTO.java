@@ -8,7 +8,7 @@ import javax.persistence.Entity;
 public class BanTO extends EntityCreatedTO {
   private String identifier;
 
-  private Timestamp expiration;
+  private Timestamp expiration; // null for permanent
 
   private String response;
 
@@ -30,6 +30,11 @@ public class BanTO extends EntityCreatedTO {
 
   public Timestamp getExpiration() {
     return expiration;
+  }
+
+  public Long getDuration() {
+    if (expiration == null) return null;
+    return expiration.getTime() - getCreated().getTime();
   }
 
   /*public String getResponse() {

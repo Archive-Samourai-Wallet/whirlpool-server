@@ -3,6 +3,7 @@ package com.samourai.whirlpool.server.persistence.repositories;
 import com.samourai.whirlpool.server.persistence.to.BanTO;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
@@ -15,6 +16,9 @@ public interface BanRepository extends CrudRepository<BanTO, Long> {
       "SELECT b from ban b WHERE identifier=:identifier AND (expiration IS NULL OR expiration >= :expirationMin)")
   List<BanTO> findByIdentifierAndExpirationAfterOrNull(
       @Param("identifier") String identifier, @Param("expirationMin") Timestamp expirationMin);
+
+  Optional<BanTO> findFirstByIdentifierOrderByExpirationDesc(
+      @Param("identifier") String identifier);
 
   @Query("SELECT b from ban b WHERE (expiration IS NULL OR expiration >= :expirationMin)")
   Page<BanTO> findByExpirationAfterOrNull(

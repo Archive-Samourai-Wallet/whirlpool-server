@@ -2,8 +2,8 @@ package com.samourai.whirlpool.server.services;
 
 import com.google.common.collect.ImmutableMap;
 import com.samourai.whirlpool.server.beans.BlameReason;
-import com.samourai.whirlpool.server.beans.ConfirmedInput;
 import com.samourai.whirlpool.server.beans.Mix;
+import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;
 import com.samourai.whirlpool.server.persistence.to.BlameTO;
 import com.samourai.whirlpool.server.utils.Utils;
@@ -34,25 +34,24 @@ public class BlameService {
     this.metricService = metricService;
   }
 
-  public void blame(ConfirmedInput confirmedInput, BlameReason reason, Mix mix) {
+  public void blame(RegisteredInput registeredInput, BlameReason reason, Mix mix) {
     // blame
-    String identifier = Utils.computeBlameIdentitifer(confirmedInput);
-    dbService.saveBlame(
-        identifier, reason, mix.getMixId(), confirmedInput.getRegisteredInput().getIp());
+    String identifier = Utils.computeBlameIdentitifer(registeredInput);
+    dbService.saveBlame(identifier, reason, mix.getMixId(), registeredInput.getIp());
 
     // notify banService
     List<BlameTO> blames = dbService.findBlames(identifier);
-    banService.onBlame(confirmedInput, identifier, blames);
+    banService.onBlame(registeredInput, identifier, blames);
 
     // log activity
     ActivityCsv activityCsv =
         new ActivityCsv(
             "BLAME",
             mix.getPool().getPoolId(),
-            confirmedInput.getRegisteredInput(),
+            registeredInput,
             ImmutableMap.of("reason", reason.name()),
             null);
     exportService.exportActivity(activityCsv);
-    metricService.onBlame(confirmedInput.getRegisteredInput());
+    metricService.onBlame(registeredInput);
   }
 }

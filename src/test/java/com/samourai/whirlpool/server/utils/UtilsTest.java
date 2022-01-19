@@ -23,7 +23,7 @@ public class UtilsTest extends AbstractIntegrationTest {
 
     // mustmix => should ban TX0
     String expected = "cb2fad88ae75fdabb2bcc131b2f4f0ff2c82af22b6dd804dc341900195fb6187";
-    String actual = Utils.computeBlameIdentitifer(confirmedInput);
+    String actual = Utils.computeBlameIdentitifer(confirmedInput.getRegisteredInput());
     Assertions.assertEquals(actual, actual);
   }
 
@@ -35,7 +35,7 @@ public class UtilsTest extends AbstractIntegrationTest {
 
     // liquidity => should ban UTXO
     String expected = "cb2fad88ae75fdabb2bcc131b2f4f0ff2c82af22b6dd804dc341900195fb6187:2";
-    String actual = Utils.computeBlameIdentitifer(confirmedInput);
+    String actual = Utils.computeBlameIdentitifer(confirmedInput.getRegisteredInput());
     Assertions.assertEquals(actual, actual);
   }
 }

@@ -3,7 +3,7 @@ package com.samourai.whirlpool.server.utils;
 import com.samourai.javaserver.utils.ServerUtils;
 import com.samourai.wallet.segwit.bech32.Bech32UtilGeneric;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
-import com.samourai.whirlpool.server.beans.ConfirmedInput;
+import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.services.rpc.JSONRpcClientServiceImpl;
 import com.samourai.whirlpool.server.services.rpc.RpcClientService;
@@ -137,12 +137,12 @@ public class Utils {
     return str.substring(0, offset) + "***" + str.substring(str.length() - offset, str.length());
   }
 
-  public static String computeBlameIdentitifer(ConfirmedInput confirmedInput) {
-    TxOutPoint txOutPoint = confirmedInput.getRegisteredInput().getOutPoint();
+  public static String computeBlameIdentitifer(RegisteredInput registeredInput) {
+    TxOutPoint txOutPoint = registeredInput.getOutPoint();
 
     String utxoHash = txOutPoint.getHash().trim().toLowerCase();
     long utxoIndex = txOutPoint.getIndex();
-    boolean liquidity = confirmedInput.getRegisteredInput().isLiquidity();
+    boolean liquidity = registeredInput.isLiquidity();
     return computeBlameIdentitifer(utxoHash, utxoIndex, liquidity);
   }
 
