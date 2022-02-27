@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>io.samourai.code.whirlpool</groupId>
 	<artifactId>whirlpool-server</artifactId>
-	<version>0.23.26-SNAPSHOT</version>
+	<version>0.23.27-SNAPSHOT</version>
 	<name>whirlpool-server</name>
 	<properties>
 		<spring-boot.version>2.6.2</spring-boot.version>
@@ -37,7 +37,7 @@
 		<dependency>
 			<groupId>io.samourai.code.wallet</groupId>
 			<artifactId>java-websocket-server</artifactId>
-			<version>1.0.3</version>
+			<version>1.0.4</version>
 			<exclusions>
 				<exclusion>
 					<groupId>io.samourai.code.wallet</groupId>
