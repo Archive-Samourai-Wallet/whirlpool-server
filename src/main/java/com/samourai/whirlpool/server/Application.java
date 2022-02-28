@@ -4,9 +4,11 @@ import com.samourai.javaserver.config.ServerConfig;
 import com.samourai.javaserver.run.ServerApplication;
 import com.samourai.javaserver.utils.LogbackUtils;
 import com.samourai.javaserver.utils.ServerUtils;
+import com.samourai.wallet.api.backend.MinerFee;
 import com.samourai.whirlpool.cli.utils.CliUtils;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
+import com.samourai.whirlpool.server.services.BackendService;
 import com.samourai.whirlpool.server.services.ExportService;
 import com.samourai.whirlpool.server.services.rpc.RpcClientService;
 import com.samourai.whirlpool.server.utils.Utils;
@@ -36,6 +38,8 @@ public class Application extends ServerApplication {
 
   @Autowired private XManagerClient xManagerClient;
 
+  @Autowired private BackendService backendService;
+
   public static void main(String[] args) {
     SpringApplication.run(Application.class, args);
   }
@@ -51,6 +55,10 @@ public class Application extends ServerApplication {
     AddressIndexResponse addressIndexResponse =
         xManagerClient.getAddressIndexOrDefault(XManagerService.WHIRLPOOL);
     log.info("XM index: " + addressIndexResponse.index);
+
+    // check backend connectivity
+    MinerFee minerFee = backendService.fetchMinerFee();
+    log.info("Backend minerFee: " + minerFee._getMap());
 
     // log activity
     ActivityCsv activityCsv = new ActivityCsv("STARTUP", null, null, null, null, null);
