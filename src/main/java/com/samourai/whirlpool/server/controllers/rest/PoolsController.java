@@ -5,8 +5,6 @@ import com.samourai.whirlpool.protocol.rest.PoolInfo;
 import com.samourai.whirlpool.protocol.rest.PoolsResponse;
 import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.beans.Pool;
-import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
-import com.samourai.whirlpool.server.services.FeeValidationService;
 import com.samourai.whirlpool.server.services.PoolService;
 import java.lang.invoke.MethodHandles;
 import org.slf4j.Logger;
@@ -21,17 +19,10 @@ public class PoolsController extends AbstractRestController {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private PoolService poolService;
-  private FeeValidationService feeValidationService;
-  private WhirlpoolServerConfig serverConfig;
 
   @Autowired
-  public PoolsController(
-      PoolService poolService,
-      FeeValidationService feeValidationService,
-      WhirlpoolServerConfig serverConfig) {
+  public PoolsController(PoolService poolService) {
     this.poolService = poolService;
-    this.feeValidationService = feeValidationService;
-    this.serverConfig = serverConfig;
   }
 
   @RequestMapping(value = WhirlpoolEndpoint.REST_POOLS, method = RequestMethod.GET)

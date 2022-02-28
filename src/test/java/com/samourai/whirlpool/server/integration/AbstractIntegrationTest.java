@@ -64,6 +64,8 @@ public abstract class AbstractIntegrationTest {
 
   @Autowired protected InputValidationService inputValidationService;
 
+  @Autowired protected ScodeService scodeService;
+
   @Autowired protected BlockchainDataService blockchainDataService;
 
   @Autowired protected MockRpcClientServiceImpl rpcClientService;
@@ -82,7 +84,7 @@ public abstract class AbstractIntegrationTest {
 
   @Autowired protected TaskExecutor taskExecutor;
 
-  @Autowired protected FeeValidationService feeValidationService;
+  @Autowired protected Tx0ValidationService tx0ValidationService;
 
   @Autowired protected CacheService cacheService;
 
@@ -93,6 +95,7 @@ public abstract class AbstractIntegrationTest {
   @Autowired protected BlameService blameService;
 
   @Autowired protected FeePayloadService feePayloadService;
+  @Autowired protected PushService pushService;
 
   protected MessageSignUtilGeneric messageSignUtil = MessageSignUtilGeneric.getInstance();
 

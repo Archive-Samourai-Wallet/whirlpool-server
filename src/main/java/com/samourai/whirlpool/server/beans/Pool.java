@@ -59,6 +59,11 @@ public class Pool {
         denomination, computeMustMixBalanceMax(), liquidity);
   }
 
+  // tests only
+  public void _setPoolFee(PoolFee poolFee) {
+    this.poolFee = poolFee;
+  }
+
   public long computeMustMixBalanceMin() {
     return denomination + minerFee.getMinerFeeMin();
   }

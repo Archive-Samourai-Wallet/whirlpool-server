@@ -4,8 +4,10 @@ import com.samourai.wallet.bip47.rpc.BIP47Account;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.protocol.util.XorMask;
 import com.samourai.whirlpool.server.services.fee.WhirlpoolFeeData;
+import com.samourai.whirlpool.server.services.fee.WhirlpoolFeeOutput;
 import java.nio.ByteBuffer;
 import org.bitcoinj.core.TransactionOutPoint;
+import org.bitcoinj.core.TransactionOutput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -40,16 +42,17 @@ public class FeePayloadService {
   }*/
 
   public WhirlpoolFeeData decode(
-      byte[] feePayloadMasked,
+      WhirlpoolFeeOutput feeOutput,
       BIP47Account secretAccountBip47,
       TransactionOutPoint input0OutPoint,
       byte[] input0Pubkey) {
     byte[] feePayload =
-        xorMask.unmask(feePayloadMasked, secretAccountBip47, input0OutPoint, input0Pubkey);
+        xorMask.unmask(
+            feeOutput.getOpReturnValue(), secretAccountBip47, input0OutPoint, input0Pubkey);
     if (feePayload == null) {
       return null;
     }
-    return decodeFeePayload(feePayload);
+    return decodeFeePayload(feePayload, feeOutput.getTxOutput());
   }
 
   // encode/decode bytes
@@ -65,7 +68,7 @@ public class FeePayloadService {
     return byteBuffer.array();
   }
 
-  protected WhirlpoolFeeData decodeFeePayload(byte[] data) {
+  protected WhirlpoolFeeData decodeFeePayload(byte[] data, TransactionOutput txOutput) {
     if (data.length != WhirlpoolProtocol.FEE_PAYLOAD_LENGTH) {
       log.error(
           "Invalid samouraiFee length: "
@@ -83,6 +86,6 @@ public class FeePayloadService {
     int feeIndice = bb.getInt();
     short scodePayload = bb.getShort();
     short feePartner = bb.getShort();
-    return new WhirlpoolFeeData(feeIndice, scodePayload, feePartner);
+    return new WhirlpoolFeeData(feeIndice, scodePayload, feePartner, txOutput);
   }
 }

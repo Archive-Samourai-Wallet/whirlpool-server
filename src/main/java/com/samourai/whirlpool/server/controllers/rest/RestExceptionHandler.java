@@ -35,7 +35,7 @@ public class RestExceptionHandler extends AbstractRestExceptionHandler {
 
   @Override
   protected void onException(Exception e) {
-    log.warn("RestException -> " + e.getMessage());
+    log.warn("RestException -> " + (e.getMessage() != null ? e.getMessage() : e.toString()));
 
     HttpServletRequest request =
         ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();

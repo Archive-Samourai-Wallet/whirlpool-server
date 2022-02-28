@@ -6,6 +6,7 @@ import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.server.beans.FailMode;
 import com.samourai.whirlpool.server.utils.Utils;
 import com.samourai.xmanager.protocol.XManagerService;
+import java.lang.invoke.MethodHandles;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -14,6 +15,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.params.TestNet3Params;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
@@ -664,6 +667,8 @@ public class WhirlpoolServerConfig extends ServerConfig {
   }
 
   public static class ScodeSamouraiFeeConfig {
+    private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
     @NotEmpty private Short payload;
     @NotEmpty private Integer feeValuePercent; // 0-100
     private Long expiration;
@@ -679,6 +684,21 @@ public class WhirlpoolServerConfig extends ServerConfig {
       if (expiration != null && expiration <= 0) {
         throw new Exception("Invalid scode.expiration");
       }
+    }
+
+    public boolean isValidAt(long tx0Time) {
+      // check expiration
+      if (expiration != null) {
+        if (tx0Time > expiration) {
+          log.warn("SCode expired: expiration=" + expiration + ", tx0Time=" + tx0Time);
+          return false;
+        } else {
+          if (log.isDebugEnabled()) {
+            log.debug("SCode still valid: expiration=" + expiration + ", tx0Time=" + tx0Time);
+          }
+        }
+      }
+      return true;
     }
 
     public Short getPayload() {
@@ -798,6 +818,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
     for (PoolConfig poolConfig : pools) {
       configInfo.put("pools[" + poolConfig.id + "]", poolConfig.toString());
     }
+    long now = System.currentTimeMillis();
     int i = 0;
     for (Map.Entry<String, ScodeSamouraiFeeConfig> feePayloadEntry :
         samouraiFees.getScodes().entrySet()) {
@@ -806,7 +827,12 @@ public class WhirlpoolServerConfig extends ServerConfig {
       String scodeInfo =
           "scode=" + scode + ", feeValuePercent=" + scodeConfig.feeValuePercent + "%";
       if (scodeConfig.expiration != null) {
-        scodeInfo += ", expiration=" + new Date(scodeConfig.expiration).toString();
+        boolean stillValid = scodeConfig.isValidAt(now);
+        scodeInfo +=
+            ", expiration="
+                + new Date(scodeConfig.expiration).toString()
+                + ", stillValid="
+                + stillValid;
       }
       configInfo.put("scode[" + i + "]", scodeInfo);
       i++;

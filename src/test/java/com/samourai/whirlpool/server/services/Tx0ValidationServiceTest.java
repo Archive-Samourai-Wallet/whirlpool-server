@@ -17,6 +17,7 @@ import com.samourai.whirlpool.client.wallet.data.minerFee.BasicMinerFeeSupplier;
 import com.samourai.whirlpool.client.whirlpool.beans.Pool;
 import com.samourai.whirlpool.client.whirlpool.beans.Tx0Data;
 import com.samourai.whirlpool.server.beans.PoolFee;
+import com.samourai.whirlpool.server.beans.Tx0Validation;
 import com.samourai.whirlpool.server.beans.rpc.RpcTransaction;
 import com.samourai.whirlpool.server.integration.AbstractIntegrationTest;
 import com.samourai.whirlpool.server.services.fee.WhirlpoolFeeData;
@@ -24,6 +25,7 @@ import com.samourai.xmanager.protocol.XManagerService;
 import java.lang.invoke.MethodHandles;
 import java.util.*;
 import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionOutput;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,7 +34,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-public class FeeValidationServiceTest extends AbstractIntegrationTest {
+public class Tx0ValidationServiceTest extends AbstractIntegrationTest {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private static final long FEES_VALID = 975000;
   private static final long FEES_VALID_50K = 50000;
@@ -73,7 +75,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
         blockchainDataService
             .getRpcTransaction(txid)
             .orElseThrow(() -> new NoSuchElementException());
-    WhirlpoolFeeData feeData = feeValidationService.decodeFeeData(rpcTransaction.getTx());
+    WhirlpoolFeeData feeData = tx0ValidationService.decodeFeeData(rpcTransaction.getTx());
     Assertions.assertEquals(feeIndice, feeData.getFeeIndice());
     Assertions.assertEquals(scodePayload, feeData.getScodePayload());
   }
@@ -83,7 +85,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
         blockchainDataService
             .getRpcTransaction(txid)
             .orElseThrow(() -> new NoSuchElementException());
-    WhirlpoolFeeData feeData = feeValidationService.decodeFeeData(rpcTransaction.getTx());
+    WhirlpoolFeeData feeData = tx0ValidationService.decodeFeeData(rpcTransaction.getTx());
     Assertions.assertNull(feeData);
   }
 
@@ -109,44 +111,49 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
   }
 
   @Test
-  public void isTx0FeePaid_feeValue() throws Exception {
+  public void findValidFeeOutput_feeValue() throws Exception {
     String txid = "6588946af1d9d92b402fd672360fd12217abfaf6382ce644d358e8174781f0ce";
 
     // accept when paid exact fee
-    Assertions.assertTrue(doIsTx0FeePaid(txid, 1234, FEES_VALID_50K, 0, null, 100));
+    Assertions.assertEquals(
+        1, doFindValidFeeOutput(txid, 1234, FEES_VALID_50K, 0, null, 100).getIndex());
 
     // reject when paid more than fee
-    Assertions.assertFalse(doIsTx0FeePaid(txid, 1234, FEES_VALID_50K - 1, 0, null, 100));
-    Assertions.assertFalse(doIsTx0FeePaid(txid, 1234, 1, 0, null, 100));
+    Assertions.assertNull(doFindValidFeeOutput(txid, 1234, FEES_VALID_50K - 1, 0, null, 100));
+    Assertions.assertNull(doFindValidFeeOutput(txid, 1234, 1, 0, null, 100));
 
     // reject when paid less than fee
-    Assertions.assertFalse(doIsTx0FeePaid(txid, 1234, FEES_VALID_50K + 1, 0, null, 100));
-    Assertions.assertFalse(doIsTx0FeePaid(txid, 1234, 1000000, 0, null, 100));
+    Assertions.assertNull(doFindValidFeeOutput(txid, 1234, FEES_VALID_50K + 1, 0, null, 100));
+    Assertions.assertNull(doFindValidFeeOutput(txid, 1234, 1000000, 0, null, 100));
 
     // reject when paid to wrong xpub indice
-    Assertions.assertFalse(doIsTx0FeePaid(txid, 234, FEES_VALID_50K, 1, null, 100));
-    Assertions.assertFalse(doIsTx0FeePaid(txid, 234, FEES_VALID_50K, 2, null, 100));
-    Assertions.assertFalse(doIsTx0FeePaid(txid, 234, FEES_VALID_50K, 10, null, 100));
+    Assertions.assertNull(doFindValidFeeOutput(txid, 234, FEES_VALID_50K, 1, null, 100));
+    Assertions.assertNull(doFindValidFeeOutput(txid, 234, FEES_VALID_50K, 2, null, 100));
+    Assertions.assertNull(doFindValidFeeOutput(txid, 234, FEES_VALID_50K, 10, null, 100));
   }
 
   @Test
-  public void isTx0FeePaid_feeAccept() throws Exception {
+  public void findValidFeeOutput_feeAccept() throws Exception {
     String txid = "6588946af1d9d92b402fd672360fd12217abfaf6382ce644d358e8174781f0ce";
     Map<Long, Long> feeAccept = new HashMap<>();
     feeAccept.put(FEES_VALID_50K, 11111111L);
 
     // reject when no feeAccept
-    Assertions.assertFalse(doIsTx0FeePaid(txid, 1234, FEES_VALID_50K + 10, 0, null, 100));
+    Assertions.assertNull(doFindValidFeeOutput(txid, 1234, FEES_VALID_50K + 10, 0, null, 100));
 
     // accept when tx0Time <= feeAccept.maxTime
-    Assertions.assertTrue(doIsTx0FeePaid(txid, 11111110L, FEES_VALID_50K + 10, 0, feeAccept, 100));
-    Assertions.assertTrue(doIsTx0FeePaid(txid, 11110L, FEES_VALID_50K + 10, 0, feeAccept, 100));
+    Assertions.assertEquals(
+        1,
+        doFindValidFeeOutput(txid, 11111110L, FEES_VALID_50K + 10, 0, feeAccept, 100).getIndex());
+    Assertions.assertEquals(
+        1, doFindValidFeeOutput(txid, 11110L, FEES_VALID_50K + 10, 0, feeAccept, 100).getIndex());
 
     // reject when tx0Time > feeAccept.maxTime
-    Assertions.assertFalse(doIsTx0FeePaid(txid, 11111112L, FEES_VALID_50K + 10, 0, feeAccept, 100));
+    Assertions.assertNull(
+        doFindValidFeeOutput(txid, 11111112L, FEES_VALID_50K + 10, 0, feeAccept, 100));
   }
 
-  private boolean doIsTx0FeePaid(
+  private TransactionOutput doFindValidFeeOutput(
       String txid,
       long txTime,
       long minFees,
@@ -155,7 +162,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
       int feeValuePercent)
       throws NotifiableException {
     PoolFee poolFee = new PoolFee(minFees, feeAccept);
-    return feeValidationService.isTx0FeePaid(
+    return tx0ValidationService.findValidFeeOutput(
         getTx(txid), txTime, xpubIndice, poolFee, feeValuePercent, XManagerService.WHIRLPOOL);
   }
 
@@ -168,7 +175,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
   }
 
   @Test
-  public void isValidTx0_feePayloadValid() throws Exception {
+  public void validate_feePayloadValid_0() throws Exception {
     UnspentOutput spendFrom =
         testUtils.generateUnspentOutputWithKey(99000000, params, utxoKeyProvider);
     Collection<UnspentOutput> spendFroms = Arrays.asList(spendFrom);
@@ -186,7 +193,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
         new BipWallet(bip84w, new MemoryIndexHandlerSupplier(), BIP_WALLET.BADBANK_BIP84);
 
     Pool pool = new Pool();
-    pool.setPoolId("foo");
+    pool.setPoolId("0.01btc");
     pool.setDenomination(1000000);
     pool.setFeeValue(FEES_VALID);
     pool.setMustMixBalanceMin(1000102);
@@ -199,12 +206,12 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
     int feeIndex = 123456;
     short scodePayload = SCODE_FOO_PAYLOAD; // valid scodePayload
     short partnerPayload = 0;
-    String feePaymentCode = feeValidationService.getFeePaymentCode();
+    String feePaymentCode = tx0ValidationService.getFeePaymentCode();
     String feeAddress = "tb1q9fj036sha0mv25qm6ruk7l85xy2wy6qp853yx0";
     byte[] feePayload = feePayloadService.encodeFeePayload(feeIndex, scodePayload, partnerPayload);
 
     Tx0Data tx0Data =
-        new Tx0Data("foo", feePaymentCode, 0, 1111, 100, "test", feePayload, feeAddress);
+        new Tx0Data("0.01btc", feePaymentCode, 0, 1111, 100, "test", feePayload, feeAddress);
 
     int nbPremix = 4;
     long tx0MinerFee = 2;
@@ -242,17 +249,26 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
                 tx0Preview,
                 utxoKeyProvider);
 
-    WhirlpoolFeeData feeData = feeValidationService.decodeFeeData(tx0.getTx());
+    PoolFee poolFee = new PoolFee(FEES_VALID, null);
+    com.samourai.whirlpool.server.beans.Pool serverPool = poolService.getPool(pool.getPoolId());
+    serverPool._setPoolFee(poolFee);
+
+    Tx0Validation tx0Validation = tx0ValidationService.validate(tx0.getTx(), 1234, poolFee);
+    Assertions.assertNull(tx0Validation.getFeeOutput());
+    Assertions.assertEquals(scodePayload, tx0Validation.getScodeConfig().getPayload());
+
+    WhirlpoolFeeData feeData = tx0Validation.getFeeData();
     Assertions.assertEquals(feeIndex, feeData.getFeeIndice());
     Assertions.assertEquals(scodePayload, feeData.getScodePayload());
     Assertions.assertEquals(partnerPayload, feeData.getPartnerPayload());
 
-    PoolFee poolFee = new PoolFee(FEES_VALID, null);
-    Assertions.assertTrue(feeValidationService.isValidTx0(tx0.getTx(), 1234, feeData, poolFee));
+    // reverse parseAndValidate
+    Integer[] strictModeVouts = new Integer[] {1, 2, 3, 4, 5, 6};
+    doParseAndValidate(tx0Validation, tx0.getTx(), serverPool, strictModeVouts);
   }
 
   @Test
-  public void isValidTx0_feePayloadInvalid() throws Exception {
+  public void validate_feePayloadInvalid() throws Exception {
     UnspentOutput spendFrom =
         testUtils.generateUnspentOutputWithKey(99000000, params, utxoKeyProvider);
     Collection<UnspentOutput> spendFroms = Arrays.asList(spendFrom);
@@ -270,7 +286,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
         new BipWallet(bip84w, new MemoryIndexHandlerSupplier(), BIP_WALLET.BADBANK_BIP84);
 
     Pool pool = new Pool();
-    pool.setPoolId("foo");
+    pool.setPoolId("0.01btc");
     pool.setDenomination(1000000);
     pool.setFeeValue(FEES_VALID);
     pool.setMustMixBalanceMin(1000102);
@@ -282,7 +298,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
     List<Pool> poolItems = new ArrayList<>();
     poolItems.add(pool);
 
-    String feePaymentCode = feeValidationService.getFeePaymentCode();
+    String feePaymentCode = tx0ValidationService.getFeePaymentCode();
     int feeIndex = 123456;
     short scodePayload = 111; // invalid scodePayload
     short partnerPayload = 0;
@@ -290,7 +306,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
     String feeAddress = "tb1q9fj036sha0mv25qm6ruk7l85xy2wy6qp853yx0";
 
     Tx0Data tx0Data =
-        new Tx0Data("foo", feePaymentCode, 0, FEES_VALID, 0, "test", feePayload, feeAddress);
+        new Tx0Data("0.01btc", feePaymentCode, 0, FEES_VALID, 0, "test", feePayload, feeAddress);
 
     int nbPremix = 4;
     long tx0MinerFee = 2;
@@ -329,33 +345,69 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
                 tx0Preview,
                 utxoKeyProvider);
 
-    WhirlpoolFeeData feeData = feeValidationService.decodeFeeData(tx0.getTx());
+    WhirlpoolFeeData feeData = tx0ValidationService.decodeFeeData(tx0.getTx());
     Assertions.assertEquals(feeIndex, feeData.getFeeIndice());
     Assertions.assertEquals(scodePayload, feeData.getScodePayload());
     Assertions.assertEquals(partnerPayload, feeData.getPartnerPayload());
 
     PoolFee poolFee = new PoolFee(FEES_VALID, null);
-    Assertions.assertFalse(feeValidationService.isValidTx0(tx0.getTx(), 1234, feeData, poolFee));
+    com.samourai.whirlpool.server.beans.Pool serverPool = poolService.getPool(pool.getPoolId());
+    serverPool._setPoolFee(poolFee);
+
+    Tx0Validation tx0Validation = tx0ValidationService.validate(tx0.getTx(), 1234, poolFee);
+    Assertions.assertNull(tx0Validation);
+
+    // reverse parseAndValidate
+    try {
+      Integer[] strictModeVouts = new Integer[] {};
+      doParseAndValidate(tx0Validation, tx0.getTx(), serverPool, strictModeVouts);
+      Assertions.assertTrue(false);
+    } catch (NotifiableException e) {
+      Assertions.assertEquals("Not a valid TX0", e.getMessage());
+    }
   }
 
   @Test
-  public void isValidTx0_feePayload2() throws NotifiableException {
+  public void validate_feePayload_0_addressReuse() throws Exception {
     // reject nofee when unknown feePayload
     String txid = "b3557587f87bcbd37e847a0fff0ded013b23026f153d85f28cb5d407d39ef2f3";
     PoolFee poolFee = new PoolFee(FEES_VALID, null);
+    com.samourai.whirlpool.server.beans.Pool serverPool = poolService.getPool("0.01btc");
+    serverPool._setPoolFee(poolFee);
 
     Transaction tx = getTx(txid);
-    Assertions.assertFalse(
-        feeValidationService.isValidTx0(tx, 1234, feeValidationService.decodeFeeData(tx), poolFee));
+    Tx0Validation tx0Validation = tx0ValidationService.validate(tx, 1234, poolFee);
+    Assertions.assertNull(tx0Validation);
+
+    // reverse parseAndValidate
+    try {
+      Integer[] strictModeVouts = new Integer[] {};
+      doParseAndValidate(tx0Validation, tx, serverPool, strictModeVouts);
+      Assertions.assertTrue(false);
+    } catch (NotifiableException e) {
+      Assertions.assertEquals("Not a valid TX0", e.getMessage());
+    }
 
     // accept when valid feePayload
-    setScodeConfig("myscode", (short) 12345, 0, null);
-    Assertions.assertTrue(
-        feeValidationService.isValidTx0(tx, 1234, feeValidationService.decodeFeeData(tx), poolFee));
+    short scodePayload = (short) 12345;
+    short partnerPayload = 0;
+    setScodeConfig("myscode", scodePayload, 0, null);
+    tx0Validation = tx0ValidationService.validate(tx, 1234, poolFee);
+    Assertions.assertNull(tx0Validation.getFeeOutput());
+    Assertions.assertEquals(scodePayload, tx0Validation.getScodeConfig().getPayload());
+
+    WhirlpoolFeeData feeData = tx0Validation.getFeeData();
+    Assertions.assertEquals(11, feeData.getFeeIndice());
+    Assertions.assertEquals(scodePayload, feeData.getScodePayload());
+    Assertions.assertEquals(partnerPayload, feeData.getPartnerPayload());
+
+    // reverse parseAndValidate
+    Integer[] strictModeVouts = new Integer[] {1, 2, 3};
+    doParseAndValidate(tx0Validation, tx, serverPool, strictModeVouts);
   }
 
   @Test
-  public void isValidTx0_noScode() throws Exception {
+  public void validate_noScode() throws Exception {
     UnspentOutput spendFrom =
         testUtils.generateUnspentOutputWithKey(99000000, params, utxoKeyProvider);
     Collection<UnspentOutput> spendFroms = Arrays.asList(spendFrom);
@@ -373,7 +425,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
         new BipWallet(bip84w, new MemoryIndexHandlerSupplier(), BIP_WALLET.BADBANK_BIP84);
 
     Pool pool = new Pool();
-    pool.setPoolId("foo");
+    pool.setPoolId("0.01btc");
     pool.setDenomination(1000000);
     pool.setFeeValue(FEES_VALID);
     pool.setMustMixBalanceMin(1000102);
@@ -385,7 +437,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
     List<Pool> poolItems = new ArrayList<>();
     poolItems.add(pool);
 
-    String feePaymentCode = feeValidationService.getFeePaymentCode();
+    String feePaymentCode = tx0ValidationService.getFeePaymentCode();
     int feeIndex = 1;
     short scodePayload = 0;
     byte[] feePayload =
@@ -393,7 +445,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
     String feeAddress = "tb1qcaerxclcmu9llc7ugh65hemqg6raaz4sul535f";
 
     Tx0Data tx0Data =
-        new Tx0Data("foo", feePaymentCode, FEES_VALID, 0, 0, "test", feePayload, feeAddress);
+        new Tx0Data("0.01btc", feePaymentCode, FEES_VALID, 0, 0, "test", feePayload, feeAddress);
 
     int nbPremix = 4;
     long tx0MinerFee = 2;
@@ -432,16 +484,25 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
                 tx0Preview,
                 utxoKeyProvider);
 
-    WhirlpoolFeeData feeData = feeValidationService.decodeFeeData(tx0.getTx());
+    PoolFee poolFee = new PoolFee(FEES_VALID, null);
+    com.samourai.whirlpool.server.beans.Pool serverPool = poolService.getPool(pool.getPoolId());
+    serverPool._setPoolFee(poolFee);
+
+    Tx0Validation tx0Validation = tx0ValidationService.validate(tx0.getTx(), 1234, poolFee);
+    Assertions.assertEquals(1, tx0Validation.getFeeOutput().getIndex());
+    Assertions.assertNull(tx0Validation.getScodeConfig());
+
+    WhirlpoolFeeData feeData = tx0Validation.getFeeData();
     Assertions.assertEquals(feeIndex, feeData.getFeeIndice());
     Assertions.assertEquals(scodePayload, feeData.getScodePayload());
 
-    PoolFee poolFee = new PoolFee(FEES_VALID, null);
-    Assertions.assertTrue(feeValidationService.isValidTx0(tx0.getTx(), 1234, feeData, poolFee));
+    // reverse parseAndValidate
+    Integer[] strictModeVouts = new Integer[] {2, 3, 4, 5, 6};
+    doParseAndValidate(tx0Validation, tx0.getTx(), serverPool, strictModeVouts);
   }
 
   @Test
-  public void isValidTx0_noScode_invalidAddress() throws Exception {
+  public void validate_noScode_invalidAddress() throws Exception {
     UnspentOutput spendFrom =
         testUtils.generateUnspentOutputWithKey(99000000, params, utxoKeyProvider);
     Collection<UnspentOutput> spendFroms = Arrays.asList(spendFrom);
@@ -459,7 +520,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
         new BipWallet(bip84w, new MemoryIndexHandlerSupplier(), BIP_WALLET.BADBANK_BIP84);
 
     Pool pool = new Pool();
-    pool.setPoolId("foo");
+    pool.setPoolId("0.01btc");
     pool.setDenomination(1000000);
     pool.setFeeValue(FEES_VALID);
     pool.setMustMixBalanceMin(1000102);
@@ -473,13 +534,13 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
 
     int feeIndex = 123456;
     short scodePayload = 0;
-    String feePaymentCode = feeValidationService.getFeePaymentCode();
+    String feePaymentCode = tx0ValidationService.getFeePaymentCode();
     byte[] feePayload =
         feePayloadService.encodeFeePayload(feeIndex, scodePayload, (short) 0); // no scodePayload
     String feeAddress = "tb1q9fj036sha0mv25qm6ruk7l85xy2wy6qp853yx0"; // invalid address
 
     Tx0Data tx0Data =
-        new Tx0Data("foo", feePaymentCode, FEES_VALID, 0, 0, "test", feePayload, feeAddress);
+        new Tx0Data("0.01btc", feePaymentCode, FEES_VALID, 0, 0, "test", feePayload, feeAddress);
 
     int nbPremix = 4;
     long tx0MinerFee = 2;
@@ -518,54 +579,54 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
                 tx0Preview,
                 utxoKeyProvider);
 
-    WhirlpoolFeeData feeData = feeValidationService.decodeFeeData(tx0.getTx());
+    WhirlpoolFeeData feeData = tx0ValidationService.decodeFeeData(tx0.getTx());
     Assertions.assertEquals(feeIndex, feeData.getFeeIndice());
     Assertions.assertEquals(scodePayload, feeData.getScodePayload());
 
     PoolFee poolFee = new PoolFee(FEES_VALID, null);
-    Assertions.assertFalse(feeValidationService.isValidTx0(tx0.getTx(), 1234, feeData, poolFee));
+    com.samourai.whirlpool.server.beans.Pool serverPool = poolService.getPool(pool.getPoolId());
+    serverPool._setPoolFee(poolFee);
+
+    Tx0Validation tx0Validation = tx0ValidationService.validate(tx0.getTx(), 1234, poolFee);
+    Assertions.assertNull(tx0Validation);
+
+    // reverse parseAndValidate
+    try {
+      Integer[] strictModeVouts = new Integer[] {};
+      doParseAndValidate(tx0Validation, tx0.getTx(), serverPool, strictModeVouts);
+      Assertions.assertTrue(false);
+    } catch (NotifiableException e) {
+      Assertions.assertEquals("Not a valid TX0", e.getMessage());
+    }
   }
 
-  @Test
-  public void getFeePayloadByScode() throws Exception {
-    long now = System.currentTimeMillis();
+  private void doParseAndValidate(
+      Tx0Validation tv1,
+      Transaction tx,
+      com.samourai.whirlpool.server.beans.Pool serverPool,
+      Integer[] strictModeVouts)
+      throws Exception {
+    Tx0Validation tv2 =
+        tx0ValidationService.parseAndValidate(
+            tx.bitcoinSerialize(), System.currentTimeMillis(), serverPool);
+    if (tv1.getFeeOutput() != null) {
+      Assertions.assertEquals(tv1.getFeeOutput().getIndex(), tv2.getFeeOutput().getIndex());
+    } else {
+      Assertions.assertNull(tv2.getFeeOutput());
+    }
+    if (tv1.getScodeConfig() != null) {
+      Assertions.assertEquals(tv1.getScodeConfig().getPayload(), tv2.getScodeConfig().getPayload());
+    } else {
+      Assertions.assertNull(tv2.getScodeConfig());
+    }
+    Assertions.assertEquals(tv1.getTx().getHashAsString(), tv2.getTx().getHashAsString());
+    Assertions.assertEquals(tv1.getFeePercent(), tv2.getFeePercent());
+    Assertions.assertEquals(tv1.getFeeData().getFeeIndice(), tv2.getFeeData().getFeeIndice());
+    Assertions.assertEquals(tv1.getFeeData().getScodePayload(), tv2.getFeeData().getScodePayload());
     Assertions.assertEquals(
-        0, (int) feeValidationService.getScodeConfigByScode(SCODE_FOO_0, now).getFeeValuePercent());
-    Assertions.assertEquals(
-        25,
-        (int) feeValidationService.getScodeConfigByScode(SCODE_BAR_25, now).getFeeValuePercent());
-    Assertions.assertEquals(
-        50,
-        (int) feeValidationService.getScodeConfigByScode(SCODE_MIN_50, now).getFeeValuePercent());
-    Assertions.assertEquals(
-        80,
-        (int) feeValidationService.getScodeConfigByScode(SCODE_MAX_80, now).getFeeValuePercent());
-    // case non-sensitive
-    Assertions.assertEquals(
-        80, (int) feeValidationService.getScodeConfigByScode("MaX", now).getFeeValuePercent());
-    Assertions.assertEquals(
-        80, (int) feeValidationService.getScodeConfigByScode("max", now).getFeeValuePercent());
-    Assertions.assertEquals(
-        80, (int) feeValidationService.getScodeConfigByScode("MAX", now).getFeeValuePercent());
-    Assertions.assertEquals(null, feeValidationService.getScodeConfigByScode("invalid", now));
-  }
+        tv1.getFeeData().getPartnerPayload(), tv2.getFeeData().getPartnerPayload());
 
-  @Test
-  public void getScodeByFeePayload() throws Exception {
-    Assertions.assertEquals(
-        SCODE_FOO_PAYLOAD,
-        (short) feeValidationService.getScodeByScodePayload(SCODE_FOO_PAYLOAD).getPayload());
-    Assertions.assertEquals(
-        SCODE_BAR_PAYLOAD,
-        (short) feeValidationService.getScodeByScodePayload(SCODE_BAR_PAYLOAD).getPayload());
-    Assertions.assertEquals(
-        SCODE_MIN_PAYLOAD,
-        (short) feeValidationService.getScodeByScodePayload(SCODE_MIN_PAYLOAD).getPayload());
-    Assertions.assertEquals(
-        SCODE_MAX_PAYLOAD,
-        (short) feeValidationService.getScodeByScodePayload(SCODE_MAX_PAYLOAD).getPayload());
-
-    Assertions.assertEquals(null, feeValidationService.getScodeByScodePayload((short) 0));
-    Assertions.assertEquals(null, feeValidationService.getScodeByScodePayload((short) -1));
+    Assertions.assertArrayEquals(
+        strictModeVouts, tv2.findStrictModeVouts().toArray(new Integer[] {}));
   }
 }

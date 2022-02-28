@@ -19,18 +19,18 @@ import org.springframework.stereotype.Service;
 @Service
 public class InputValidationService {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-  private FeeValidationService feeValidationService;
+  private Tx0ValidationService tx0ValidationService;
   private WhirlpoolServerConfig whirlpoolServerConfig;
   private CryptoService cryptoService;
   private MessageSignUtilGeneric messageSignUtil;
 
   public InputValidationService(
-      FeeValidationService feeValidationService,
+      Tx0ValidationService tx0ValidationService,
       WhirlpoolServerConfig whirlpoolServerConfig,
       CryptoService cryptoService,
       DbService dbService,
       MessageSignUtilGeneric messageSignUtil) {
-    this.feeValidationService = feeValidationService;
+    this.tx0ValidationService = tx0ValidationService;
     this.whirlpoolServerConfig = whirlpoolServerConfig;
     this.cryptoService = cryptoService;
     this.messageSignUtil = messageSignUtil;
@@ -63,7 +63,7 @@ public class InputValidationService {
       throws NotifiableException {
     Transaction tx = rpcTx.getTx();
     // is it a tx0?
-    WhirlpoolFeeData feeData = feeValidationService.decodeFeeData(tx);
+    WhirlpoolFeeData feeData = tx0ValidationService.decodeFeeData(tx);
     if (feeData != null) {
       // this is a tx0 => mustMix
       if (log.isTraceEnabled()) {
@@ -78,7 +78,8 @@ public class InputValidationService {
       }
 
       // check fees paid
-      if (!feeValidationService.isValidTx0(rpcTx.getTx(), rpcTx.getTxTime(), feeData, poolFee)) {
+      if (tx0ValidationService.validate(rpcTx.getTx(), rpcTx.getTxTime(), poolFee, feeData)
+          == null) {
         log.error(
             "Input rejected (invalid fee for tx0="
                 + tx.getHashAsString()

@@ -1,15 +1,20 @@
 package com.samourai.whirlpool.server.services.fee;
 
+import org.bitcoinj.core.TransactionOutput;
+
 public class WhirlpoolFeeData {
 
   private int feeIndice;
   private short scodePayload;
   private short partnerPayload;
+  private TransactionOutput txOutput;
 
-  public WhirlpoolFeeData(int feeIndice, short scodePayload, short partnerPayload) {
+  public WhirlpoolFeeData(
+      int feeIndice, short scodePayload, short partnerPayload, TransactionOutput txOutput) {
     this.feeIndice = feeIndice;
     this.scodePayload = scodePayload;
     this.partnerPayload = partnerPayload;
+    this.txOutput = txOutput;
   }
 
   public int getFeeIndice() {
@@ -24,6 +29,10 @@ public class WhirlpoolFeeData {
     return partnerPayload;
   }
 
+  public TransactionOutput getTxOutput() {
+    return txOutput;
+  }
+
   @Override
   public String toString() {
     return "feeIndice="
@@ -31,6 +40,8 @@ public class WhirlpoolFeeData {
         + ", scodePayload="
         + scodePayload
         + ", partnerPayload="
-        + partnerPayload;
+        + partnerPayload
+        + ", txOutputIndex="
+        + txOutput.getIndex();
   }
 }

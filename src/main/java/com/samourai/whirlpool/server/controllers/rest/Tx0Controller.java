@@ -1,13 +1,11 @@
 package com.samourai.whirlpool.server.controllers.rest;
 
 import com.google.common.collect.ImmutableMap;
-import com.samourai.javaserver.exceptions.RestException;
-import com.samourai.wallet.api.backend.beans.PushTxAddressReuseException;
-import com.samourai.wallet.api.backend.beans.PushTxException;
-import com.samourai.whirlpool.client.exception.NotifiableException;
 import com.samourai.whirlpool.protocol.WhirlpoolEndpoint;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
-import com.samourai.whirlpool.protocol.rest.*;
+import com.samourai.whirlpool.protocol.rest.Tx0DataRequestV2;
+import com.samourai.whirlpool.protocol.rest.Tx0DataResponseV1;
+import com.samourai.whirlpool.protocol.rest.Tx0DataResponseV2;
 import com.samourai.whirlpool.server.beans.Partner;
 import com.samourai.whirlpool.server.beans.Pool;
 import com.samourai.whirlpool.server.beans.PoolFee;
@@ -26,7 +24,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
-import org.bitcoinj.core.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,87 +35,38 @@ public class Tx0Controller extends AbstractRestController {
 
   private PoolService poolService;
   private PartnerService partnerService;
-  private FeeValidationService feeValidationService;
+  private Tx0ValidationService tx0ValidationService;
+  private ScodeService scodeService;
   private FeePayloadService feePayloadService;
   private ExportService exportService;
   private WhirlpoolServerConfig serverConfig;
   private XManagerClient xManagerClient;
-  private BackendService backendService;
 
   @Autowired
   public Tx0Controller(
       PoolService poolService,
       PartnerService partnerService,
-      FeeValidationService feeValidationService,
+      Tx0ValidationService tx0ValidationService,
+      ScodeService scodeService,
       FeePayloadService feePayloadService,
       ExportService exportService,
       WhirlpoolServerConfig serverConfig,
-      XManagerClient xManagerClient,
-      BackendService backendService) {
+      XManagerClient xManagerClient) {
     this.poolService = poolService;
     this.partnerService = partnerService;
-    this.feeValidationService = feeValidationService;
+    this.tx0ValidationService = tx0ValidationService;
+    this.scodeService = scodeService;
     this.feePayloadService = feePayloadService;
     this.exportService = exportService;
     this.serverConfig = serverConfig;
     this.xManagerClient = xManagerClient;
-    this.backendService = backendService;
   }
 
+  @Deprecated
   @RequestMapping(value = WhirlpoolEndpoint.REST_PREFIX + "tx0Notify", method = RequestMethod.POST)
-  public void tx0Notify(HttpServletRequest request, @RequestBody PushTxRequest payload) {
+  public void tx0Notify(HttpServletRequest request) {
     // ignore old clients
     return;
-  }
-
-  @RequestMapping(value = WhirlpoolEndpoint.REST_TX0_PUSH, method = RequestMethod.POST)
-  public void tx0Push(HttpServletRequest request, @RequestBody PushTxRequest payload)
-      throws Exception {
-    if (log.isDebugEnabled()) {
-      log.debug("(<) " + WhirlpoolEndpoint.REST_TX0_PUSH);
-    }
-
-    // validate tx
-    try {
-      byte[] txBytes = WhirlpoolProtocol.decodeBytes(payload.tx);
-      Transaction tx = new Transaction(serverConfig.getNetworkParameters(), txBytes);
-      log.info("tx0Push: " + tx.getHashAsString());
-    } catch (Exception e) {
-      log.error("", e);
-      throw new NotifiableException("Tx parsing error");
-    }
-
-    // push
-    pushTx(payload.tx);
-
-    // TODO validate & metric
-    /*
-    // run tx0 analyzis in another thread
-    taskService.runOnce(1, () -> {
-      try {
-        // verify tx0
-        RpcTransaction rpcTransaction =
-                blockchainDataService.getRpcTransaction(payload.txid).orElseThrow(() -> notFoundException);
-        metricService.onTx0(payload, payload.poolId);
-      } catch (Exception e) {
-        log.error("tx0Notify failed", e);
-      }
-    });
-    */
-  }
-
-  protected void pushTx(String txHex) throws Exception {
-    try {
-      backendService.pushTx(txHex);
-    } catch (PushTxAddressReuseException e) {
-      PushTxErrorResponse response =
-          new PushTxErrorResponse(
-              e.getMessage(), e.getPushTxError(), e.getAdressReuseOutputIndexs());
-      throw new RestException(response);
-    } catch (PushTxException e) {
-      PushTxErrorResponse response = new PushTxErrorResponse(e.getMessage(), e.getPushTxError());
-      throw new RestException(response);
-    }
   }
 
   @RequestMapping(value = WhirlpoolEndpoint.REST_TX0_DATA, method = RequestMethod.POST)
@@ -146,7 +94,7 @@ public class Tx0Controller extends AbstractRestController {
     }
 
     WhirlpoolServerConfig.ScodeSamouraiFeeConfig scodeConfig =
-        feeValidationService.getScodeConfigByScode(scode, System.currentTimeMillis());
+        scodeService.getByScode(scode, System.currentTimeMillis());
     if (scodeConfig == null && scode != null) {
       log.warn("Tx0Data: Invalid SCODE: " + scode);
     }
@@ -233,7 +181,7 @@ public class Tx0Controller extends AbstractRestController {
               + ", partnerId="
               + partner.getId());
     }
-    String feePaymentCode = feeValidationService.getFeePaymentCode();
+    String feePaymentCode = tx0ValidationService.getFeePaymentCode();
     return new Tx0DataResponseV2.Tx0Data(
         poolId,
         feePaymentCode,
@@ -261,9 +209,9 @@ public class Tx0Controller extends AbstractRestController {
 
     PoolFee poolFee = poolService.getPool(poolId).getPoolFee();
 
-    String feePaymentCode = feeValidationService.getFeePaymentCode();
+    String feePaymentCode = tx0ValidationService.getFeePaymentCode();
     WhirlpoolServerConfig.ScodeSamouraiFeeConfig scodeConfig =
-        feeValidationService.getScodeConfigByScode(scode, System.currentTimeMillis());
+        scodeService.getByScode(scode, System.currentTimeMillis());
     String feePayload64;
     long feeValue;
     int feeDiscountPercent;
