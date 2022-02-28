@@ -9,6 +9,7 @@ import com.samourai.wallet.segwit.SegwitAddress;
 import com.samourai.wallet.segwit.bech32.Bech32Segwit;
 import com.samourai.wallet.segwit.bech32.Bech32UtilGeneric;
 import com.samourai.wallet.util.FormatsUtilGeneric;
+import com.samourai.wallet.util.TxUtil;
 import com.samourai.whirlpool.server.utils.BIP47WalletAndHDWallet;
 import java.math.BigInteger;
 import java.util.*;
@@ -191,7 +192,7 @@ public class ManualMixer {
       tx.addInput(ti);
     }
     unsignedStrTxHash = tx.getHashAsString();
-    unsignedHexTx = new String(Hex.encode(tx.bitcoinSerialize()));
+    unsignedHexTx = TxUtil.getInstance().getTxHex(tx);
     System.out.println("UNSIGNED TX: " + tx);
     System.out.println("unsignedStrTxHash = " + unsignedStrTxHash);
     System.out.println("unsignedHexTx = " + unsignedHexTx);
@@ -231,7 +232,7 @@ public class ManualMixer {
     tx.verify();
 
     strTxHash = tx.getHashAsString();
-    hexTx = new String(Hex.encode(tx.bitcoinSerialize()));
+    hexTx = TxUtil.getInstance().getTxHex(tx);
     System.out.println("FINAL TX: " + tx);
     System.out.println("strTxHash = " + strTxHash);
     System.out.println("hexTx = " + hexTx);

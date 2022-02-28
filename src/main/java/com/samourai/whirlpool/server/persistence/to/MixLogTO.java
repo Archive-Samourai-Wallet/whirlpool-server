@@ -1,8 +1,8 @@
 package com.samourai.whirlpool.server.persistence.to;
 
+import com.samourai.wallet.util.TxUtil;
 import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.persistence.to.shared.EntityTO;
-import com.samourai.whirlpool.server.utils.Utils;
 import javax.persistence.*;
 
 @Entity(name = "mixLog")
@@ -23,7 +23,7 @@ public class MixLogTO extends EntityTO {
 
     if (mix.getTx() != null) {
       this.txid = mix.getTx().getHashAsString();
-      this.rawTx = Utils.getRawTx(mix.getTx());
+      this.rawTx = TxUtil.getInstance().getTxHex(mix.getTx());
     }
   }
 

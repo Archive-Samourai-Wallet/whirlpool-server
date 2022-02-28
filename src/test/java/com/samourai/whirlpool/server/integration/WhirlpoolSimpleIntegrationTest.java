@@ -4,10 +4,10 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 
 import com.samourai.wallet.bip47.rpc.BIP47Wallet;
 import com.samourai.wallet.bip47.rpc.PaymentCode;
-import com.samourai.wallet.client.BipWalletAndAddressType;
+import com.samourai.wallet.bipWallet.BipWallet;
+import com.samourai.wallet.hd.BIP_WALLET;
 import com.samourai.wallet.hd.HD_Wallet;
 import com.samourai.wallet.segwit.SegwitAddress;
-import com.samourai.whirlpool.client.wallet.beans.WhirlpoolAccount;
 import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.utils.AssertMultiClientManager;
@@ -45,8 +45,7 @@ public class WhirlpoolSimpleIntegrationTest extends AbstractIntegrationTest {
 
     // init BIP47 wallet for output
     BIP47Wallet bip47OutputWallet = testUtils.generateWallet().getBip47Wallet();
-    BipWalletAndAddressType bip84Wallet =
-        testUtils.generateWallet().getBip84Wallet(WhirlpoolAccount.DEPOSIT);
+    BipWallet bip84Wallet = testUtils.generateWallet().getBip84Wallet(BIP_WALLET.DEPOSIT_BIP84);
 
     PaymentCode inputPCode = new PaymentCode(bip47InputWallet.getAccount(0).getPaymentCode());
     // sender signs message with payment code notification address privkey

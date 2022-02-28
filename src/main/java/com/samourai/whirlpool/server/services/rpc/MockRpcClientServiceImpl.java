@@ -3,6 +3,7 @@ package com.samourai.whirlpool.server.services.rpc;
 import com.samourai.javaserver.utils.ServerUtils;
 import com.samourai.wallet.segwit.SegwitAddress;
 import com.samourai.wallet.segwit.bech32.Bech32UtilGeneric;
+import com.samourai.wallet.util.TxUtil;
 import com.samourai.whirlpool.server.beans.rpc.RpcTransaction;
 import com.samourai.whirlpool.server.services.CryptoService;
 import java.io.File;
@@ -57,7 +58,7 @@ public class MockRpcClientServiceImpl implements RpcClientService {
     // mock result TX to simulate broadcast
     String txid = tx.getHashAsString();
     log.warn("NOT broadcasting tx (mock-tx-broadcast=1): " + txid);
-    mock(txid, org.bitcoinj.core.Utils.HEX.encode(tx.bitcoinSerialize()), MOCK_TX_CONFIRMATIONS);
+    mock(txid, TxUtil.getInstance().getTxHex(tx), MOCK_TX_CONFIRMATIONS);
   }
 
   @Override
@@ -131,7 +132,7 @@ public class MockRpcClientServiceImpl implements RpcClientService {
 
     // mock tx
     String txid = transaction.getHashAsString();
-    mock(txid, org.bitcoinj.core.Utils.HEX.encode(transaction.bitcoinSerialize()), nbConfirmations);
+    mock(txid, TxUtil.getInstance().getTxHex(transaction), nbConfirmations);
     log.info("mocked txid=" + txid + ":\n" + transaction.toString());
 
     // verify mock

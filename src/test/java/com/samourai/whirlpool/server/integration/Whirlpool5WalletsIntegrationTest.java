@@ -2,9 +2,9 @@ package com.samourai.whirlpool.server.integration;
 
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
-import com.samourai.wallet.client.BipWalletAndAddressType;
+import com.samourai.wallet.bipWallet.BipWallet;
+import com.samourai.wallet.hd.BIP_WALLET;
 import com.samourai.wallet.segwit.SegwitAddress;
-import com.samourai.whirlpool.client.wallet.beans.WhirlpoolAccount;
 import com.samourai.whirlpool.protocol.websocket.notifications.MixStatus;
 import com.samourai.whirlpool.server.beans.ConfirmedInput;
 import com.samourai.whirlpool.server.beans.Mix;
@@ -421,8 +421,8 @@ public class Whirlpool5WalletsIntegrationTest extends AbstractIntegrationTest {
             int utxoIndex = Integer.parseInt(utxoHashSplit[1]);
 
             final String paymentCode = mixers.get(i);
-            final BipWalletAndAddressType bip84Wallet =
-                premixer.wallets.get(paymentCode).getBip84Wallet(WhirlpoolAccount.DEPOSIT);
+            final BipWallet bip84Wallet =
+                premixer.wallets.get(paymentCode).getBip84Wallet(BIP_WALLET.DEPOSIT_BIP84);
 
             multiClientManager.connectWithMock(
                 segwitAddress,
@@ -479,7 +479,7 @@ public class Whirlpool5WalletsIntegrationTest extends AbstractIntegrationTest {
     // print transactions
     // Transaction unsignedTx = mix.getTx(); // TODO
     // String unsignedStrTxHash = unsignedTx.getHashAsString();
-    // String unsignedHexTx = new String(Hex.encode(unsignedTx.bitcoinSerialize()));
+    // String unsignedHexTx = TxUtil.getInstance().getTxHex(unsignedTx);
     // System.out.println("unsignedStrTxHash = "+unsignedStrTxHash);
     // System.out.println("unsignedHexTx = "+unsignedHexTx);
 

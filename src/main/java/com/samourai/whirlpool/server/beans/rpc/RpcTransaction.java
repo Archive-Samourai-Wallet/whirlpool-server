@@ -1,10 +1,10 @@
 package com.samourai.whirlpool.server.beans.rpc;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.samourai.wallet.util.TxUtil;
 import com.samourai.whirlpool.server.services.rpc.RpcRawTransactionResponse;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.Utils;
 
 public class RpcTransaction {
   private int confirmations;
@@ -14,7 +14,7 @@ public class RpcTransaction {
 
   public RpcTransaction(RpcRawTransactionResponse rpcRawTransaction, NetworkParameters params) {
     // parse tx with bitcoinj
-    this.tx = new Transaction(params, Utils.HEX.decode(rpcRawTransaction.getHex()));
+    this.tx = TxUtil.getInstance().fromTxHex(params, rpcRawTransaction.getHex());
     this.confirmations = rpcRawTransaction.getConfirmations();
     this.txTime = rpcRawTransaction.getTxTime();
   }

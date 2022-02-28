@@ -1,6 +1,7 @@
 package com.samourai.whirlpool.server.services.rpc;
 
 import com.samourai.javaserver.utils.ServerUtils;
+import com.samourai.wallet.util.TxUtil;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.exceptions.BroadcastException;
 import java.lang.invoke.MethodHandles;
@@ -121,7 +122,7 @@ public class JSONRpcClientServiceImpl implements RpcClientService {
 
     try {
       log.info("Broadcasting tx " + txid);
-      rpcClient.sendRawTransaction(org.bitcoinj.core.Utils.HEX.encode(tx.bitcoinSerialize()));
+      rpcClient.sendRawTransaction(TxUtil.getInstance().getTxHex(tx));
     } catch (Exception e) {
       throw BroadcastException.computeBroadcastException(e);
     }

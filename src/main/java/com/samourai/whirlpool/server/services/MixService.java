@@ -489,7 +489,7 @@ public class MixService {
       // check final transaction
       tx.verify();
 
-      log.info("Tx to broadcast: \n" + tx + "\nRaw: " + Utils.getRawTx(tx));
+      log.info("Tx to broadcast: \n" + tx + "\nRaw: " + TxUtil.getInstance().getTxHex(tx));
       try {
         rpcClientService.broadcastTransaction(tx);
         goSuccess(mix);
@@ -527,7 +527,7 @@ public class MixService {
 
           log.info("Txid: " + tx.getHashAsString());
           if (log.isDebugEnabled()) {
-            log.debug("Tx to sign: \n" + tx + "\nRaw: " + Utils.getRawTx(tx));
+            log.debug("Tx to sign: \n" + tx + "\nRaw: " + TxUtil.getInstance().getTxHex(tx));
           }
         } catch (Exception e) {
           log.error("Unexpected exception on buildTransaction() for signing", e);

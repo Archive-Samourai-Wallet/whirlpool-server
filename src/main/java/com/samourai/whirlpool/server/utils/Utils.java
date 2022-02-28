@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.text.CharacterPredicates;
 import org.apache.commons.text.RandomStringGenerator;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.TransactionWitness;
 import org.bitcoinj.script.Script;
@@ -39,10 +38,6 @@ public class Utils {
 
   public static String generateUniqueString() {
     return UUID.randomUUID().toString().replace("-", "");
-  }
-
-  public static String getRawTx(Transaction tx) {
-    return org.bitcoinj.core.Utils.HEX.encode(tx.bitcoinSerialize());
   }
 
   public static TransactionWitness witnessUnserialize64(String[] witnesses64) {

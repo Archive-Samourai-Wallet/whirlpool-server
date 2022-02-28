@@ -3,6 +3,7 @@ package com.samourai.whirlpool.server.beans;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import com.samourai.javaserver.utils.ServerUtils;
+import com.samourai.wallet.util.TxUtil;
 import com.samourai.whirlpool.server.beans.rpc.RpcTransaction;
 import com.samourai.whirlpool.server.integration.AbstractIntegrationTest;
 import com.samourai.whirlpool.server.services.rpc.RpcRawTransactionResponse;
@@ -10,7 +11,6 @@ import java.lang.invoke.MethodHandles;
 import java.util.HashMap;
 import java.util.Map;
 import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.Utils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -85,13 +85,12 @@ public class RpcTransactionTest extends AbstractIntegrationTest {
       String txhex = entry.getValue();
 
       // TEST
-      Transaction tx =
-          new Transaction(cryptoService.getNetworkParameters(), Utils.HEX.decode(txhex));
+      Transaction tx = TxUtil.getInstance().fromTxHex(cryptoService.getNetworkParameters(), txhex);
       log.info("txid=" + txid + ":\n" + tx.toString());
 
       // VERIFY
       Assertions.assertEquals(txid, tx.getHashAsString());
-      Assertions.assertEquals(txhex, Utils.HEX.encode(tx.bitcoinSerialize()));
+      Assertions.assertEquals(txhex, TxUtil.getInstance().getTxHex(tx));
 
       // verify structure
       RpcRawTransactionResponse rawTxResponse =

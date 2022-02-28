@@ -4,9 +4,9 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 
 import com.samourai.javaserver.exceptions.NotifiableException;
 import com.samourai.wallet.api.backend.beans.UnspentOutput;
-import com.samourai.wallet.client.BipWallet;
-import com.samourai.wallet.client.indexHandler.MemoryIndexHandler;
-import com.samourai.wallet.hd.AddressType;
+import com.samourai.wallet.bipWallet.BipWallet;
+import com.samourai.wallet.client.indexHandler.MemoryIndexHandlerSupplier;
+import com.samourai.wallet.hd.BIP_WALLET;
 import com.samourai.wallet.hd.HD_Wallet;
 import com.samourai.wallet.send.provider.SimpleUtxoKeyProvider;
 import com.samourai.whirlpool.client.tx0.*;
@@ -23,7 +23,6 @@ import com.samourai.whirlpool.server.services.fee.WhirlpoolFeeData;
 import com.samourai.xmanager.protocol.XManagerService;
 import java.lang.invoke.MethodHandles;
 import java.util.*;
-import java8.util.Lists;
 import org.bitcoinj.core.Transaction;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -172,39 +171,19 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
   public void isValidTx0_feePayloadValid() throws Exception {
     UnspentOutput spendFrom =
         testUtils.generateUnspentOutputWithKey(99000000, params, utxoKeyProvider);
-    Collection<UnspentOutput> spendFroms = Lists.of(spendFrom);
+    Collection<UnspentOutput> spendFroms = Arrays.asList(spendFrom);
     HD_Wallet bip84w =
         hdWalletFactory.restoreWallet(
             "all all all all all all all all all all all all", "test", params);
 
     BipWallet depositWallet =
-        new BipWallet(
-            bip84w,
-            WhirlpoolAccount.DEPOSIT,
-            new MemoryIndexHandler(),
-            new MemoryIndexHandler(),
-            AddressType.SEGWIT_NATIVE);
+        new BipWallet(bip84w, new MemoryIndexHandlerSupplier(), BIP_WALLET.DEPOSIT_BIP84);
     BipWallet premixWallet =
-        new BipWallet(
-            bip84w,
-            WhirlpoolAccount.PREMIX,
-            new MemoryIndexHandler(),
-            new MemoryIndexHandler(),
-            AddressType.SEGWIT_NATIVE);
+        new BipWallet(bip84w, new MemoryIndexHandlerSupplier(), BIP_WALLET.PREMIX_BIP84);
     BipWallet postmixWallet =
-        new BipWallet(
-            bip84w,
-            WhirlpoolAccount.POSTMIX,
-            new MemoryIndexHandler(),
-            new MemoryIndexHandler(),
-            AddressType.SEGWIT_NATIVE);
+        new BipWallet(bip84w, new MemoryIndexHandlerSupplier(), BIP_WALLET.POSTMIX_BIP84);
     BipWallet badBankWallet =
-        new BipWallet(
-            bip84w,
-            WhirlpoolAccount.BADBANK,
-            new MemoryIndexHandler(),
-            new MemoryIndexHandler(),
-            AddressType.SEGWIT_NATIVE);
+        new BipWallet(bip84w, new MemoryIndexHandlerSupplier(), BIP_WALLET.BADBANK_BIP84);
 
     Pool pool = new Pool();
     pool.setPoolId("foo");
@@ -256,7 +235,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
                 badBankWallet,
                 new Tx0Config(
                     tx0PreviewService,
-                    Lists.of(pool),
+                    Arrays.asList(pool),
                     Tx0FeeTarget.BLOCKS_2,
                     Tx0FeeTarget.BLOCKS_2,
                     WhirlpoolAccount.DEPOSIT),
@@ -276,39 +255,19 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
   public void isValidTx0_feePayloadInvalid() throws Exception {
     UnspentOutput spendFrom =
         testUtils.generateUnspentOutputWithKey(99000000, params, utxoKeyProvider);
-    Collection<UnspentOutput> spendFroms = Lists.of(spendFrom);
+    Collection<UnspentOutput> spendFroms = Arrays.asList(spendFrom);
     HD_Wallet bip84w =
         hdWalletFactory.restoreWallet(
             "all all all all all all all all all all all all", "test", params);
 
     BipWallet depositWallet =
-        new BipWallet(
-            bip84w,
-            WhirlpoolAccount.DEPOSIT,
-            new MemoryIndexHandler(),
-            new MemoryIndexHandler(),
-            AddressType.SEGWIT_NATIVE);
+        new BipWallet(bip84w, new MemoryIndexHandlerSupplier(), BIP_WALLET.DEPOSIT_BIP84);
     BipWallet premixWallet =
-        new BipWallet(
-            bip84w,
-            WhirlpoolAccount.PREMIX,
-            new MemoryIndexHandler(),
-            new MemoryIndexHandler(),
-            AddressType.SEGWIT_NATIVE);
+        new BipWallet(bip84w, new MemoryIndexHandlerSupplier(), BIP_WALLET.PREMIX_BIP84);
     BipWallet postmixWallet =
-        new BipWallet(
-            bip84w,
-            WhirlpoolAccount.POSTMIX,
-            new MemoryIndexHandler(),
-            new MemoryIndexHandler(),
-            AddressType.SEGWIT_NATIVE);
+        new BipWallet(bip84w, new MemoryIndexHandlerSupplier(), BIP_WALLET.POSTMIX_BIP84);
     BipWallet badBankWallet =
-        new BipWallet(
-            bip84w,
-            WhirlpoolAccount.BADBANK,
-            new MemoryIndexHandler(),
-            new MemoryIndexHandler(),
-            AddressType.SEGWIT_NATIVE);
+        new BipWallet(bip84w, new MemoryIndexHandlerSupplier(), BIP_WALLET.BADBANK_BIP84);
 
     Pool pool = new Pool();
     pool.setPoolId("foo");
@@ -363,7 +322,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
                 badBankWallet,
                 new Tx0Config(
                     tx0PreviewService,
-                    Lists.of(pool),
+                    Arrays.asList(pool),
                     Tx0FeeTarget.BLOCKS_2,
                     Tx0FeeTarget.BLOCKS_2,
                     WhirlpoolAccount.DEPOSIT),
@@ -399,39 +358,19 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
   public void isValidTx0_noScode() throws Exception {
     UnspentOutput spendFrom =
         testUtils.generateUnspentOutputWithKey(99000000, params, utxoKeyProvider);
-    Collection<UnspentOutput> spendFroms = Lists.of(spendFrom);
+    Collection<UnspentOutput> spendFroms = Arrays.asList(spendFrom);
     HD_Wallet bip84w =
         hdWalletFactory.restoreWallet(
             "all all all all all all all all all all all all", "test", params);
 
     BipWallet depositWallet =
-        new BipWallet(
-            bip84w,
-            WhirlpoolAccount.DEPOSIT,
-            new MemoryIndexHandler(),
-            new MemoryIndexHandler(),
-            AddressType.SEGWIT_NATIVE);
+        new BipWallet(bip84w, new MemoryIndexHandlerSupplier(), BIP_WALLET.DEPOSIT_BIP84);
     BipWallet premixWallet =
-        new BipWallet(
-            bip84w,
-            WhirlpoolAccount.PREMIX,
-            new MemoryIndexHandler(),
-            new MemoryIndexHandler(),
-            AddressType.SEGWIT_NATIVE);
+        new BipWallet(bip84w, new MemoryIndexHandlerSupplier(), BIP_WALLET.PREMIX_BIP84);
     BipWallet postmixWallet =
-        new BipWallet(
-            bip84w,
-            WhirlpoolAccount.POSTMIX,
-            new MemoryIndexHandler(),
-            new MemoryIndexHandler(),
-            AddressType.SEGWIT_NATIVE);
+        new BipWallet(bip84w, new MemoryIndexHandlerSupplier(), BIP_WALLET.POSTMIX_BIP84);
     BipWallet badBankWallet =
-        new BipWallet(
-            bip84w,
-            WhirlpoolAccount.BADBANK,
-            new MemoryIndexHandler(),
-            new MemoryIndexHandler(),
-            AddressType.SEGWIT_NATIVE);
+        new BipWallet(bip84w, new MemoryIndexHandlerSupplier(), BIP_WALLET.BADBANK_BIP84);
 
     Pool pool = new Pool();
     pool.setPoolId("foo");
@@ -486,7 +425,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
                 badBankWallet,
                 new Tx0Config(
                     tx0PreviewService,
-                    Lists.of(pool),
+                    Arrays.asList(pool),
                     Tx0FeeTarget.BLOCKS_2,
                     Tx0FeeTarget.BLOCKS_2,
                     WhirlpoolAccount.DEPOSIT),
@@ -505,39 +444,19 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
   public void isValidTx0_noScode_invalidAddress() throws Exception {
     UnspentOutput spendFrom =
         testUtils.generateUnspentOutputWithKey(99000000, params, utxoKeyProvider);
-    Collection<UnspentOutput> spendFroms = Lists.of(spendFrom);
+    Collection<UnspentOutput> spendFroms = Arrays.asList(spendFrom);
     HD_Wallet bip84w =
         hdWalletFactory.restoreWallet(
             "all all all all all all all all all all all all", "test", params);
 
     BipWallet depositWallet =
-        new BipWallet(
-            bip84w,
-            WhirlpoolAccount.DEPOSIT,
-            new MemoryIndexHandler(),
-            new MemoryIndexHandler(),
-            AddressType.SEGWIT_NATIVE);
+        new BipWallet(bip84w, new MemoryIndexHandlerSupplier(), BIP_WALLET.DEPOSIT_BIP84);
     BipWallet premixWallet =
-        new BipWallet(
-            bip84w,
-            WhirlpoolAccount.PREMIX,
-            new MemoryIndexHandler(),
-            new MemoryIndexHandler(),
-            AddressType.SEGWIT_NATIVE);
+        new BipWallet(bip84w, new MemoryIndexHandlerSupplier(), BIP_WALLET.PREMIX_BIP84);
     BipWallet postmixWallet =
-        new BipWallet(
-            bip84w,
-            WhirlpoolAccount.POSTMIX,
-            new MemoryIndexHandler(),
-            new MemoryIndexHandler(),
-            AddressType.SEGWIT_NATIVE);
+        new BipWallet(bip84w, new MemoryIndexHandlerSupplier(), BIP_WALLET.POSTMIX_BIP84);
     BipWallet badBankWallet =
-        new BipWallet(
-            bip84w,
-            WhirlpoolAccount.BADBANK,
-            new MemoryIndexHandler(),
-            new MemoryIndexHandler(),
-            AddressType.SEGWIT_NATIVE);
+        new BipWallet(bip84w, new MemoryIndexHandlerSupplier(), BIP_WALLET.BADBANK_BIP84);
 
     Pool pool = new Pool();
     pool.setPoolId("foo");
@@ -592,7 +511,7 @@ public class FeeValidationServiceTest extends AbstractIntegrationTest {
                 badBankWallet,
                 new Tx0Config(
                     tx0PreviewService,
-                    Lists.of(pool),
+                    Arrays.asList(pool),
                     Tx0FeeTarget.BLOCKS_2,
                     Tx0FeeTarget.BLOCKS_2,
                     WhirlpoolAccount.DEPOSIT),

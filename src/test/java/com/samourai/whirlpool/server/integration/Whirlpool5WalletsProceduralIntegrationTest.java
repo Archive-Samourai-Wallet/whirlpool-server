@@ -10,6 +10,7 @@ import com.samourai.wallet.bip69.BIP69OutputComparator;
 import com.samourai.wallet.hd.HD_Wallet;
 import com.samourai.wallet.segwit.SegwitAddress;
 import com.samourai.wallet.segwit.bech32.Bech32Segwit;
+import com.samourai.wallet.util.TxUtil;
 import java.lang.invoke.MethodHandles;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -476,7 +477,7 @@ public class Whirlpool5WalletsProceduralIntegrationTest extends AbstractIntegrat
       final Script segwitPubkeyScript = ScriptBuilder.createP2WPKHOutputScript(ecKeySpendFrom);
       tx.addSignedInput(outPoint, segwitPubkeyScript, ecKeySpendFrom);
 
-      final String hexTx = new String(Hex.encode(tx.bitcoinSerialize()));
+      final String hexTx = TxUtil.getInstance().getTxHex(tx);
       final String strTxHash = tx.getHashAsString();
 
       tx.verify();
@@ -593,7 +594,7 @@ public class Whirlpool5WalletsProceduralIntegrationTest extends AbstractIntegrat
     }
 
     String unsignedStrTxHash = tx.getHashAsString();
-    String unsignedHexTx = new String(Hex.encode(tx.bitcoinSerialize()));
+    String unsignedHexTx = TxUtil.getInstance().getTxHex(tx);
     System.out.println("unsignedStrTxHash = " + unsignedStrTxHash);
     System.out.println("unsignedHexTx = " + unsignedHexTx);
 
@@ -629,7 +630,7 @@ public class Whirlpool5WalletsProceduralIntegrationTest extends AbstractIntegrat
 
     tx.verify();
 
-    final String hexTx = new String(Hex.encode(tx.bitcoinSerialize()));
+    final String hexTx = TxUtil.getInstance().getTxHex(tx);
     final String strTxHash = tx.getHashAsString();
 
     System.out.println("strTxHash = " + strTxHash);

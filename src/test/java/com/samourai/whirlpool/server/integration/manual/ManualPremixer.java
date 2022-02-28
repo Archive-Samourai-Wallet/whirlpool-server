@@ -7,6 +7,7 @@ import com.samourai.wallet.hd.HD_WalletFactoryGeneric;
 import com.samourai.wallet.segwit.bech32.Bech32Segwit;
 import com.samourai.wallet.segwit.bech32.Bech32UtilGeneric;
 import com.samourai.wallet.util.FormatsUtilGeneric;
+import com.samourai.wallet.util.TxUtil;
 import com.samourai.whirlpool.server.utils.BIP47WalletAndHDWallet;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -235,7 +236,7 @@ public class ManualPremixer {
       final Script segwitPubkeyScript = ScriptBuilder.createP2WPKHOutputScript(ecKeySpendFrom);
       tx.addSignedInput(outPoint, segwitPubkeyScript, ecKeySpendFrom);
 
-      final String hexTx = new String(Hex.encode(tx.bitcoinSerialize()));
+      final String hexTx = TxUtil.getInstance().getTxHex(tx);
       final String strTxHash = tx.getHashAsString();
 
       tx.verify();

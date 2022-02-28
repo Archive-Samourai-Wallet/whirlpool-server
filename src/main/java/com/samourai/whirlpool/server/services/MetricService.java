@@ -8,8 +8,8 @@ import com.samourai.whirlpool.server.persistence.to.MixTO;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Tag;
 import java.lang.invoke.MethodHandles;
+import java.util.Arrays;
 import java.util.Collection;
-import java8.util.Lists;
 import org.apache.commons.lang3.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,9 +70,9 @@ public class MetricService {
   public void manage(Pool pool) {
     // queue-mustMix
     Iterable<Tag> tagsTor =
-        Lists.of(Tag.of("poolId", pool.getPoolId()), Tag.of("tor", Boolean.toString(true)));
+        Arrays.asList(Tag.of("poolId", pool.getPoolId()), Tag.of("tor", Boolean.toString(true)));
     Iterable<Tag> tagsClearnet =
-        Lists.of(Tag.of("poolId", pool.getPoolId()), Tag.of("tor", Boolean.toString(false)));
+        Arrays.asList(Tag.of("poolId", pool.getPoolId()), Tag.of("tor", Boolean.toString(false)));
     Metrics.gauge(
         GAUGE_POOL_QUEUE_MUSTMIX, tagsTor, pool, p -> mock(p.getMustMixQueue().getSizeByTor(true)));
     Metrics.gauge(
@@ -94,7 +94,7 @@ public class MetricService {
         p -> mock(p.getLiquidityQueue().getSizeByTor(false)));
 
     // mixing-mustMix
-    Iterable<Tag> tags = Lists.of(Tag.of("poolId", pool.getPoolId()));
+    Iterable<Tag> tags = Arrays.asList(Tag.of("poolId", pool.getPoolId()));
     Metrics.gauge(
         GAUGE_POOL_MIXING_MUSTMIX, tags, pool, p -> mock(p.getCurrentMix().getNbInputsMustMix()));
 
