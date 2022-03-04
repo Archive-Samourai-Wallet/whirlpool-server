@@ -67,7 +67,7 @@ public class RegisteredInput {
   public String toString() {
     return "poolId="
         + poolId
-        + "outPoint="
+        + ", outPoint="
         + outPoint
         + ", liquidity="
         + liquidity

@@ -146,8 +146,8 @@ public class MixService {
           throw new QueueInputException(
               "Not enough minerFee for last mustMix slot", registeredInput, pool.getPoolId());
         } else {
-          if (log.isDebugEnabled()) {
-            log.debug(
+          if (log.isTraceEnabled()) {
+            log.trace(
                 "["
                     + pool.getPoolId()
                     + "] Accepting last mustMix: sufficient minerFees, "

@@ -27,10 +27,9 @@ public class BackendApiTest extends AbstractIntegrationTest {
     super.setUp();
 
     backendApi =
-        new BackendApi(
+        BackendApi.newBackendApiSamourai(
             new JavaHttpClientService(serverConfig).getHttpClient(HttpUsage.BACKEND),
-            BackendServer.TESTNET.getBackendUrlClear(),
-            null);
+            BackendServer.TESTNET.getBackendUrlClear());
   }
 
   @Test
