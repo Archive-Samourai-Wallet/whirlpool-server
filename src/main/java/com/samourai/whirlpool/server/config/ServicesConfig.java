@@ -15,6 +15,8 @@ import com.samourai.wallet.util.MessageSignUtilGeneric;
 import com.samourai.wallet.util.TxUtil;
 import com.samourai.whirlpool.protocol.WhirlpoolEndpoint;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
+import com.samourai.whirlpool.protocol.feeOpReturn.FeeOpReturnImplV0;
+import com.samourai.whirlpool.protocol.feeOpReturn.FeeOpReturnImplV1;
 import com.samourai.whirlpool.protocol.util.XorMask;
 import com.samourai.whirlpool.server.services.JavaHttpClientService;
 import com.samourai.xmanager.client.XManagerClient;
@@ -106,6 +108,16 @@ public class ServicesConfig extends ServerServicesConfig {
       WhirlpoolServerConfig serverConfig, JavaHttpClientService httpClient) {
     return new XManagerClient(
         httpClient.getHttpClient(HttpUsage.COORDINATOR_REST), serverConfig.isTestnet(), false);
+  }
+
+  @Bean
+  FeeOpReturnImplV0 feeOpReturnV0(XorMask xorMask) {
+    return new FeeOpReturnImplV0(xorMask);
+  }
+
+  @Bean
+  FeeOpReturnImplV1 feeOpReturnV1(XorMask xorMask) {
+    return new FeeOpReturnImplV1(xorMask);
   }
 
   @Bean

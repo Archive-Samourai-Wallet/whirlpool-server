@@ -8,13 +8,22 @@ public class WhirlpoolFeeData {
   private short scodePayload;
   private short partnerPayload;
   private TransactionOutput txOutput;
+  private short opReturnVersion;
+  private short feePayloadVersion;
 
   public WhirlpoolFeeData(
-      int feeIndice, short scodePayload, short partnerPayload, TransactionOutput txOutput) {
+      int feeIndice,
+      short scodePayload,
+      short partnerPayload,
+      TransactionOutput txOutput,
+      short opReturnVersion,
+      short feePayloadVersion) {
     this.feeIndice = feeIndice;
     this.scodePayload = scodePayload;
     this.partnerPayload = partnerPayload;
     this.txOutput = txOutput;
+    this.opReturnVersion = opReturnVersion;
+    this.feePayloadVersion = feePayloadVersion;
   }
 
   public int getFeeIndice() {
@@ -33,6 +42,14 @@ public class WhirlpoolFeeData {
     return txOutput;
   }
 
+  public short getOpReturnVersion() {
+    return opReturnVersion;
+  }
+
+  public short getFeePayloadVersion() {
+    return feePayloadVersion;
+  }
+
   @Override
   public String toString() {
     return "feeIndice="
@@ -42,6 +59,10 @@ public class WhirlpoolFeeData {
         + ", partnerPayload="
         + partnerPayload
         + ", txOutputIndex="
-        + txOutput.getIndex();
+        + txOutput.getIndex()
+        + ", feeOpReturnVersion="
+        + opReturnVersion
+        + ", feePayloadVersion="
+        + feePayloadVersion;
   }
 }

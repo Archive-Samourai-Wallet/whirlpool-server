@@ -159,7 +159,7 @@ public class Tx0Controller extends AbstractRestController {
     }
 
     byte[] feePayload =
-        feePayloadService.encodeFeePayload(feeIndex, scodePayload, partner.getPayload());
+        feePayloadService.computeFeePayload(feeIndex, scodePayload, partner.getPayload());
     String feePayload64 = WhirlpoolProtocol.encodeBytes(feePayload);
 
     if (log.isDebugEnabled()) {

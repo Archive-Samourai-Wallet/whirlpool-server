@@ -5,7 +5,10 @@ import com.samourai.http.client.IHttpClient;
 import com.samourai.http.client.IHttpClientService;
 import com.samourai.javaserver.utils.ServerUtils;
 import com.samourai.wallet.api.backend.BackendServer;
+import com.samourai.wallet.bip47.rpc.BIP47Account;
+import com.samourai.wallet.bip47.rpc.BIP47Wallet;
 import com.samourai.wallet.bip47.rpc.java.Bip47UtilJava;
+import com.samourai.wallet.hd.HD_Wallet;
 import com.samourai.wallet.hd.HD_WalletFactoryGeneric;
 import com.samourai.wallet.segwit.SegwitAddress;
 import com.samourai.wallet.segwit.bech32.Bech32UtilGeneric;
@@ -18,6 +21,7 @@ import com.samourai.whirlpool.client.utils.ClientCryptoService;
 import com.samourai.whirlpool.client.wallet.WhirlpoolWalletConfig;
 import com.samourai.whirlpool.client.wallet.data.dataSource.DataSourceFactory;
 import com.samourai.whirlpool.client.wallet.data.dataSource.DojoDataSourceFactory;
+import com.samourai.whirlpool.protocol.util.XorMask;
 import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.beans.Pool;
 import com.samourai.whirlpool.server.beans.PoolMinerFee;
@@ -33,6 +37,9 @@ import com.samourai.whirlpool.server.utils.Utils;
 import java.lang.invoke.MethodHandles;
 import java.util.Optional;
 import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionInput;
+import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.params.TestNet3Params;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -47,6 +54,9 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles(ServerUtils.PROFILE_TEST)
 public abstract class AbstractIntegrationTest {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
+  protected String SEED_WORDS = "all all all all all all all all all all all all";
+  protected String SEED_PASSPHRASE = "test";
 
   @LocalServerPort protected int port;
 
@@ -96,6 +106,7 @@ public abstract class AbstractIntegrationTest {
 
   @Autowired protected FeePayloadService feePayloadService;
   @Autowired protected PushService pushService;
+  @Autowired protected XorMask xorMask;
 
   protected MessageSignUtilGeneric messageSignUtil = MessageSignUtilGeneric.getInstance();
 
@@ -301,5 +312,33 @@ public abstract class AbstractIntegrationTest {
     synchronized (this) {
       wait(500);
     }
+  }
+
+  protected BIP47Account computeBip47Account() throws Exception {
+    HD_Wallet bip44wallet = hdWalletFactory.restoreWallet(SEED_WORDS, SEED_PASSPHRASE, params);
+    BIP47Wallet bip47Wallet = new BIP47Wallet(bip44wallet);
+    BIP47Account bip47Account = bip47Wallet.getAccount(0);
+    String PCODE = "PM8TJgqKqMesJ52RveEtE6qLKjKqWVB4dMormiywD2hwAGd3MiGxvurnFC6jMFS4hPa2Xb9JUWJYryty5Q9osQ3ELxgGpVMrERpFbNXfe9Th3nAwHfag";
+    Assertions.assertEquals(PCODE, bip47Account.getPaymentCode());
+    return bip47Account;
+  }
+
+  protected TransactionOutput mockTxOutput(SegwitAddress address) throws Exception {
+    // generate transaction with bitcoinj
+    Transaction transaction = new Transaction(params);
+
+    // add outputs
+    String addressBech32 = address.getBech32AsString();
+    TransactionOutput transactionOutput =
+            bech32Util.getTransactionOutput(addressBech32, 1234, params);
+    transaction.addOutput(transactionOutput);
+
+    // add coinbase input
+    int txCounter = 1;
+    TransactionInput transactionInput =
+            new TransactionInput(
+                    params, transaction, new byte[] {(byte) txCounter, (byte) (txCounter++ >> 8)});
+    transaction.addInput(transactionInput);
+    return transactionOutput;
   }
 }

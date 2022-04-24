@@ -40,7 +40,9 @@ public class ConfirmInputService {
       String poolId = e.getPoolId();
       if (log.isDebugEnabled()) {
         log.debug(
-            "Input queued: poolId="
+            "["
+                + mixId
+                + "] Input queued: poolId="
                 + poolId
                 + ", input="
                 + registeredInput.getOutPoint()

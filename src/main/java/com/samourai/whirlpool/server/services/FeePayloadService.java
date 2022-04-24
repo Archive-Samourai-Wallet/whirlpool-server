@@ -1,11 +1,13 @@
 package com.samourai.whirlpool.server.services;
 
 import com.samourai.wallet.bip47.rpc.BIP47Account;
-import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
-import com.samourai.whirlpool.protocol.util.XorMask;
+import com.samourai.whirlpool.protocol.feeOpReturn.FeeOpReturn;
+import com.samourai.whirlpool.protocol.feeOpReturn.FeeOpReturnImpl;
+import com.samourai.whirlpool.protocol.feeOpReturn.FeeOpReturnImplV0;
+import com.samourai.whirlpool.protocol.feeOpReturn.FeeOpReturnImplV1;
+import com.samourai.whirlpool.protocol.feePayload.FeePayloadV1;
 import com.samourai.whirlpool.server.services.fee.WhirlpoolFeeData;
 import com.samourai.whirlpool.server.services.fee.WhirlpoolFeeOutput;
-import java.nio.ByteBuffer;
 import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.core.TransactionOutput;
 import org.slf4j.Logger;
@@ -16,76 +18,81 @@ import org.springframework.stereotype.Service;
 public class FeePayloadService {
   private static final Logger log = LoggerFactory.getLogger(FeePayloadService.class);
 
-  private static final short FEE_PAYLOAD_VERSION = 1;
   public static final short SCODE_PAYLOAD_NONE = 0;
 
-  private XorMask xorMask;
+  private FeeOpReturnImpl feeOpReturnImplCurrent;
+  private FeeOpReturnImpl[] feeOpReturnImpls;
 
-  public FeePayloadService(XorMask xorMask) {
-    this.xorMask = xorMask;
+  public FeePayloadService(
+      FeeOpReturnImplV0 feeOpReturnImplV0, FeeOpReturnImplV1 feeOpReturnImplV1) {
+    this.feeOpReturnImpls = new FeeOpReturnImpl[] {feeOpReturnImplV0, feeOpReturnImplV1};
+    this.feeOpReturnImplCurrent = feeOpReturnImplV1; // use FeeOpReturnImplV1
   }
 
-  /*public byte[] encode(
-      int feeIndice,
-      short scodePayload,
-      short partner,
-      String paymentCode,
-      NetworkParameters params,
-      byte[] input0PrivKey,
-      TransactionOutPoint input0OutPoint)
-      throws Exception {
-    byte[] feePayload = encodeFeePayload(feeIndice, scodePayload, partner);
-    if (feePayload == null) {
-      return null;
+  // for tests only
+  protected void _setFeeOpReturnImplCurrent(FeeOpReturnImpl FeeOpReturnImplCurrent) {
+    this.feeOpReturnImplCurrent = FeeOpReturnImplCurrent;
+  }
+
+  // for tests only
+  protected FeeOpReturnImpl _getFeeOpReturnImplCurrent() {
+    return feeOpReturnImplCurrent;
+  }
+
+  public boolean acceptsOpReturn(byte[] opReturn) {
+    for (FeeOpReturnImpl feeOpReturnImpl : feeOpReturnImpls) {
+      if (feeOpReturnImpl.acceptsOpReturn(opReturn)) {
+        return true;
+      }
     }
-    return xorMask.mask(feePayload, paymentCode, params, input0PrivKey, input0OutPoint);
-  }*/
+    return false;
+  }
+
+  protected FeeOpReturnImpl findOpReturnImpl(byte[] opReturn) {
+    for (FeeOpReturnImpl feeOpReturnImpl : feeOpReturnImpls) {
+      if (feeOpReturnImpl.acceptsOpReturn(opReturn)) {
+        return feeOpReturnImpl;
+      }
+    }
+    log.error("Invalid opReturn.length: " + opReturn.length);
+    return null;
+  }
 
   public WhirlpoolFeeData decode(
       WhirlpoolFeeOutput feeOutput,
       BIP47Account secretAccountBip47,
       TransactionOutPoint input0OutPoint,
-      byte[] input0Pubkey) {
-    byte[] feePayload =
-        xorMask.unmask(
-            feeOutput.getOpReturnValue(), secretAccountBip47, input0OutPoint, input0Pubkey);
-    if (feePayload == null) {
-      return null;
+      byte[] input0Pubkey)
+      throws Exception {
+
+    // decrypt feePayload
+    byte[] opReturn = feeOutput.getOpReturnValue();
+    FeeOpReturnImpl feeOpReturnImpl = findOpReturnImpl(opReturn);
+    if (feeOpReturnImpl == null) {
+      throw new Exception("Unknown FeeOpReturnImpl");
     }
-    return decodeFeePayload(feePayload, feeOutput.getTxOutput());
+    FeeOpReturn feeOpReturn =
+        feeOpReturnImpl.parseOpReturn(opReturn, secretAccountBip47, input0OutPoint, input0Pubkey);
+
+    // parse feePayload
+    return parseFeePayload(feeOpReturn, feeOutput.getTxOutput());
+  }
+
+  protected WhirlpoolFeeData parseFeePayload(FeeOpReturn feeOpReturn, TransactionOutput txOutput)
+      throws Exception {
+    FeePayloadV1 fp = FeePayloadV1.parse(feeOpReturn.getFeePayload());
+    int feeIndice = fp.getFeeIndice();
+    short scodePayload = fp.getScodePayload();
+    short feePartner = fp.getFeePartner();
+    short feeOpReturnVersion = feeOpReturn.getOpReturnVersion();
+    short feePayloadVersion = fp.getVersion();
+    return new WhirlpoolFeeData(
+        feeIndice, scodePayload, feePartner, txOutput, feeOpReturnVersion, feePayloadVersion);
   }
 
   // encode/decode bytes
 
-  public byte[] encodeFeePayload(int feeIndice, short scodePayload, short partner) {
-    // feeVersion:short(2) | indice:int(4) | scode:short(2) | feePartner:short(2)
-    ByteBuffer byteBuffer =
-        ByteBuffer.allocate(WhirlpoolProtocol.FEE_PAYLOAD_LENGTH)
-            .putShort(FEE_PAYLOAD_VERSION)
-            .putInt(feeIndice)
-            .putShort(scodePayload)
-            .putShort(partner);
-    return byteBuffer.array();
-  }
-
-  protected WhirlpoolFeeData decodeFeePayload(byte[] data, TransactionOutput txOutput) {
-    if (data.length != WhirlpoolProtocol.FEE_PAYLOAD_LENGTH) {
-      log.error(
-          "Invalid samouraiFee length: "
-              + data.length
-              + " vs "
-              + WhirlpoolProtocol.FEE_PAYLOAD_LENGTH);
-      return null;
-    }
-    ByteBuffer bb = ByteBuffer.wrap(data);
-    short version = bb.getShort();
-    if (version != FEE_PAYLOAD_VERSION) {
-      log.error("Invalid samouraiFee version: " + version + " vs " + FEE_PAYLOAD_VERSION);
-      return null;
-    }
-    int feeIndice = bb.getInt();
-    short scodePayload = bb.getShort();
-    short feePartner = bb.getShort();
-    return new WhirlpoolFeeData(feeIndice, scodePayload, feePartner, txOutput);
+  public byte[] computeFeePayload(int feeIndice, short scodePayload, short partner) {
+    return feeOpReturnImplCurrent.computeFeePayload(feeIndice, scodePayload, partner);
   }
 }

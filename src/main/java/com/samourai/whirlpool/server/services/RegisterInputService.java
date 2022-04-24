@@ -99,8 +99,7 @@ public class RegisterInputService {
         // verify input is a valid mustMix or liquidity
         Pool pool = poolService.getPool(poolId);
         boolean hasMixTxid = dbService.hasMixTxid(txid, txOutPoint.getValue());
-        inputValidationService.validateProvenance(
-            txOutPoint, rpcTransaction, liquidity, pool, hasMixTxid);
+        inputValidationService.validateProvenance(rpcTransaction, liquidity, pool, hasMixTxid);
       } else {
         log.warn("tx0 check disabled by whitelist for txid=" + txid);
       }

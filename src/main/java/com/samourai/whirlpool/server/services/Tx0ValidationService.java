@@ -7,7 +7,6 @@ import com.samourai.wallet.hd.HD_WalletFactoryGeneric;
 import com.samourai.wallet.segwit.bech32.Bech32UtilGeneric;
 import com.samourai.wallet.util.Callback;
 import com.samourai.wallet.util.TxUtil;
-import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.server.beans.Partner;
 import com.samourai.whirlpool.server.beans.Pool;
 import com.samourai.whirlpool.server.beans.PoolFee;
@@ -85,11 +84,11 @@ public class Tx0ValidationService {
         .getAccount(0);
   }
 
-  public WhirlpoolFeeData decodeFeeData(Transaction tx) {
+  public WhirlpoolFeeData decodeFeeData(Transaction tx) throws Exception {
     WhirlpoolFeeOutput feeOutput = findOpReturnValue(tx);
     if (feeOutput == null) {
       // not a tx0
-      return null;
+      throw new Exception("feeOutput not found");
     }
 
     // decode opReturnMaskedValue
@@ -119,25 +118,32 @@ public class Tx0ValidationService {
 
     // validate tx0
     Tx0Validation tx0Validation = validate(tx, tx0Time, pool.getPoolFee());
-    if (tx0Validation == null) {
-      log.warn("Not a valid TX0: " + tx.toString());
-      throw new NotifiableException("Not a valid TX0");
-    }
     return tx0Validation;
   }
 
   public Tx0Validation validate(Transaction tx0, long tx0Time, PoolFee poolFee)
       throws NotifiableException {
-    WhirlpoolFeeData feeData = decodeFeeData(tx0);
-    return validate(tx0, tx0Time, poolFee, feeData);
+    WhirlpoolFeeData feeData;
+    try {
+      feeData = decodeFeeData(tx0);
+    } catch (Exception e) {
+      // not a TX0
+      log.warn("Not a TX0 " + tx0.getHashAsString() + ": " + e.getMessage());
+      throw new NotifiableException("Not a TX0");
+    }
+    // validate TX0
+    try {
+      return validate(tx0, tx0Time, poolFee, feeData);
+    } catch (Exception e) {
+      log.warn("Not a valid TX0 " + tx0.getHashAsString() + ": " + e.getMessage());
+      throw new NotifiableException("Not a valid TX0");
+    }
   }
 
   public Tx0Validation validate(
-      Transaction tx0, long tx0Time, PoolFee poolFee, WhirlpoolFeeData feeData)
-      throws NotifiableException {
+      Transaction tx0, long tx0Time, PoolFee poolFee, WhirlpoolFeeData feeData) throws Exception {
     if (feeData == null) {
-      log.warn("Not a valid TX0: " + tx0.getHashAsString() + ": feeData is null");
-      return null; // invalid
+      throw new Exception("feeData is null");
     }
     // validate feePayload
     WhirlpoolServerConfig.ScodeSamouraiFeeConfig scodeConfig =
@@ -154,12 +160,8 @@ public class Tx0ValidationService {
     // validate for feeIndice with feePercent
     TransactionOutput feeOutput =
         findValidFeeOutput(tx0, tx0Time, feeData.getFeeIndice(), poolFee, feePercent, xmService);
-    if (feeOutput != null) {
-      // valid - fee paid
-      return new Tx0Validation(tx0, feeData, poolFee, scodeConfig, feePercent, feeOutput);
-    }
-    log.warn("Not a valid tx0: " + tx0.getHashAsString() + ": no valid feeOutput");
-    return null; // invalid
+    return new Tx0Validation(
+        tx0, feeData, poolFee, scodeConfig, feePercent, feeOutput); // valid - fee paid
   }
 
   protected TransactionOutput findValidFeeOutput(
@@ -169,10 +171,9 @@ public class Tx0ValidationService {
       PoolFee poolFee,
       int feeValuePercent,
       XManagerService xmService)
-      throws NotifiableException {
+      throws Exception {
     if (x < 0) {
-      log.error("Invalid samouraiFee indice: " + x);
-      return null;
+      throw new Exception("Invalid samouraiFee indice: " + x);
     }
 
     // make sure tx contains an output to samourai fees
@@ -230,7 +231,7 @@ public class Tx0ValidationService {
             + feeValuePercent
             + ", expectedFeeValue="
             + expectedFeeValue);
-    return null;
+    throw new Exception("No valid fee payment found");
   }
 
   private Callback<byte[]> computeCallbackFetchOutpointScriptBytes(TransactionOutPoint outPoint) {
@@ -263,7 +264,7 @@ public class Tx0ValidationService {
               ScriptChunk scriptChunkPushData = script.getChunks().get(1);
               if (scriptChunkPushData.isPushData()) {
                 if (scriptChunkPushData.data != null
-                    && scriptChunkPushData.data.length == WhirlpoolProtocol.FEE_PAYLOAD_LENGTH) {
+                    && feePayloadService.acceptsOpReturn(scriptChunkPushData.data)) {
                   return new WhirlpoolFeeOutput(txOutput, scriptChunkPushData.data);
                 }
               }

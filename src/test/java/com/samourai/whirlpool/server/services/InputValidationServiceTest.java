@@ -180,15 +180,15 @@ public class InputValidationServiceTest extends AbstractIntegrationTest {
 
   private boolean doCheckInput(String utxoHash, long utxoIndex, PoolFee poolFee)
       throws NotifiableException {
-    RpcTransaction rpcTransaction =
+    RpcTransaction rpcTx =
         blockchainDataService
             .getRpcTransaction(utxoHash)
             .orElseThrow(() -> new NoSuchElementException(utxoHash + "-" + utxoIndex));
-    long inputValue = rpcTransaction.getTx().getOutput(utxoIndex).getValue().getValue();
+    long inputValue = rpcTx.getTx().getOutput(utxoIndex).getValue().getValue();
     boolean hasMixTxid = hasMixTxid(utxoHash, inputValue);
     boolean isLiquidity =
         inputValidationService.checkInputProvenance(
-            rpcTransaction, inputValue, poolFee, hasMixTxid);
+            rpcTx.getTx(), rpcTx.getTxTime(), poolFee, hasMixTxid);
     return isLiquidity;
   }
 }

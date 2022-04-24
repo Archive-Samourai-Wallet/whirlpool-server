@@ -4,6 +4,7 @@ import com.samourai.javaserver.exceptions.NotifiableException;
 import com.samourai.wallet.util.MessageSignUtilGeneric;
 import com.samourai.whirlpool.server.beans.Pool;
 import com.samourai.whirlpool.server.beans.PoolFee;
+import com.samourai.whirlpool.server.beans.Tx0Validation;
 import com.samourai.whirlpool.server.beans.rpc.RpcTransaction;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
@@ -28,7 +29,6 @@ public class InputValidationService {
       Tx0ValidationService tx0ValidationService,
       WhirlpoolServerConfig whirlpoolServerConfig,
       CryptoService cryptoService,
-      DbService dbService,
       MessageSignUtilGeneric messageSignUtil) {
     this.tx0ValidationService = tx0ValidationService;
     this.whirlpoolServerConfig = whirlpoolServerConfig;
@@ -36,83 +36,74 @@ public class InputValidationService {
     this.messageSignUtil = messageSignUtil;
   }
 
-  public TxOutPoint validateProvenance(
-      TxOutPoint txOutPoint, RpcTransaction tx, boolean liquidity, Pool pool, boolean hasMixTxid)
+  public void validateProvenance(
+      RpcTransaction tx, boolean liquidity, Pool pool, boolean hasMixTxid)
       throws NotifiableException {
 
     // provenance verification can be disabled with testMode
     if (whirlpoolServerConfig.isTestMode()) {
       log.warn("tx0 check disabled by testMode");
-      return txOutPoint;
+      return; // valid
     }
 
     // verify input comes from a valid tx0 or previous mix
     boolean isLiquidity =
-        checkInputProvenance(tx, txOutPoint.getValue(), pool.getPoolFee(), hasMixTxid);
+        checkInputProvenance(tx.getTx(), tx.getTxTime(), pool.getPoolFee(), hasMixTxid);
     if (!isLiquidity && liquidity) {
       throw new IllegalInputException("Input rejected: joined as liquidity but is a mustMix");
     }
     if (isLiquidity && !liquidity) {
       throw new IllegalInputException("Input rejected: joined as mustMix but is as a liquidity");
     }
-    return txOutPoint;
+    return; // valid
   }
 
   protected boolean checkInputProvenance(
-      RpcTransaction rpcTx, long inputValue, PoolFee poolFee, boolean hasMixTxid)
-      throws NotifiableException {
-    Transaction tx = rpcTx.getTx();
+      Transaction tx, long txTime, PoolFee poolFee, boolean hasMixTxid) throws NotifiableException {
     // is it a tx0?
-    WhirlpoolFeeData feeData = tx0ValidationService.decodeFeeData(tx);
-    if (feeData != null) {
-      // this is a tx0 => mustMix
+    WhirlpoolFeeData feeData;
+    try {
+      feeData = tx0ValidationService.decodeFeeData(tx);
+    } catch (Exception e) {
+      // this is not a tx0 => liquidity coming from a previous whirlpool tx
       if (log.isTraceEnabled()) {
-        log.trace(
-            "Validating input: txid="
-                + tx.getHashAsString()
-                + ", value="
-                + inputValue
-                + ", feeData={"
-                + feeData
-                + "}");
-      }
-
-      // check fees paid
-      if (tx0ValidationService.validate(rpcTx.getTx(), rpcTx.getTxTime(), poolFee, feeData)
-          == null) {
-        log.error(
-            "Input rejected (invalid fee for tx0="
-                + tx.getHashAsString()
-                + ", x="
-                + feeData.getFeeIndice()
-                + ", feeData={"
-                + feeData
-                + "}");
-        throw new IllegalInputException(
-            "Input rejected (invalid fee for tx0="
-                + tx.getHashAsString()
-                + ", x="
-                + feeData.getFeeIndice()
-                + ", scodePayload="
-                + (feeData.getScodePayload() != FeePayloadService.SCODE_PAYLOAD_NONE ? "yes" : "no")
-                + ")");
-      }
-      return false; // mustMix
-    } else {
-      // this is not a valid tx0 => liquidity coming from a previous whirlpool tx
-      if (log.isTraceEnabled()) {
-        log.trace(
-            "Validating input: txid="
-                + tx.getHashAsString()
-                + ", value="
-                + inputValue
-                + ": feeData=null");
+        log.trace("Validating input: txid=" + tx.getHashAsString() + ": feeData=null");
       }
 
       if (!hasMixTxid) { // not a whirlpool tx
+        log.error("Input rejected (not a premix or whirlpool input)", e);
         throw new IllegalInputException("Input rejected (not a premix or whirlpool input)");
       }
       return true; // liquidity
+    }
+
+    // this is a tx0 => mustMix
+    if (log.isTraceEnabled()) {
+      log.trace("Validating input: txid=" + tx.getHashAsString() + ", feeData={" + feeData + "}");
+    }
+
+    try {
+      // verify tx0
+      Tx0Validation tx0Validation = tx0ValidationService.validate(tx, txTime, poolFee, feeData);
+      return false; // mustMix
+    } catch (Exception e) {
+      // invalid fees
+      log.error(
+          "Input rejected (invalid fee for tx0="
+              + tx.getHashAsString()
+              + ", x="
+              + feeData.getFeeIndice()
+              + ", feeData={"
+              + feeData
+              + "}");
+      throw new IllegalInputException(
+          "Input rejected (invalid fee for tx0="
+              + tx.getHashAsString()
+              + ", x="
+              + feeData.getFeeIndice()
+              + ", scodePayload="
+              + (feeData.getScodePayload() != FeePayloadService.SCODE_PAYLOAD_NONE ? "yes" : "no")
+              + ")");
     }
   }
 
