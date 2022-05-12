@@ -30,7 +30,7 @@ public class ConfirmInputService {
 
   public synchronized Optional<byte[]> confirmInputOrQueuePool(
       String mixId, String username, byte[] blindedBordereau, String userHash)
-      throws NotifiableException, MixException {
+      throws NotifiableException {
     try {
       // add input to mix & reply confirmInputResponse
       return Optional.of(mixService.confirmInput(mixId, username, blindedBordereau, userHash));
@@ -62,6 +62,9 @@ public class ConfirmInputService {
           registeredInput.getOutPoint(),
           registeredInput.getIp(),
           userHash);
+      return Optional.empty();
+    } catch (MixException e) {
+      // ConfirmInput too late, mix already started => input was already silently requeued
       return Optional.empty();
     }
   }

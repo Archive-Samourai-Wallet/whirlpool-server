@@ -5,9 +5,7 @@ import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.exceptions.AlreadyRegisteredInputException;
 import com.samourai.whirlpool.server.utils.Utils;
 import java.lang.invoke.MethodHandles;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -74,6 +72,13 @@ public class InputPool {
       inputsById.remove(inputId);
     }
     return inputByUsername;
+  }
+
+  public synchronized Collection<RegisteredInput> clear() {
+    Collection<RegisteredInput> inputs =
+        new LinkedList<>(inputsById.values()); // copy to avoid getting cleared next!
+    inputsById.clear();
+    return inputs;
   }
 
   public void resetLastUserHash() {

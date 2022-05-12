@@ -367,7 +367,9 @@ public class MixService {
             + liquiditiesQueued
             + " liquidities + "
             + mustMixQueued
-            + " mustMixs)");
+            + " mustMixs, "
+            + mix.getNbConfirmingInputs()
+            + " confirming)");
   }
 
   protected synchronized boolean isRegisterOutputReady(Mix mix) {
@@ -537,6 +539,32 @@ public class MixService {
 
       // update mix status
       mix.setMixStatusAndTime(mixStatus);
+
+      if (mixStatus == MixStatus.REGISTER_OUTPUT) {
+        // silently requeue late confirming inputs
+        Collection<RegisteredInput> confirmingInputs = mix.clearConfirmingInputs();
+        if (log.isDebugEnabled()) {
+          log.debug(
+              "[MIX "
+                  + mixId
+                  + "] Requeueing "
+                  + confirmingInputs.size()
+                  + " late confirming inputs");
+        }
+        for (RegisteredInput confirmingInput : confirmingInputs) {
+          try {
+            poolService.registerInput(
+                mix.getPool().getPoolId(),
+                confirmingInput.getUsername(),
+                confirmingInput.isLiquidity(),
+                confirmingInput.getOutPoint(),
+                confirmingInput.getIp(),
+                confirmingInput.getLastUserHash());
+          } catch (Exception e) {
+            log.error("requeue confirming input failed", e);
+          }
+        }
+      }
 
       boolean mixOver = (mixStatus == MixStatus.SUCCESS || mixStatus == MixStatus.FAIL);
       // save mix before notifying users

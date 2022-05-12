@@ -243,4 +243,30 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
     testUtils.assertMix(2, 0, mix); // liquidity confirmed
     testUtils.assertPool(1, 0, pool);
   }
+
+  @Test
+  public void confirmInput_shouldRequeueLateConfirmingInputs() throws Exception {
+    Mix mix =
+        __nextMix(
+            1, 1, 2, __getCurrentMix().getPool()); // 2 users max - 1 liquidityMin = 1 mustMix max
+    Pool pool = mix.getPool();
+
+    // 1/1 mustMix
+    registerInput(mix, "mustMix1", 999, false);
+    testUtils.assertMix(0, 1, mix); // mustMix confirming
+    testUtils.assertPool(0, 0, pool);
+
+    // 2/1 mustMix => confirmed
+    registerInputAndConfirmInput(mix, "mustMix2", 999, false, null, null);
+    testUtils.assertMix(1, 1, mix); // mustMix queued
+    testUtils.assertPool(0, 0, pool);
+
+    // 1/1 liquidity
+    registerInputAndConfirmInput(mix, "liquidity1", 999, true, null, null);
+
+    // liquidity confirmed, mustmix1 requeued
+    testUtils.assertMix(2, 0, mix);
+    testUtils.assertPool(1, 0, pool);
+    Assertions.assertTrue(pool.getMustMixQueue().findByUsername("mustMix1").isPresent());
+  }
 }

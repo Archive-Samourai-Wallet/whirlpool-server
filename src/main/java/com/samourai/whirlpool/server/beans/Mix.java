@@ -176,6 +176,10 @@ public class Mix {
     return confirmingInputs.getSize();
   }
 
+  public synchronized Collection<RegisteredInput> clearConfirmingInputs() {
+    return confirmingInputs.clear();
+  }
+
   public Collection<ConfirmedInput> getInputs() {
     return inputsById.values();
   }
