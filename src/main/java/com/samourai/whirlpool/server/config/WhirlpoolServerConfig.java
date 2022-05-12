@@ -563,7 +563,8 @@ public class WhirlpoolServerConfig extends ServerConfig {
   }
 
   public static class SamouraiFeeConfig {
-    private SecretWalletConfig secretWallet;
+    private SecretWalletConfig secretWalletV0; // for FeeOpReturnImplV0
+    private SecretWalletConfig secretWallet; // for >= FeeOpReturnImplV1
     private Map<String, ScodeSamouraiFeeConfig> scodes = new HashMap<>(); // -32,768 to 32,767
     private Map<String, ScodeSamouraiFeeConfig> scodesUpperCase;
 
@@ -574,6 +575,14 @@ public class WhirlpoolServerConfig extends ServerConfig {
         }
         scodeEntry.getValue().validate();
       }
+    }
+
+    public SecretWalletConfig getSecretWalletV0() {
+      return secretWalletV0;
+    }
+
+    public void setSecretWalletV0(SecretWalletConfig secretWalletV0) {
+      this.secretWalletV0 = secretWalletV0;
     }
 
     public SecretWalletConfig getSecretWallet() {
@@ -775,8 +784,11 @@ public class WhirlpoolServerConfig extends ServerConfig {
         rpcClient.getHost() + ":" + rpcClient.getPort() + "," + networkParameters.getId());
     configInfo.put("protocolVersion", WhirlpoolProtocol.PROTOCOL_VERSION);
 
+    int nbSeedWordsV0 = samouraiFees.getSecretWalletV0().getWords().split(" ").length;
     int nbSeedWords = samouraiFees.getSecretWallet().getWords().split(" ").length;
-    configInfo.put("samouraiFees", "secretWallet=(" + nbSeedWords + " seed words)");
+    configInfo.put(
+        "samouraiFees",
+        "secretWalletV0=(" + nbSeedWordsV0 + " words), secretWallet=(" + nbSeedWords + " words)");
     configInfo.put("minerFees", minerFees.toString());
 
     configInfo.put(

@@ -79,8 +79,8 @@ public class PushServiceTest extends AbstractIntegrationTest {
       Assertions.assertTrue(false);
     } catch (BackendPushTxException e) {
       // ok
-      Assertions.assertEquals("Not a valid TX0", e.getMessage());
-      Assertions.assertEquals("Not a valid TX0", e.getPushTxError());
+      Assertions.assertEquals("Not a TX0", e.getMessage());
+      Assertions.assertEquals("Not a TX0", e.getPushTxError());
     }
   }
 
@@ -146,8 +146,8 @@ public class PushServiceTest extends AbstractIntegrationTest {
       Assertions.assertTrue(false);
     } catch (BackendPushTxException e) {
       // ok
-      Assertions.assertEquals("Not a valid TX0", e.getMessage());
-      Assertions.assertEquals("Not a valid TX0", e.getPushTxError());
+      Assertions.assertEquals("Not a TX0", e.getMessage());
+      Assertions.assertEquals("Not a TX0", e.getPushTxError());
     }
   }
   /*

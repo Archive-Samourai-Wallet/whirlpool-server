@@ -55,9 +55,6 @@ import org.springframework.test.context.ActiveProfiles;
 public abstract class AbstractIntegrationTest {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  protected String SEED_WORDS = "all all all all all all all all all all all all";
-  protected String SEED_PASSPHRASE = "test";
-
   @LocalServerPort protected int port;
 
   @Autowired protected WhirlpoolServerConfig serverConfig;
@@ -315,10 +312,29 @@ public abstract class AbstractIntegrationTest {
   }
 
   protected BIP47Account computeBip47Account() throws Exception {
-    HD_Wallet bip44wallet = hdWalletFactory.restoreWallet(SEED_WORDS, SEED_PASSPHRASE, params);
+    WhirlpoolServerConfig.SecretWalletConfig secretWalletConfig =
+        serverConfig.getSamouraiFees().getSecretWallet();
+    HD_Wallet bip44wallet =
+        hdWalletFactory.restoreWallet(
+            secretWalletConfig.getWords(), secretWalletConfig.getPassphrase(), params);
     BIP47Wallet bip47Wallet = new BIP47Wallet(bip44wallet);
     BIP47Account bip47Account = bip47Wallet.getAccount(0);
-    String PCODE = "PM8TJgqKqMesJ52RveEtE6qLKjKqWVB4dMormiywD2hwAGd3MiGxvurnFC6jMFS4hPa2Xb9JUWJYryty5Q9osQ3ELxgGpVMrERpFbNXfe9Th3nAwHfag";
+    String PCODE =
+        "PM8TJVGXADoSSFmre2HstFraDFYT35K7ccGLMoLMkKS5xMSooWe6RYJBsjqic77EyLs9ULP5unaCajCA2VNVjvETQqyoDEF59dcyGL1riWbk9AwNfAN1";
+    Assertions.assertEquals(PCODE, bip47Account.getPaymentCode());
+    return bip47Account;
+  }
+
+  protected BIP47Account computeBip47AccountV0() throws Exception {
+    WhirlpoolServerConfig.SecretWalletConfig secretWalletConfig =
+        serverConfig.getSamouraiFees().getSecretWalletV0();
+    HD_Wallet bip44wallet =
+        hdWalletFactory.restoreWallet(
+            secretWalletConfig.getWords(), secretWalletConfig.getPassphrase(), params);
+    BIP47Wallet bip47Wallet = new BIP47Wallet(bip44wallet);
+    BIP47Account bip47Account = bip47Wallet.getAccount(0);
+    String PCODE =
+        "PM8TJXp19gCE6hQzqRi719FGJzF6AreRwvoQKLRnQ7dpgaakakFns22jHUqhtPQWmfevPQRCyfFbdDrKvrfw9oZv5PjaCerQMa3BKkPyUf9yN1CDR3w6";
     Assertions.assertEquals(PCODE, bip47Account.getPaymentCode());
     return bip47Account;
   }
@@ -330,14 +346,14 @@ public abstract class AbstractIntegrationTest {
     // add outputs
     String addressBech32 = address.getBech32AsString();
     TransactionOutput transactionOutput =
-            bech32Util.getTransactionOutput(addressBech32, 1234, params);
+        bech32Util.getTransactionOutput(addressBech32, 1234, params);
     transaction.addOutput(transactionOutput);
 
     // add coinbase input
     int txCounter = 1;
     TransactionInput transactionInput =
-            new TransactionInput(
-                    params, transaction, new byte[] {(byte) txCounter, (byte) (txCounter++ >> 8)});
+        new TransactionInput(
+            params, transaction, new byte[] {(byte) txCounter, (byte) (txCounter++ >> 8)});
     transaction.addInput(transactionInput);
     return transactionOutput;
   }

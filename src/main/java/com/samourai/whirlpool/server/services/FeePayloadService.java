@@ -60,6 +60,7 @@ public class FeePayloadService {
 
   public WhirlpoolFeeData decode(
       WhirlpoolFeeOutput feeOutput,
+      BIP47Account secretAccountBip47V0,
       BIP47Account secretAccountBip47,
       TransactionOutPoint input0OutPoint,
       byte[] input0Pubkey)
@@ -71,8 +72,15 @@ public class FeePayloadService {
     if (feeOpReturnImpl == null) {
       throw new Exception("Unknown FeeOpReturnImpl");
     }
+    if (log.isDebugEnabled()) {
+      log.debug("decode(): opReturnVersion=" + feeOpReturnImpl.getOpReturnVersion());
+    }
+    BIP47Account bip47Account =
+        feeOpReturnImpl.getOpReturnVersion() == FeeOpReturnImplV0.OP_RETURN_VERSION
+            ? secretAccountBip47V0
+            : secretAccountBip47;
     FeeOpReturn feeOpReturn =
-        feeOpReturnImpl.parseOpReturn(opReturn, secretAccountBip47, input0OutPoint, input0Pubkey);
+        feeOpReturnImpl.parseOpReturn(opReturn, bip47Account, input0OutPoint, input0Pubkey);
 
     // parse feePayload
     return parseFeePayload(feeOpReturn, feeOutput.getTxOutput());

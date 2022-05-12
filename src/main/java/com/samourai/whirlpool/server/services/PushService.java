@@ -1,6 +1,5 @@
 package com.samourai.whirlpool.server.services;
 
-import com.samourai.javaserver.exceptions.NotifiableException;
 import com.samourai.wallet.api.backend.beans.BackendPushTxException;
 import com.samourai.wallet.util.TxUtil;
 import com.samourai.whirlpool.server.beans.Pool;
@@ -31,9 +30,10 @@ public class PushService {
     Tx0Validation tx0Validation;
     try {
       tx0Validation = tx0ValidationService.parseAndValidate(txBytes, txTime, pool);
-    } catch (NotifiableException e) {
-      // wrap "Not a TX0" as BackendPushTxException
-      throw new BackendPushTxException(e.getMessage());
+    } catch (Exception e) {
+      log.error("Not a TX0", e);
+      // hide error details and wrap "Not a TX0" as BackendPushTxException
+      throw new BackendPushTxException("Not a TX0");
     }
 
     Transaction tx = tx0Validation.getTx();

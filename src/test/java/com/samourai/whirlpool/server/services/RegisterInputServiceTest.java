@@ -104,11 +104,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
   public void registerInput_shouldFailWhenSpent() throws Exception {
     // TEST
     Exception e =
-        Assertions.assertThrows(
-            IllegalInputException.class,
-            () -> {
-              runTestValidInput(false, true);
-            });
+        Assertions.assertThrows(IllegalInputException.class, () -> runTestValidInput(false, true));
     Assertions.assertEquals(RegisterInputService.ERROR_ALREADY_SPENT, e.getMessage());
 
     // VERIFY

@@ -39,6 +39,7 @@ public class Tx0ValidationService {
   private WhirlpoolServerConfig serverConfig;
   private Bech32UtilGeneric bech32Util;
   private HD_WalletFactoryGeneric hdWalletFactory;
+  private BIP47Account secretAccountBip47V0;
   private BIP47Account secretAccountBip47;
   private TxUtil txUtil;
   private BlockchainDataService blockchainDataService;
@@ -63,7 +64,10 @@ public class Tx0ValidationService {
     this.serverConfig = serverConfig;
     this.bech32Util = bech32UtilGeneric;
     this.hdWalletFactory = hdWalletFactory;
-    this.secretAccountBip47 = computeSecretAccount();
+    this.secretAccountBip47V0 =
+        computeSecretAccount(serverConfig.getSamouraiFees().getSecretWalletV0());
+    this.secretAccountBip47 =
+        computeSecretAccount(serverConfig.getSamouraiFees().getSecretWallet());
     this.txUtil = txUtil;
     this.blockchainDataService = blockchainDataService;
     this.feePayloadService = feePayloadService;
@@ -72,12 +76,12 @@ public class Tx0ValidationService {
     this.scodeService = scodeService;
   }
 
-  private BIP47Account computeSecretAccount() throws Exception {
-    SecretWalletConfig secretWallet = serverConfig.getSamouraiFees().getSecretWallet();
+  private BIP47Account computeSecretAccount(SecretWalletConfig secretWalletConfig)
+      throws Exception {
     HD_Wallet hdw =
         hdWalletFactory.restoreWallet(
-            secretWallet.getWords(),
-            secretWallet.getPassphrase(),
+            secretWalletConfig.getWords(),
+            secretWalletConfig.getPassphrase(),
             cryptoService.getNetworkParameters());
     return hdWalletFactory
         .getBIP47(hdw.getSeedHex(), hdw.getPassphrase(), cryptoService.getNetworkParameters())
@@ -97,7 +101,8 @@ public class Tx0ValidationService {
         computeCallbackFetchOutpointScriptBytes(input0OutPoint); // needed for P2PK
     byte[] input0Pubkey = txUtil.findInputPubkey(tx, 0, fetchInputOutpointScriptBytes);
     WhirlpoolFeeData feeData =
-        feePayloadService.decode(feeOutput, secretAccountBip47, input0OutPoint, input0Pubkey);
+        feePayloadService.decode(
+            feeOutput, secretAccountBip47V0, secretAccountBip47, input0OutPoint, input0Pubkey);
     return feeData;
   }
 
@@ -105,8 +110,7 @@ public class Tx0ValidationService {
     return secretAccountBip47.getPaymentCode();
   }
 
-  public Tx0Validation parseAndValidate(byte[] txBytes, long tx0Time, Pool pool)
-      throws NotifiableException {
+  public Tx0Validation parseAndValidate(byte[] txBytes, long tx0Time, Pool pool) throws Exception {
     // parse tx
     Transaction tx;
     try {
@@ -121,23 +125,13 @@ public class Tx0ValidationService {
     return tx0Validation;
   }
 
-  public Tx0Validation validate(Transaction tx0, long tx0Time, PoolFee poolFee)
-      throws NotifiableException {
-    WhirlpoolFeeData feeData;
-    try {
-      feeData = decodeFeeData(tx0);
-    } catch (Exception e) {
-      // not a TX0
-      log.warn("Not a TX0 " + tx0.getHashAsString() + ": " + e.getMessage());
-      throw new NotifiableException("Not a TX0");
-    }
-    // validate TX0
-    try {
-      return validate(tx0, tx0Time, poolFee, feeData);
-    } catch (Exception e) {
-      log.warn("Not a valid TX0 " + tx0.getHashAsString() + ": " + e.getMessage());
-      throw new NotifiableException("Not a valid TX0");
-    }
+  protected Tx0Validation validate(Transaction tx0, long tx0Time, PoolFee poolFee)
+      throws Exception {
+    // decode
+    WhirlpoolFeeData feeData = decodeFeeData(tx0);
+
+    // validate
+    return validate(tx0, tx0Time, poolFee, feeData);
   }
 
   public Tx0Validation validate(

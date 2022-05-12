@@ -2,19 +2,10 @@ package com.samourai.whirlpool.server.services;
 
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
-import com.samourai.wallet.api.backend.beans.UnspentOutput;
-import com.samourai.wallet.bipWallet.BipWallet;
-import com.samourai.wallet.client.indexHandler.MemoryIndexHandlerSupplier;
-import com.samourai.wallet.hd.BIP_WALLET;
-import com.samourai.wallet.hd.HD_Wallet;
 import com.samourai.wallet.send.provider.SimpleUtxoKeyProvider;
 import com.samourai.whirlpool.client.tx0.*;
 import com.samourai.whirlpool.client.wallet.WhirlpoolWalletConfig;
-import com.samourai.whirlpool.client.wallet.beans.Tx0FeeTarget;
-import com.samourai.whirlpool.client.wallet.beans.WhirlpoolAccount;
 import com.samourai.whirlpool.client.wallet.data.minerFee.BasicMinerFeeSupplier;
-import com.samourai.whirlpool.client.whirlpool.beans.Pool;
-import com.samourai.whirlpool.client.whirlpool.beans.Tx0Data;
 import com.samourai.whirlpool.protocol.feeOpReturn.FeeOpReturnImplV0;
 import com.samourai.whirlpool.protocol.feePayload.FeePayloadV1;
 import com.samourai.whirlpool.server.beans.PoolFee;
@@ -60,7 +51,9 @@ public class Tx0ValidationServiceV0Test extends AbstractIntegrationTest {
   protected void setupFeeOpReturnImpl() {
     // use FeeOpReturnImplV0
     feePayloadService._setFeeOpReturnImplCurrent(feeOpReturnImplV0);
-    Assertions.assertEquals(FeeOpReturnImplV0.OP_RETURN_VERSION, feePayloadService._getFeeOpReturnImplCurrent().getOpReturnVersion());
+    Assertions.assertEquals(
+        FeeOpReturnImplV0.OP_RETURN_VERSION,
+        feePayloadService._getFeeOpReturnImplCurrent().getOpReturnVersion());
   }
 
   @BeforeEach
@@ -105,10 +98,10 @@ public class Tx0ValidationServiceV0Test extends AbstractIntegrationTest {
             .getRpcTransaction(txid)
             .orElseThrow(() -> new NoSuchElementException());
 
-    Assertions.assertThrows(
-        Exception.class,
-        () -> tx0ValidationService.decodeFeeData(rpcTransaction.getTx()),
-        errorMessage);
+    Exception e =
+        Assertions.assertThrows(
+            Exception.class, () -> tx0ValidationService.decodeFeeData(rpcTransaction.getTx()));
+    Assertions.assertEquals(errorMessage, e.getMessage());
   }
 
   @Test
@@ -144,42 +137,44 @@ public class Tx0ValidationServiceV0Test extends AbstractIntegrationTest {
         1, doFindValidFeeOutput(txid, 1234, FEES_VALID_50K, 0, null, 100).getIndex());
 
     // reject when paid more than fee
-    Assertions.assertThrows(
-        Exception.class,
-        () -> doFindValidFeeOutput(txid, 1234, FEES_VALID_50K - 1, 0, null, 100),
-        "No valid fee payment found");
+    Exception e =
+        Assertions.assertThrows(
+            Exception.class,
+            () -> doFindValidFeeOutput(txid, 1234, FEES_VALID_50K - 1, 0, null, 100));
+    Assertions.assertEquals("No valid fee payment found", e.getMessage());
 
-    Assertions.assertThrows(
-        Exception.class,
-        () -> doFindValidFeeOutput(txid, 1234, 1, 0, null, 100),
-        "No valid fee payment found");
+    e =
+        Assertions.assertThrows(
+            Exception.class, () -> doFindValidFeeOutput(txid, 1234, 1, 0, null, 100));
+    Assertions.assertEquals("No valid fee payment found", e.getMessage());
 
     // reject when paid less than fee
-    Assertions.assertThrows(
-        Exception.class,
-        () -> doFindValidFeeOutput(txid, 1234, FEES_VALID_50K + 1, 0, null, 100),
-        "No valid fee payment found");
+    e =
+        Assertions.assertThrows(
+            Exception.class,
+            () -> doFindValidFeeOutput(txid, 1234, FEES_VALID_50K + 1, 0, null, 100));
+    Assertions.assertEquals("No valid fee payment found", e.getMessage());
 
-    Assertions.assertThrows(
-        Exception.class,
-        () -> doFindValidFeeOutput(txid, 1234, 1000000, 0, null, 100),
-        "No valid fee payment found");
+    e =
+        Assertions.assertThrows(
+            Exception.class, () -> doFindValidFeeOutput(txid, 1234, 1000000, 0, null, 100));
+    Assertions.assertEquals("No valid fee payment found", e.getMessage());
 
     // reject when paid to wrong xpub indice
-    Assertions.assertThrows(
-        Exception.class,
-        () -> doFindValidFeeOutput(txid, 234, FEES_VALID_50K, 1, null, 100),
-        "No valid fee payment found");
+    e =
+        Assertions.assertThrows(
+            Exception.class, () -> doFindValidFeeOutput(txid, 234, FEES_VALID_50K, 1, null, 100));
+    Assertions.assertEquals("No valid fee payment found", e.getMessage());
 
-    Assertions.assertThrows(
-        Exception.class,
-        () -> doFindValidFeeOutput(txid, 234, FEES_VALID_50K, 2, null, 100),
-        "No valid fee payment found");
+    e =
+        Assertions.assertThrows(
+            Exception.class, () -> doFindValidFeeOutput(txid, 234, FEES_VALID_50K, 2, null, 100));
+    Assertions.assertEquals("No valid fee payment found", e.getMessage());
 
-    Assertions.assertThrows(
-        Exception.class,
-        () -> doFindValidFeeOutput(txid, 234, FEES_VALID_50K, 10, null, 100),
-        "No valid fee payment found");
+    e =
+        Assertions.assertThrows(
+            Exception.class, () -> doFindValidFeeOutput(txid, 234, FEES_VALID_50K, 10, null, 100));
+    Assertions.assertEquals("No valid fee payment found", e.getMessage());
   }
 
   @Test
@@ -189,10 +184,11 @@ public class Tx0ValidationServiceV0Test extends AbstractIntegrationTest {
     feeAccept.put(FEES_VALID_50K, 11111111L);
 
     // reject when no feeAccept
-    Assertions.assertThrows(
-        Exception.class,
-        () -> doFindValidFeeOutput(txid, 1234, FEES_VALID_50K + 10, 0, null, 100),
-        "No valid fee payment found");
+    Exception e =
+        Assertions.assertThrows(
+            Exception.class,
+            () -> doFindValidFeeOutput(txid, 1234, FEES_VALID_50K + 10, 0, null, 100));
+    Assertions.assertEquals("No valid fee payment found", e.getMessage());
 
     // accept when tx0Time <= feeAccept.maxTime
     Assertions.assertEquals(
@@ -202,10 +198,11 @@ public class Tx0ValidationServiceV0Test extends AbstractIntegrationTest {
         1, doFindValidFeeOutput(txid, 11110L, FEES_VALID_50K + 10, 0, feeAccept, 100).getIndex());
 
     // reject when tx0Time > feeAccept.maxTime
-    Assertions.assertThrows(
-        Exception.class,
-        () -> doFindValidFeeOutput(txid, 11111112L, FEES_VALID_50K + 10, 0, feeAccept, 100),
-        "No valid fee payment found");
+    e =
+        Assertions.assertThrows(
+            Exception.class,
+            () -> doFindValidFeeOutput(txid, 11111112L, FEES_VALID_50K + 10, 0, feeAccept, 100));
+    Assertions.assertEquals("No valid fee payment found", e.getMessage());
   }
 
   private TransactionOutput doFindValidFeeOutput(
@@ -229,8 +226,8 @@ public class Tx0ValidationServiceV0Test extends AbstractIntegrationTest {
     return rpcTransaction.getTx();
   }
 
-  @Test
-  public void validate_tx0_feePayloadValid_V0() throws Exception {
+  /*@Test
+  public void generate_feePayloadValid() throws Exception {
     UnspentOutput spendFrom =
         testUtils.generateUnspentOutputWithKey(99000000, params, utxoKeyProvider);
     Collection<UnspentOutput> spendFroms = Arrays.asList(spendFrom);
@@ -321,7 +318,7 @@ public class Tx0ValidationServiceV0Test extends AbstractIntegrationTest {
     // reverse parseAndValidate
     Integer[] strictModeVouts = new Integer[] {1, 2, 3, 4, 5, 6};
     doParseAndValidate(tx0Validation, tx0.getTx(), serverPool, strictModeVouts);
-  }
+  }*/
 
   @Test
   public void validate_raw_feePayloadValid_V0() throws Exception {
@@ -353,8 +350,8 @@ public class Tx0ValidationServiceV0Test extends AbstractIntegrationTest {
     doParseAndValidate(tx0Validation, tx, serverPool, strictModeVouts);
   }
 
-  @Test
-  public void validate_tx0_feePayloadInvalidV0() throws Exception {
+  /*@Test
+  public void generate_feePayloadInvalidV0() throws Exception {
     UnspentOutput spendFrom =
         testUtils.generateUnspentOutputWithKey(99000000, params, utxoKeyProvider);
     Collection<UnspentOutput> spendFroms = Arrays.asList(spendFrom);
@@ -445,7 +442,7 @@ public class Tx0ValidationServiceV0Test extends AbstractIntegrationTest {
         Exception.class,
         () -> tx0ValidationService.validate(tx0.getTx(), 1234, poolFee),
         "Not a valid TX0");
-  }
+  }*/
 
   @Test
   public void validate_raw_feePayloadInvalidV0() throws Exception {
@@ -456,8 +453,10 @@ public class Tx0ValidationServiceV0Test extends AbstractIntegrationTest {
     String txHex =
         "010000000001015cfb347c26ab871701abd6cd2ba520fd1cd2fdea02b0ade99819b0b18395e2a10000000000ffffffff070000000000000000426a40188ec2c5ee1080ea32e0a0238df851586eb91102c073b0ffa9c0c97cd451d969e8bf3068cf83f64af2d9c935adce0bae5dd20ea8575d1d9d60d565518376db4798e00e0000000000160014df3a4bc83635917ad18621f3ba78cef6469c5f59a6420f000000000016001429386be199b340466a45b488d8eef42f574d6eaaa6420f00000000001600147e4a4628dd8fbd638681a728e39f7d92ada04070a6420f0000000000160014e0c3a6cc4f4eedfa72f6b6e9d6767e2a2eb8c09fa6420f0000000000160014eb241f46cc4cb5eb777d1b7ebaf28af3a71431008eb39a0500000000160014a2fc114723a7924b0b056567b5c24d16ce8933690247304402206c46aa627c636a4fdbefc7a16214be37ec90a0654bdf509dc20afa6393d78cd402205c2f0ddb1167452cd977bbb1fe7658d5683767c7f3634452d1ff090de662e4970121039b645a6ef7a274ca0cde38f78524c191525defd545d196b48a6e0594611d0b6c00000000";
     Transaction tx = txUtil.fromTxHex(params, txHex);
-    Assertions.assertThrows(
-        Exception.class, () -> tx0ValidationService.validate(tx, 1234, poolFee), "Not a valid TX0");
+    Exception e =
+        Assertions.assertThrows(
+            Exception.class, () -> tx0ValidationService.validate(tx, 1234, poolFee));
+    Assertions.assertEquals("No valid fee payment found", e.getMessage());
   }
 
   @Test
@@ -469,8 +468,10 @@ public class Tx0ValidationServiceV0Test extends AbstractIntegrationTest {
     serverPool._setPoolFee(poolFee);
 
     Transaction tx = getTx(txid);
-    Assertions.assertThrows(
-        Exception.class, () -> tx0ValidationService.validate(tx, 1234, poolFee), "Not a valid TX0");
+    Exception e =
+        Assertions.assertThrows(
+            Exception.class, () -> tx0ValidationService.validate(tx, 1234, poolFee));
+    Assertions.assertEquals("No valid fee payment found", e.getMessage());
 
     // accept when valid feePayload
     short scodePayload = (short) 12345;
@@ -492,8 +493,8 @@ public class Tx0ValidationServiceV0Test extends AbstractIntegrationTest {
     doParseAndValidate(tx0Validation, tx, serverPool, strictModeVouts);
   }
 
-  @Test
-  public void validate_tx0_noScodeV0() throws Exception {
+  /*@Test
+  public void generate_noScode() throws Exception {
     UnspentOutput spendFrom =
         testUtils.generateUnspentOutputWithKey(99000000, params, utxoKeyProvider);
     Collection<UnspentOutput> spendFroms = Arrays.asList(spendFrom);
@@ -586,7 +587,7 @@ public class Tx0ValidationServiceV0Test extends AbstractIntegrationTest {
     // reverse parseAndValidate
     Integer[] strictModeVouts = new Integer[] {2, 3, 4, 5, 6};
     doParseAndValidate(tx0Validation, tx0.getTx(), serverPool, strictModeVouts);
-  }
+  }*/
 
   @Test
   public void validate_raw_noScodeV0() throws Exception {
@@ -615,8 +616,8 @@ public class Tx0ValidationServiceV0Test extends AbstractIntegrationTest {
     doParseAndValidate(tx0Validation, tx, serverPool, strictModeVouts);
   }
 
-  @Test
-  public void validate_tx0_noScode_invalidAddressV0() throws Exception {
+  /*@Test
+  public void generate_noScode_invalidAddressV0() throws Exception {
     UnspentOutput spendFrom =
         testUtils.generateUnspentOutputWithKey(99000000, params, utxoKeyProvider);
     Collection<UnspentOutput> spendFroms = Arrays.asList(spendFrom);
@@ -706,7 +707,7 @@ public class Tx0ValidationServiceV0Test extends AbstractIntegrationTest {
         Exception.class,
         () -> tx0ValidationService.validate(tx0.getTx(), 1234, poolFee),
         "Not a valid TX0");
-  }
+  }*/
 
   @Test
   public void validate_raw_noScode_invalidAddressV0() throws Exception {
@@ -717,8 +718,10 @@ public class Tx0ValidationServiceV0Test extends AbstractIntegrationTest {
     String txHex =
         "01000000000101f94906397bf14055ada7430aa55e74b52ee80e95a11b43c487ac497c745a9fb40000000000ffffffff070000000000000000426a4004264aa79e320240ea2a3eab63128916ab724ccfef667bb5954604c41c3558f0d10c6cffb500ff746e8a3b3244f2c1bd2390f9ffab7faa378d14b664336c5d1a98e00e00000000001600142a64f8ea17ebf6c5501bd0f96f7cf43114e26801a6420f000000000016001429386be199b340466a45b488d8eef42f574d6eaaa6420f00000000001600147e4a4628dd8fbd638681a728e39f7d92ada04070a6420f0000000000160014e0c3a6cc4f4eedfa72f6b6e9d6767e2a2eb8c09fa6420f0000000000160014eb241f46cc4cb5eb777d1b7ebaf28af3a71431008eb39a0500000000160014df3a4bc83635917ad18621f3ba78cef6469c5f590247304402201a24a3bc19d0e9840058385b8d0ece8102fb72d94951b00e5bf99183f2e1220302205a7c609c4a0da54fca3533e15de1b865d6c1b12647569fd827b87abab86b360f012103e05cde9b0cdfdc717e8e3b1d816bfda440dda03cb433d67722549a672f6743c700000000";
     Transaction tx = txUtil.fromTxHex(params, txHex);
-    Assertions.assertThrows(
-        Exception.class, () -> tx0ValidationService.validate(tx, 1234, poolFee), "Not a valid TX0");
+    Exception e =
+        Assertions.assertThrows(
+            Exception.class, () -> tx0ValidationService.validate(tx, 1234, poolFee));
+    Assertions.assertEquals("No valid fee payment found", e.getMessage());
   }
 
   protected void doParseAndValidate(
