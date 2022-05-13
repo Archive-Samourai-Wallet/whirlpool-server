@@ -6,6 +6,7 @@ import com.samourai.javawsserver.interceptors.JWSSIpHandshakeInterceptor;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
+import com.samourai.whirlpool.server.exceptions.ServerErrorCode;
 import com.samourai.whirlpool.server.services.ExportService;
 import com.samourai.whirlpool.server.services.RegisterInputService;
 import com.samourai.whirlpool.server.services.WSMessageService;
@@ -37,6 +38,7 @@ public abstract class AbstractWebSocketController {
         headers.getFirstNativeHeader(WhirlpoolProtocol.HEADER_PROTOCOL_VERSION);
     if (!WhirlpoolProtocol.PROTOCOL_VERSION.equals(clientProtocolVersion)) {
       throw new IllegalInputException(
+          ServerErrorCode.VERSION_MISMATCH,
           "Version mismatch: server="
               + WhirlpoolProtocol.PROTOCOL_VERSION
               + ", client="
@@ -55,9 +57,10 @@ public abstract class AbstractWebSocketController {
       String activity) {
 
     NotifiableException notifiable = NotifiableException.computeNotifiableException(e);
+    int errorCode = notifiable.getErrorCode();
     String message = notifiable.getMessage();
     String username = principal.getName();
-    WSMessageService.sendPrivateError(username, message);
+    WSMessageService.sendPrivateError(username, errorCode, message);
 
     // skip healthCheck
     if (!RegisterInputService.HEALTH_CHECK_SUCCESS.equals(message)) {

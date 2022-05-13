@@ -87,8 +87,8 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
     // same hash
     RpcTransaction rpcTransaction =
         rpcClientService.createAndMockTx(inputAddress, inputBalance, 100, 2);
-    TxOutPoint txOutPoint1 = blockchainDataService.getOutPoint(rpcTransaction, 0);
-    TxOutPoint txOutPoint2 = blockchainDataService.getOutPoint(rpcTransaction, 1);
+    TxOutPoint txOutPoint1 = blockchainDataService.getOutPoint(rpcTransaction, 0).get();
+    TxOutPoint txOutPoint2 = blockchainDataService.getOutPoint(rpcTransaction, 1).get();
 
     Assertions.assertEquals(txOutPoint1.getHash(), txOutPoint2.getHash());
     Assertions.assertEquals(0, txOutPoint1.getIndex());
@@ -153,8 +153,8 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
         rpcClientService.createAndMockTx(inputAddress, inputBalance, 100, 2);
     RpcTransaction rpcTransaction2 =
         rpcClientService.createAndMockTx(inputAddress, inputBalance, 100, 2);
-    TxOutPoint txOutPoint1 = blockchainDataService.getOutPoint(rpcTransaction, 0);
-    TxOutPoint txOutPoint2 = blockchainDataService.getOutPoint(rpcTransaction2, 1);
+    TxOutPoint txOutPoint1 = blockchainDataService.getOutPoint(rpcTransaction, 0).get();
+    TxOutPoint txOutPoint2 = blockchainDataService.getOutPoint(rpcTransaction2, 1).get();
 
     Assertions.assertEquals(txOutPoint1.getHash(), txOutPoint2.getHash());
     Assertions.assertEquals(0, txOutPoint1.getIndex());

@@ -6,6 +6,7 @@ import com.samourai.whirlpool.protocol.beans.Utxo;
 import com.samourai.whirlpool.protocol.websocket.notifications.MixStatus;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
+import com.samourai.whirlpool.server.exceptions.ServerErrorCode;
 import com.samourai.whirlpool.server.persistence.to.MixTO;
 import com.samourai.whirlpool.server.services.CryptoService;
 import com.samourai.whirlpool.server.utils.Utils;
@@ -236,7 +237,8 @@ public class Mix {
       throws IllegalInputException {
     String inputId = Utils.computeInputId(confirmedInput.getRegisteredInput().getOutPoint());
     if (inputsById.containsKey(inputId)) {
-      throw new IllegalInputException("input already registered");
+      throw new IllegalInputException(
+          ServerErrorCode.INPUT_ALREADY_REGISTERED, "input already registered");
     }
     inputsById.put(inputId, confirmedInput);
   }

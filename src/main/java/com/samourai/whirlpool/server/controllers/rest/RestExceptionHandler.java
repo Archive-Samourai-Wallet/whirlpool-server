@@ -4,6 +4,7 @@ import com.samourai.javaserver.exceptions.NotifiableException;
 import com.samourai.javaserver.rest.AbstractRestExceptionHandler;
 import com.samourai.whirlpool.protocol.rest.RestErrorResponse;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;
+import com.samourai.whirlpool.server.exceptions.ServerErrorCode;
 import com.samourai.whirlpool.server.services.ExportService;
 import java.lang.invoke.MethodHandles;
 import javax.servlet.http.HttpServletRequest;
@@ -29,7 +30,8 @@ public class RestExceptionHandler extends AbstractRestExceptionHandler {
   @Override
   protected ResponseEntity<Object> mapException(Exception e) {
     NotifiableException notifiableException = NotifiableException.computeNotifiableException(e);
-    Object response = new RestErrorResponse(notifiableException.getMessage());
+    Object response =
+        new RestErrorResponse(ServerErrorCode.SERVER_ERROR, notifiableException.getMessage());
     return new ResponseEntity<>(response, notifiableException.getHttpStatus());
   }
 

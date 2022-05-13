@@ -10,6 +10,7 @@ import com.samourai.whirlpool.server.beans.export.ActivityCsv;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
+import com.samourai.whirlpool.server.exceptions.ServerErrorCode;
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.Map;
@@ -119,7 +120,7 @@ public class PoolService {
   public Pool getPool(String poolId) throws IllegalInputException {
     Pool pool = pools.get(poolId);
     if (pool == null) {
-      throw new IllegalInputException("Pool not found");
+      throw new IllegalInputException(ServerErrorCode.INVALID_ARGUMENT, "Pool not found");
     }
     return pool;
   }
@@ -153,6 +154,7 @@ public class PoolService {
       long balanceMin = pool.computePremixBalanceMin(liquidity);
       long balanceMax = pool.computePremixBalanceMax(liquidity);
       throw new IllegalInputException(
+          ServerErrorCode.INPUT_REJECTED,
           "Invalid input balance (expected: "
               + balanceMin
               + "-"
@@ -167,7 +169,7 @@ public class PoolService {
 
     // verify confirmations
     if (!isUtxoConfirmed(txOutPoint, liquidity)) {
-      throw new IllegalInputException("Input is not confirmed");
+      throw new IllegalInputException(ServerErrorCode.INPUT_REJECTED, "Input is not confirmed");
     }
     queueToPool(pool, registeredInput);
     return registeredInput;

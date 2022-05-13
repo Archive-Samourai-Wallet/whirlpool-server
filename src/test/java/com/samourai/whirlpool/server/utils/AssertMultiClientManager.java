@@ -110,7 +110,7 @@ public class AssertMultiClientManager extends MultiClientManager {
     // prepare input & output and mock input
     RpcTransaction rpcTransaction =
         rpcClientService.createAndMockTx(inputAddress, inputBalance, nbConfirmations, nbOuts);
-    TxOutPoint utxo = blockchainDataService.getOutPoint(rpcTransaction, utxoIndex);
+    TxOutPoint utxo = blockchainDataService.getOutPoint(rpcTransaction, utxoIndex).get();
     ECKey utxoKey = inputAddress.getECKey();
 
     return prepareClient(utxo, utxoKey, bip84Wallet, cliConfig);

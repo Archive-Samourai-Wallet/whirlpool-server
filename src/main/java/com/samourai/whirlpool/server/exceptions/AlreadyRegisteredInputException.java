@@ -5,6 +5,6 @@ import com.samourai.javaserver.exceptions.NotifiableException;
 public class AlreadyRegisteredInputException extends NotifiableException {
 
   public AlreadyRegisteredInputException(String message) {
-    super(message);
+    super(ServerErrorCode.INPUT_ALREADY_REGISTERED, message);
   }
 }

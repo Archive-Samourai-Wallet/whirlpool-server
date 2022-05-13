@@ -7,6 +7,7 @@ import com.samourai.whirlpool.server.beans.rpc.RpcTransaction;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.exceptions.BannedInputException;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
+import com.samourai.whirlpool.server.exceptions.ServerErrorCode;
 import com.samourai.whirlpool.server.persistence.to.BanTO;
 import java.lang.invoke.MethodHandles;
 import java.util.Optional;
@@ -58,13 +59,13 @@ public class RegisterInputService {
       String ip)
       throws NotifiableException {
     if (HEALTH_CHECK_UTXO.equals(utxoHash)) {
-      throw new IllegalInputException(HEALTH_CHECK_SUCCESS);
+      throw new IllegalInputException(ServerErrorCode.INPUT_REJECTED, HEALTH_CHECK_SUCCESS);
     }
     if (!cryptoService.isValidTxHash(utxoHash)) {
-      throw new IllegalInputException("Invalid utxoHash");
+      throw new IllegalInputException(ServerErrorCode.INPUT_REJECTED, "Invalid utxoHash");
     }
     if (utxoIndex < 0) {
-      throw new IllegalInputException("Invalid utxoIndex");
+      throw new IllegalInputException(ServerErrorCode.INPUT_REJECTED, "Invalid utxoIndex");
     }
 
     // verify UTXO not banned
@@ -78,10 +79,14 @@ public class RegisterInputService {
     try {
       // fetch outPoint
       IllegalInputException notFoundException =
-          new IllegalInputException("UTXO not found: " + utxoHash + "-" + utxoIndex);
+          new IllegalInputException(
+              ServerErrorCode.INPUT_REJECTED, "UTXO not found: " + utxoHash + "-" + utxoIndex);
       RpcTransaction rpcTransaction =
           blockchainDataService.getRpcTransaction(utxoHash).orElseThrow(() -> notFoundException);
-      TxOutPoint txOutPoint = blockchainDataService.getOutPoint(rpcTransaction, utxoIndex);
+      TxOutPoint txOutPoint =
+          blockchainDataService
+              .getOutPoint(rpcTransaction, utxoIndex)
+              .orElseThrow(() -> notFoundException);
 
       // verify signature
       inputValidationService.validateSignature(txOutPoint, poolId, signature);
@@ -90,7 +95,8 @@ public class RegisterInputService {
       if (!blockchainDataService.isTxOutUnspent(utxoHash, utxoIndex)) {
         // spent input being resubmitted by client = spending tx is missing in mempool backing CLI
         // we assume it's a mix tx which was removed from CLI mempool due to mempool congestion
-        throw new IllegalInputException(RegisterInputService.ERROR_ALREADY_SPENT);
+        throw new IllegalInputException(
+            ServerErrorCode.INPUT_REJECTED, RegisterInputService.ERROR_ALREADY_SPENT);
       }
 
       // check tx0Whitelist

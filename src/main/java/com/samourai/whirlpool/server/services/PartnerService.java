@@ -3,6 +3,7 @@ package com.samourai.whirlpool.server.services;
 import com.samourai.whirlpool.server.beans.Partner;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
+import com.samourai.whirlpool.server.exceptions.ServerErrorCode;
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -46,7 +47,8 @@ public class PartnerService {
   public Partner getById(String partnerId) throws IllegalInputException {
     Partner partner = partnersById.get(partnerId);
     if (partner == null) {
-      throw new IllegalInputException("Partner not found: partnerId=" + partnerId);
+      throw new IllegalInputException(
+          ServerErrorCode.INVALID_ARGUMENT, "Partner not found: partnerId=" + partnerId);
     }
     return partner;
   }
@@ -54,7 +56,8 @@ public class PartnerService {
   public Partner getByPayload(short partnerPayload) throws IllegalInputException {
     Partner partner = partnersByPayload.get(partnerPayload);
     if (partner == null) {
-      throw new IllegalInputException("Partner not found: partnerPayload" + partnerPayload);
+      throw new IllegalInputException(
+          ServerErrorCode.INVALID_ARGUMENT, "Partner not found: partnerPayload" + partnerPayload);
     }
     return partner;
   }

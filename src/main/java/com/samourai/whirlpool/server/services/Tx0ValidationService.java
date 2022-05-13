@@ -1,6 +1,5 @@
 package com.samourai.whirlpool.server.services;
 
-import com.samourai.javaserver.exceptions.NotifiableException;
 import com.samourai.wallet.bip47.rpc.BIP47Account;
 import com.samourai.wallet.hd.HD_Wallet;
 import com.samourai.wallet.hd.HD_WalletFactoryGeneric;
@@ -117,7 +116,7 @@ public class Tx0ValidationService {
       tx = new Transaction(serverConfig.getNetworkParameters(), txBytes);
     } catch (Exception e) {
       log.error("", e);
-      throw new NotifiableException("Tx parsing error");
+      throw new Exception("Tx parsing error");
     }
 
     // validate tx0

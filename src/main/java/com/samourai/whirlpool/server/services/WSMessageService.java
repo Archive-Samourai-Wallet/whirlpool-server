@@ -29,11 +29,11 @@ public class WSMessageService extends JWSSMessageService {
     this.whirlpoolProtocol = whirlpoolProtocol;
   }
 
-  public void sendPrivateError(String username, String message) {
+  public void sendPrivateError(String username, int errorCode, String message) {
     if (!RegisterInputService.HEALTH_CHECK_SUCCESS.equals(message)) {
       log.warn("(>) " + username + " sendPrivateError: " + message);
     }
-    ErrorResponse errorResponse = new ErrorResponse(message);
+    ErrorResponse errorResponse = new ErrorResponse(errorCode, message);
     sendPrivate(username, errorResponse);
   }
 

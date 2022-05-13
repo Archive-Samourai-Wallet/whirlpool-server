@@ -258,7 +258,7 @@ public abstract class AbstractIntegrationTest {
     RpcTransaction rpcTransaction =
         rpcClientService.createAndMockTx(address, amount, nbConfirmations, nbOuts);
 
-    TxOutPoint txOutPoint = blockchainDataService.getOutPoint(rpcTransaction, utxoIndex);
+    TxOutPoint txOutPoint = blockchainDataService.getOutPoint(rpcTransaction, utxoIndex).get();
     return txOutPoint;
   }
 

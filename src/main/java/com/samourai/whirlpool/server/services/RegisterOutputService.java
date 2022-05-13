@@ -7,6 +7,7 @@ import com.samourai.whirlpool.server.beans.FailMode;
 import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
+import com.samourai.whirlpool.server.exceptions.ServerErrorCode;
 import java.lang.invoke.MethodHandles;
 import org.bitcoinj.core.NetworkParameters;
 import org.slf4j.Logger;
@@ -43,7 +44,7 @@ public class RegisterOutputService {
 
     // verify signature
     if (!messageSignUtil.verifySignedMessage(receiveAddress, receiveAddress, signature, params)) {
-      throw new NotifiableException("Invalid signature");
+      throw new NotifiableException(ServerErrorCode.INVALID_ARGUMENT, "Invalid signature");
     }
 
     // validate
@@ -80,12 +81,13 @@ public class RegisterOutputService {
   private void validate(String receiveAddress) throws Exception {
     // verify output
     if (!formatsUtil.isValidBech32(receiveAddress)) {
-      throw new IllegalInputException("Invalid receiveAddress");
+      throw new IllegalInputException(ServerErrorCode.INPUT_REJECTED, "Invalid receiveAddress");
     }
 
     // verify output not revoked
     if (dbService.hasMixOutput(receiveAddress)) {
-      throw new IllegalInputException("Output already registered");
+      throw new IllegalInputException(
+          ServerErrorCode.INPUT_ALREADY_REGISTERED, "Output already registered");
     }
   }
 }

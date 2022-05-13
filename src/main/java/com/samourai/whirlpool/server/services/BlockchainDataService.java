@@ -3,7 +3,6 @@ package com.samourai.whirlpool.server.services;
 import com.samourai.wallet.segwit.bech32.Bech32UtilGeneric;
 import com.samourai.whirlpool.server.beans.rpc.RpcTransaction;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
-import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import com.samourai.whirlpool.server.services.rpc.RpcClientService;
 import com.samourai.whirlpool.server.services.rpc.RpcRawTransactionResponse;
 import com.samourai.whirlpool.server.utils.Utils;
@@ -50,14 +49,11 @@ public class BlockchainDataService {
     }
   }
 
-  public TxOutPoint getOutPoint(RpcTransaction rpcTransaction, long utxoIndex)
-      throws IllegalInputException {
+  public Optional<TxOutPoint> getOutPoint(RpcTransaction rpcTransaction, long utxoIndex) {
     String utxoHash = rpcTransaction.getTx().getHashAsString();
-    IllegalInputException notFoundException =
-        new IllegalInputException("UTXO not found: " + utxoHash + "-" + utxoIndex);
     TransactionOutput txOutput = rpcTransaction.getTx().getOutput(utxoIndex);
     if (txOutput == null) {
-      throw notFoundException;
+      return Optional.empty();
     }
 
     long inputValue = txOutput.getValue().getValue();
@@ -71,7 +67,7 @@ public class BlockchainDataService {
             rpcTransaction.getConfirmations(),
             txOutput.getScriptBytes(),
             toAddress);
-    return txOutPoint;
+    return Optional.of(txOutPoint);
   }
 
   public boolean isTxOutUnspent(String txid, long utxoIndex) {

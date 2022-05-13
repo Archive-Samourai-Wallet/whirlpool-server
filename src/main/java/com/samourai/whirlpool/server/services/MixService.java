@@ -13,10 +13,7 @@ import com.samourai.whirlpool.server.beans.export.ActivityCsv;
 import com.samourai.whirlpool.server.beans.export.MixCsv;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
-import com.samourai.whirlpool.server.exceptions.BroadcastException;
-import com.samourai.whirlpool.server.exceptions.IllegalInputException;
-import com.samourai.whirlpool.server.exceptions.MixException;
-import com.samourai.whirlpool.server.exceptions.QueueInputException;
+import com.samourai.whirlpool.server.exceptions.*;
 import com.samourai.whirlpool.server.services.rpc.RpcClientService;
 import com.samourai.whirlpool.server.utils.Utils;
 import java.lang.invoke.MethodHandles;
@@ -100,7 +97,7 @@ public class MixService {
       whirlpoolServerConfig.checkFailMode(FailMode.CONFIRM_INPUT_BLAME);
     } catch (Exception e) {
       blameService.blame(registeredInput, BlameReason.DISCONNECT, mix);
-      throw new IllegalInputException(e.getMessage());
+      throw new IllegalInputException(ServerErrorCode.INPUT_REJECTED, e.getMessage());
     }
 
     // check mix didn't start yet
@@ -209,7 +206,8 @@ public class MixService {
     ConfirmedInput alreadyConfirmedInput = mix.findInput(registeredInput.getOutPoint());
     if (alreadyConfirmedInput != null) {
       // input already confirmed => reject duplicate client
-      throw new IllegalInputException("Input already confirmed");
+      throw new IllegalInputException(
+          ServerErrorCode.INPUT_ALREADY_REGISTERED, "Input already confirmed");
     }
   }
 
@@ -235,7 +233,9 @@ public class MixService {
         mix.removeConfirmingInputByUsername(username)
             .orElseThrow(
                 () ->
-                    new IllegalInputException("Confirming input not found: username=" + username));
+                    new IllegalInputException(
+                        ServerErrorCode.SERVER_ERROR,
+                        "Confirming input not found: username=" + username));
 
     // set lastUserHash
     registeredInput.setLastUserHash(userHash);
@@ -323,12 +323,14 @@ public class MixService {
     // verify unblindedSignedBordereau
     if (!cryptoService.verifyUnblindedSignedBordereau(
         receiveAddress, unblindedSignedBordereau, mix.getKeyPair())) {
-      throw new IllegalInputException("Invalid unblindedSignedBordereau");
+      throw new IllegalInputException(
+          ServerErrorCode.INVALID_ARGUMENT, "Invalid unblindedSignedBordereau");
     }
 
     // verify no output address reuse with inputs
     if (mix.getInputByAddress(receiveAddress).isPresent()) {
-      throw new IllegalInputException("output already registered as input");
+      throw new IllegalInputException(
+          ServerErrorCode.INPUT_ALREADY_REGISTERED, "output already registered as input");
     }
 
     log.info("[" + mix.getMixId() + "] registered output: " + receiveAddress);
@@ -426,18 +428,20 @@ public class MixService {
     // verify this username didn't already reveal his output
     if (mix.hasRevealedOutputUsername(username)) {
       log.warn("Rejecting already revealed username: " + username);
-      throw new IllegalInputException("Output already revealed");
+      throw new IllegalInputException(
+          ServerErrorCode.INPUT_ALREADY_REGISTERED, "Output already revealed");
     }
     // verify this receiveAddress was not already revealed (someone could try to register 2 inputs
     // and reveal same receiveAddress to block mix)
     if (mix.hasRevealedReceiveAddress(receiveAddress)) {
       log.warn("Rejecting already revealed receiveAddress: " + receiveAddress);
-      throw new IllegalInputException("ReceiveAddress already revealed");
+      throw new IllegalInputException(
+          ServerErrorCode.INPUT_ALREADY_REGISTERED, "ReceiveAddress already revealed");
     }
 
     // verify an output was registered with this receiveAddress
     if (!mix.getReceiveAddresses().contains(receiveAddress)) {
-      throw new IllegalInputException("Invalid receiveAddress");
+      throw new IllegalInputException(ServerErrorCode.INVALID_ARGUMENT, "Invalid receiveAddress");
     }
 
     mix.addRevealedOutput(username, receiveAddress);
@@ -462,9 +466,12 @@ public class MixService {
         mix.getInputByUsername(username)
             .orElseThrow(
                 () ->
-                    new IllegalInputException("Input not found for signing username=" + username));
+                    new IllegalInputException(
+                        ServerErrorCode.INPUT_REJECTED,
+                        "Input not found for signing username=" + username));
     if (mix.getSignedByUsername(username)) {
-      throw new IllegalInputException("User already signed, username=" + username);
+      throw new IllegalInputException(
+          ServerErrorCode.INPUT_ALREADY_REGISTERED, "User already signed, username=" + username);
     }
     TxOutPoint txOutPoint = confirmedInput.getRegisteredInput().getOutPoint();
 
@@ -479,7 +486,7 @@ public class MixService {
       txUtil.verifySignInput(tx, inputIndex, txOutPoint.getValue(), txOutPoint.getScriptBytes());
     } catch (Exception e) {
       log.error("Invalid signature: verifySignInput failed", e);
-      throw new IllegalInputException("Invalid signature");
+      throw new IllegalInputException(ServerErrorCode.INVALID_ARGUMENT, "Invalid signature");
     }
 
     // signature success

@@ -1,9 +1,10 @@
 package com.samourai.whirlpool.server.config;
 
 import com.samourai.javaserver.config.ServerConfig;
-import com.samourai.whirlpool.client.exception.NotifiableException;
+import com.samourai.javaserver.exceptions.NotifiableException;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.server.beans.FailMode;
+import com.samourai.whirlpool.server.exceptions.ServerErrorCode;
 import com.samourai.whirlpool.server.utils.Utils;
 import com.samourai.xmanager.protocol.XManagerService;
 import java.lang.invoke.MethodHandles;
@@ -855,7 +856,8 @@ public class WhirlpoolServerConfig extends ServerConfig {
   public void checkFailMode(FailMode value) throws NotifiableException {
     // fail mode?
     if (failMode.equals(value)) {
-      throw new NotifiableException("serverConfig.failMode=" + failMode);
+      throw new NotifiableException(
+          ServerErrorCode.INPUT_REJECTED, "serverConfig.failMode=" + failMode);
     }
   }
 }
