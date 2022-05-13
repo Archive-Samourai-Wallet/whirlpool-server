@@ -31,7 +31,7 @@ public class WSMessageService extends JWSSMessageService {
 
   public void sendPrivateError(String username, int errorCode, String message) {
     if (!RegisterInputService.HEALTH_CHECK_SUCCESS.equals(message)) {
-      log.warn("(>) " + username + " sendPrivateError: " + message);
+      log.warn("(>) " + username + " sendPrivateError(" + errorCode + "): " + message);
     }
     ErrorResponse errorResponse = new ErrorResponse(errorCode, message);
     sendPrivate(username, errorResponse);

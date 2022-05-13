@@ -20,11 +20,13 @@ public class FeePayloadService {
 
   public static final short SCODE_PAYLOAD_NONE = 0;
 
+  private FeeOpReturnImpl feeOpReturnImplV0;
   private FeeOpReturnImpl feeOpReturnImplCurrent;
   private FeeOpReturnImpl[] feeOpReturnImpls;
 
   public FeePayloadService(
       FeeOpReturnImplV0 feeOpReturnImplV0, FeeOpReturnImplV1 feeOpReturnImplV1) {
+    this.feeOpReturnImplV0 = feeOpReturnImplV0;
     this.feeOpReturnImpls = new FeeOpReturnImpl[] {feeOpReturnImplV0, feeOpReturnImplV1};
     this.feeOpReturnImplCurrent = feeOpReturnImplV1; // use FeeOpReturnImplV1
   }
@@ -100,7 +102,9 @@ public class FeePayloadService {
 
   // encode/decode bytes
 
-  public byte[] computeFeePayload(int feeIndice, short scodePayload, short partner) {
-    return feeOpReturnImplCurrent.computeFeePayload(feeIndice, scodePayload, partner);
+  public byte[] computeFeePayload(
+      int feeIndice, short scodePayload, short partner, boolean opReturnV0) {
+    FeeOpReturnImpl impl = opReturnV0 ? feeOpReturnImplV0 : feeOpReturnImplCurrent;
+    return impl.computeFeePayload(feeIndice, scodePayload, partner);
   }
 }

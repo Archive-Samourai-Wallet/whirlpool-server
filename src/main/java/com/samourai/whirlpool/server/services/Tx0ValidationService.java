@@ -105,8 +105,9 @@ public class Tx0ValidationService {
     return feeData;
   }
 
-  public String getFeePaymentCode() {
-    return secretAccountBip47.getPaymentCode();
+  public String getFeePaymentCode(boolean opReturnV0) {
+    BIP47Account ba = opReturnV0 ? secretAccountBip47V0 : secretAccountBip47;
+    return ba.getPaymentCode();
   }
 
   public Tx0Validation parseAndValidate(byte[] txBytes, long tx0Time, Pool pool) throws Exception {
