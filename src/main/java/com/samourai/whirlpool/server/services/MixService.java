@@ -253,7 +253,7 @@ public class MixService {
     log.info(
         "["
             + mixId
-            + "] registered "
+            + "] confirmed "
             + (registeredInput.isLiquidity() ? "liquidity" : "mustMix")
             + ": "
             + registeredInput.getOutPoint());
@@ -365,13 +365,16 @@ public class MixService {
             + mix.computeMinerFeeAccumulated()
             + "/"
             + mix.getPool().getMinerFeeMix()
-            + "sat (pool: "
+            + "sat"
+            + ", "
+            + mix.getNbConfirmingInputs()
+            + " confirming, mixStatus="
+            + mix.getMixStatus()
+            + " (pool: "
             + liquiditiesQueued
             + " liquidities + "
             + mustMixQueued
-            + " mustMixs, "
-            + mix.getNbConfirmingInputs()
-            + " confirming)");
+            + " mustMixs)");
   }
 
   protected synchronized boolean isRegisterOutputReady(Mix mix) {
