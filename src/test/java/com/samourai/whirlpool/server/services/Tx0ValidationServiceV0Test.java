@@ -2,11 +2,11 @@ package com.samourai.whirlpool.server.services;
 
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
-import com.samourai.wallet.send.provider.SimpleUtxoKeyProvider;
 import com.samourai.whirlpool.client.tx0.*;
 import com.samourai.whirlpool.client.wallet.WhirlpoolWalletConfig;
 import com.samourai.whirlpool.client.wallet.data.minerFee.BasicMinerFeeSupplier;
 import com.samourai.whirlpool.protocol.feeOpReturn.FeeOpReturnImplV0;
+import com.samourai.whirlpool.protocol.feeOpReturn.FeeOpReturnImplV1;
 import com.samourai.whirlpool.protocol.feePayload.FeePayloadV1;
 import com.samourai.whirlpool.server.beans.PoolFee;
 import com.samourai.whirlpool.server.beans.Tx0Validation;
@@ -42,10 +42,10 @@ public class Tx0ValidationServiceV0Test extends AbstractIntegrationTest {
   protected static final short SCODE_MAX_PAYLOAD = 32767;
 
   private WhirlpoolWalletConfig whirlpoolWalletConfig;
-  private SimpleUtxoKeyProvider utxoKeyProvider;
   private Tx0PreviewService tx0PreviewService;
 
   @Autowired private FeeOpReturnImplV0 feeOpReturnImplV0;
+  @Autowired private FeeOpReturnImplV1 feeOpReturnImplV1;
   protected Tx0Service tx0Service;
 
   protected void setupFeeOpReturnImpl() {
@@ -71,15 +71,10 @@ public class Tx0ValidationServiceV0Test extends AbstractIntegrationTest {
     setScodeConfig(SCODE_MAX_80, SCODE_MAX_PAYLOAD, 80, null);
 
     whirlpoolWalletConfig = computeWhirlpoolWalletConfig();
-    utxoKeyProvider = new SimpleUtxoKeyProvider();
     tx0PreviewService =
         new Tx0PreviewService(new BasicMinerFeeSupplier(1, 9999), whirlpoolWalletConfig);
 
-    tx0Service =
-        new Tx0Service(
-            whirlpoolWalletConfig,
-            tx0PreviewService,
-            feePayloadService._getFeeOpReturnImplCurrent());
+    tx0Service = new Tx0Service(whirlpoolWalletConfig, tx0PreviewService, feeOpReturnImplV1);
   }
 
   private void assertFeeData(String txid, int feeIndice, short scodePayload) throws Exception {

@@ -57,25 +57,30 @@ public class RegisterOutputService {
   }
 
   public synchronized Mix registerOutput(
-      String inputsHash, byte[] unblindedSignedBordereau, String receiveAddress) throws Exception {
+      String inputsHash, byte[] unblindedSignedBordereau, String receiveAddress, byte[] bordereau)
+      throws Exception {
+
     try {
       // validate
       validate(receiveAddress);
 
       // failMode
       whirlpoolServerConfig.checkFailMode(FailMode.REGISTER_OUTPUT);
+
+      // register
+      Mix mix =
+          mixService.registerOutput(
+              inputsHash, unblindedSignedBordereau, receiveAddress, bordereau);
+
+      // revoke output
+      dbService.saveMixOutput(receiveAddress);
+
+      return mix;
     } catch (Exception e) {
       log.info("registerOutput failed for " + receiveAddress + ": " + e.getMessage());
       mixService.registerOutputFailure(inputsHash, receiveAddress);
       throw e;
     }
-
-    // register
-    Mix mix = mixService.registerOutput(inputsHash, unblindedSignedBordereau, receiveAddress);
-
-    // revoke output
-    dbService.saveMixOutput(receiveAddress);
-    return mix;
   }
 
   private void validate(String receiveAddress) throws Exception {

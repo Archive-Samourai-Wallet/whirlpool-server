@@ -3,6 +3,7 @@ package com.samourai.whirlpool.server.services;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import com.samourai.wallet.segwit.SegwitAddress;
+import com.samourai.whirlpool.client.utils.ClientUtils;
 import com.samourai.whirlpool.protocol.websocket.notifications.MixStatus;
 import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.beans.Pool;
@@ -42,8 +43,9 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
     testUtils.assertMix(0, 1, mix); // mustMix confirming
 
     // blind bordereau
+    byte[] bordereau = ClientUtils.generateBordereau();
     RSABlindingParameters blindingParams = computeBlindingParams(mix);
-    byte[] blindedBordereau = clientCryptoService.blind(receiveAddress, blindingParams);
+    byte[] blindedBordereau = clientCryptoService.blind(bordereau, blindingParams);
 
     // CONFIRM_INPUT
     confirmInputService.confirmInputOrQueuePool(mixId, username, blindedBordereau, "userHash");
@@ -58,7 +60,7 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
     byte[] unblindedSignedBordereau =
         clientCryptoService.unblind(signedBlindedBordereau, blindingParams);
     registerOutputService.registerOutput(
-        mix.computeInputsHash(), unblindedSignedBordereau, receiveAddress);
+        mix.computeInputsHash(), unblindedSignedBordereau, receiveAddress, bordereau);
     Assertions.assertEquals(1, mix.getReceiveAddresses().size());
 
     // TEST
@@ -120,8 +122,9 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
     testUtils.assertMix(0, 2, mix); // confirming
 
     // blind bordereau
+    byte[] bordereau = ClientUtils.generateBordereau();
     RSABlindingParameters blindingParams = computeBlindingParams(mix);
-    byte[] blindedBordereau = clientCryptoService.blind(receiveAddress, blindingParams);
+    byte[] blindedBordereau = clientCryptoService.blind(bordereau, blindingParams);
 
     // CONFIRM_INPUT
     confirmInputService.confirmInputOrQueuePool(mixId, "user1", blindedBordereau, "userHash1");
@@ -186,8 +189,9 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
     testUtils.assertMix(0, 2, mix); // confirming
 
     // blind bordereau
+    byte[] bordereau = ClientUtils.generateBordereau();
     RSABlindingParameters blindingParams = computeBlindingParams(mix);
-    byte[] blindedBordereau = clientCryptoService.blind(receiveAddress, blindingParams);
+    byte[] blindedBordereau = clientCryptoService.blind(bordereau, blindingParams);
 
     // CONFIRM_INPUT
     confirmInputService.confirmInputOrQueuePool(mixId, "user1", blindedBordereau, "userHash1");

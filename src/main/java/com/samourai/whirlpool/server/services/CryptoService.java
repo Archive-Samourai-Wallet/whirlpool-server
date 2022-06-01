@@ -65,12 +65,11 @@ public class CryptoService {
   }
 
   public boolean verifyUnblindedSignedBordereau(
-      String revealedBordereau, byte[] unblindedSignedBordereau, AsymmetricCipherKeyPair keyPair) {
+      byte[] revealedBordereau, byte[] unblindedSignedBordereau, AsymmetricCipherKeyPair keyPair) {
     PSSSigner signer = new PSSSigner(new RSAEngine(), new SHA256Digest(), 32);
     signer.init(false, keyPair.getPublic());
 
-    byte[] data = revealedBordereau.getBytes();
-    signer.update(data, 0, data.length);
+    signer.update(revealedBordereau, 0, revealedBordereau.length);
     return signer.verifySignature(unblindedSignedBordereau);
   }
 

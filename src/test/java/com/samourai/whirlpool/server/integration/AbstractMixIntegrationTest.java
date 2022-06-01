@@ -1,6 +1,7 @@
 package com.samourai.whirlpool.server.integration;
 
 import com.samourai.wallet.segwit.SegwitAddress;
+import com.samourai.whirlpool.client.utils.ClientUtils;
 import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.services.*;
@@ -62,11 +63,9 @@ public abstract class AbstractMixIntegrationTest extends AbstractIntegrationTest
       String username,
       int confirmations,
       boolean liquidity,
-      String receiveAddressOrNullForReuseInputAddr,
-      RSABlindingParameters blindingParams)
+      RSABlindingParameters blindingParams,
+      byte[] bordereau)
       throws Exception {
-    String mixId = mix.getMixId();
-
     int nbConfirming = mix.getNbConfirmingInputs();
 
     // REGISTER_INPUT
@@ -80,18 +79,23 @@ public abstract class AbstractMixIntegrationTest extends AbstractIntegrationTest
       return null;
     }
 
+    return confirmInput(mix, username, blindingParams, bordereau);
+  }
+
+  public byte[] confirmInput(
+      Mix mix, String username, RSABlindingParameters blindingParams, byte[] bordereau)
+      throws Exception {
     // blind bordereau
-    if (receiveAddressOrNullForReuseInputAddr == null) {
-      // reuse inputAddress
-      receiveAddressOrNullForReuseInputAddr = txOutPoint.getToAddress();
-    }
     if (blindingParams == null) {
       blindingParams = computeBlindingParams(mix);
     }
-    byte[] blindedBordereau =
-        clientCryptoService.blind(receiveAddressOrNullForReuseInputAddr, blindingParams);
+    if (bordereau == null) {
+      bordereau = ClientUtils.generateBordereau();
+    }
+    byte[] blindedBordereau = clientCryptoService.blind(bordereau, blindingParams);
 
     // CONFIRM_INPUT
+    String mixId = mix.getMixId();
     confirmInputService.confirmInputOrQueuePool(
         mixId, username, blindedBordereau, "userHash" + username);
 

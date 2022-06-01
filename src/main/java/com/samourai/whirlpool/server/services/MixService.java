@@ -312,17 +312,36 @@ public class MixService {
   public synchronized void registerOutputFailure(String inputsHash, String receiveAddress)
       throws Exception {
     Mix mix = getMixByInputsHash(inputsHash, MixStatus.REGISTER_OUTPUT);
-    mix.registerOutputInvalid(receiveAddress);
+    mix.setLastReceiveAddressesRejected(receiveAddress);
     log.info("[" + mix.getMixId() + "] registered output failure: " + receiveAddress);
   }
 
   public synchronized Mix registerOutput(
-      String inputsHash, byte[] unblindedSignedBordereau, String receiveAddress) throws Exception {
+      String inputsHash, byte[] unblindedSignedBordereau, String receiveAddress, byte[] bordereau)
+      throws Exception {
     Mix mix = getMixByInputsHash(inputsHash, MixStatus.REGISTER_OUTPUT);
+
+    // verify bordereau not already registered
+    if (bordereau == null) {
+      throw new IllegalInputException(ServerErrorCode.INVALID_ARGUMENT, "Invalid bordereau");
+    }
+    if (mix.hasBordereau(bordereau)) {
+      throw new IllegalInputException(
+          ServerErrorCode.INPUT_ALREADY_REGISTERED, "Bordereau already registered");
+    }
+
+    // verify receiveAddress not already registered
+    if (StringUtils.isEmpty(receiveAddress)) {
+      throw new IllegalInputException(ServerErrorCode.INVALID_ARGUMENT, "Invalid receiveAddress");
+    }
+    if (mix.hasReceiveAddress(receiveAddress)) {
+      throw new IllegalInputException(
+          ServerErrorCode.INPUT_ALREADY_REGISTERED, "receiveAddress already registered");
+    }
 
     // verify unblindedSignedBordereau
     if (!cryptoService.verifyUnblindedSignedBordereau(
-        receiveAddress, unblindedSignedBordereau, mix.getKeyPair())) {
+        bordereau, unblindedSignedBordereau, mix.getKeyPair())) {
       throw new IllegalInputException(
           ServerErrorCode.INVALID_ARGUMENT, "Invalid unblindedSignedBordereau");
     }
@@ -334,7 +353,7 @@ public class MixService {
     }
 
     log.info("[" + mix.getMixId() + "] registered output: " + receiveAddress);
-    mix.registerOutput(receiveAddress);
+    mix.registerOutput(receiveAddress, bordereau);
 
     if (isRegisterOutputReady(mix)) {
       String mixId = mix.getMixId();
@@ -808,7 +827,7 @@ public class MixService {
 
     for (Mix mix : getCurrentMixs()) {
       if (!MixStatus.FAIL.equals(mix.getMixStatus())) {
-        String registerOutputRejected = mix.getRegisterOutputRejected();
+        String lastReceiveAddressRejected = mix.getLastReceiveAddressesRejected();
 
         Collection<ConfirmedInput> confirmedInputsToBlame = mix.onDisconnect(username);
         if (!confirmedInputsToBlame.isEmpty()) {
@@ -817,9 +836,10 @@ public class MixService {
                 // blame
                 BlameReason blameReason = BlameReason.DISCONNECT;
                 Map<String, String> detailsParam = null;
-                if (registerOutputRejected != null) {
-                  blameReason = BlameReason.REJECTED_OUTPUT;
-                  detailsParam = ImmutableMap.of("receiveAddress", registerOutputRejected);
+                if (lastReceiveAddressRejected != null) {
+                  // we can't be sure that rejected output is related to disconnected input
+                  // blameReason = BlameReason.REJECTED_OUTPUT;
+                  detailsParam = ImmutableMap.of("receiveAddress", lastReceiveAddressRejected);
                 }
                 blameService.blame(confirmedInput.getRegisteredInput(), blameReason, mix);
 
@@ -837,9 +857,9 @@ public class MixService {
           // restart mix
           String failInfo = computeOutpointKeysToBlame(confirmedInputsToBlame);
           FailReason failReason = FailReason.DISCONNECT;
-          if (registerOutputRejected != null) {
-            failReason = FailReason.REJECTED_OUTPUT;
-            failInfo += " " + registerOutputRejected;
+          if (lastReceiveAddressRejected != null) {
+            // failReason = FailReason.REJECTED_OUTPUT;
+            failInfo += " " + lastReceiveAddressRejected;
           }
           goFail(mix, failReason, failInfo);
         }

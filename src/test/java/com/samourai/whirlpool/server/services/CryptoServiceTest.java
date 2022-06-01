@@ -2,6 +2,7 @@ package com.samourai.whirlpool.server.services;
 
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
+import com.samourai.whirlpool.client.utils.ClientUtils;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.server.integration.AbstractIntegrationTest;
 import java.lang.invoke.MethodHandles;
@@ -86,8 +87,9 @@ public class CryptoServiceTest extends AbstractIntegrationTest {
     RSAKeyParameters serverPubKey = (RSAKeyParameters) serverKeyPair.getPublic();
 
     // blind
+    byte[] bordereau = ClientUtils.generateBordereau();
     RSABlindingParameters blindingParams = clientCryptoService.computeBlindingParams(serverPubKey);
-    byte[] blindedBordereau = clientCryptoService.blind(receiveAddress, blindingParams);
+    byte[] blindedBordereau = clientCryptoService.blind(bordereau, blindingParams);
 
     // sign
     byte[] signedBlindedBordereau =
@@ -100,7 +102,7 @@ public class CryptoServiceTest extends AbstractIntegrationTest {
     // verify
     Assertions.assertTrue(
         cryptoService.verifyUnblindedSignedBordereau(
-            receiveAddress, unblindedSignedBordereau, serverKeyPair));
+            bordereau, unblindedSignedBordereau, serverKeyPair));
   }
 
   @Test
@@ -110,8 +112,9 @@ public class CryptoServiceTest extends AbstractIntegrationTest {
     RSAKeyParameters serverPubKey = (RSAKeyParameters) serverKeyPair.getPublic();
 
     // blind
+    byte[] bordereau = ClientUtils.generateBordereau();
     RSABlindingParameters blindingParams = clientCryptoService.computeBlindingParams(serverPubKey);
-    byte[] blindedBordereau = clientCryptoService.blind(receiveAddress, blindingParams);
+    byte[] blindedBordereau = clientCryptoService.blind(bordereau, blindingParams);
 
     // sign
     byte[] signedBlindedBordereau =
@@ -122,10 +125,10 @@ public class CryptoServiceTest extends AbstractIntegrationTest {
         clientCryptoService.unblind(signedBlindedBordereau, blindingParams);
 
     // verify
-    String fakeReceiveAddress = "fakeReceiveAddress";
+    byte[] fakeBordereau = "fakeBordereau".getBytes();
     Assertions.assertFalse(
         cryptoService.verifyUnblindedSignedBordereau(
-            fakeReceiveAddress, unblindedSignedBordereau, serverKeyPair)); // reject
+            fakeBordereau, unblindedSignedBordereau, serverKeyPair)); // reject
   }
 
   @Test
@@ -136,8 +139,9 @@ public class CryptoServiceTest extends AbstractIntegrationTest {
     RSAKeyParameters serverPubKey = (RSAKeyParameters) serverKeyPair.getPublic();
 
     // blind
+    byte[] bordereau = ClientUtils.generateBordereau();
     RSABlindingParameters blindingParams = clientCryptoService.computeBlindingParams(serverPubKey);
-    byte[] blindedBordereau = clientCryptoService.blind(receiveAddress, blindingParams);
+    byte[] blindedBordereau = clientCryptoService.blind(bordereau, blindingParams);
 
     // sign
     byte[] signedBlindedBordereau =
@@ -153,7 +157,7 @@ public class CryptoServiceTest extends AbstractIntegrationTest {
     // verify
     Assertions.assertFalse(
         cryptoService.verifyUnblindedSignedBordereau(
-            receiveAddress, unblindedSignedBordereau, serverKeyPair)); // reject
+            bordereau, unblindedSignedBordereau, serverKeyPair)); // reject
   }
 
   @Test
@@ -163,10 +167,11 @@ public class CryptoServiceTest extends AbstractIntegrationTest {
     AsymmetricCipherKeyPair serverKeyPair = cryptoService.generateKeyPair();
 
     // blind
+    byte[] bordereau = ClientUtils.generateBordereau();
     RSAKeyParameters fakePubKey = (RSAKeyParameters) cryptoService.generateKeyPair().getPublic();
     RSABlindingParameters blindingParams =
         clientCryptoService.computeBlindingParams(fakePubKey); // blind from wrong pubKey
-    byte[] blindedBordereau = clientCryptoService.blind(receiveAddress, blindingParams);
+    byte[] blindedBordereau = clientCryptoService.blind(bordereau, blindingParams);
 
     // sign
     byte[] signedBlindedBordereau =
@@ -179,6 +184,6 @@ public class CryptoServiceTest extends AbstractIntegrationTest {
     // verify
     Assertions.assertFalse(
         cryptoService.verifyUnblindedSignedBordereau(
-            receiveAddress, unblindedSignedBordereau, serverKeyPair)); // reject
+            bordereau, unblindedSignedBordereau, serverKeyPair)); // reject
   }
 }

@@ -58,9 +58,14 @@ public class RegisterOutputController extends AbstractRestController {
     // register output
     byte[] unblindedSignedBordereau =
         WhirlpoolProtocol.decodeBytes(payload.unblindedSignedBordereau64);
+    byte[] bordereau = WhirlpoolProtocol.decodeBytes(payload.bordereau64);
+    if (bordereau == null) {
+      // clients < protocol V0.23.9
+      bordereau = payload.receiveAddress.getBytes();
+    }
     Mix mix =
         registerOutputService.registerOutput(
-            payload.inputsHash, unblindedSignedBordereau, payload.receiveAddress);
+            payload.inputsHash, unblindedSignedBordereau, payload.receiveAddress, bordereau);
 
     // log activity
     String poolId = mix.getPool().getPoolId();

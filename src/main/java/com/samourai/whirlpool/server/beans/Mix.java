@@ -38,8 +38,9 @@ public class Mix {
   private InputPool confirmingInputs;
   private Map<String, ConfirmedInput> inputsById;
 
+  private Set<byte[]> bordereaux;
   private Set<String> receiveAddresses;
-  private Set<String> receiveAddressesRejected;
+  private String lastReceiveAddressesRejected;
   private Map<String, String> revealedReceiveAddressesByUsername;
   private Map<String, Boolean> signed;
 
@@ -66,8 +67,9 @@ public class Mix {
     this.confirmingInputs = new InputPool();
     this.inputsById = new ConcurrentHashMap<>();
 
+    this.bordereaux = new HashSet<>();
     this.receiveAddresses = new HashSet<>();
-    this.receiveAddressesRejected = new HashSet<>();
+    this.lastReceiveAddressesRejected = null;
     this.revealedReceiveAddressesByUsername = new ConcurrentHashMap<>();
     this.signed = new ConcurrentHashMap<>();
 
@@ -268,19 +270,20 @@ public class Mix {
     return WhirlpoolProtocol.computeInputsHash(inputs);
   }
 
-  public synchronized void registerOutput(String receiveAddress) {
+  public synchronized void registerOutput(String receiveAddress, byte[] bordereau) {
     receiveAddresses.add(receiveAddress);
+    bordereaux.add(bordereau);
   }
 
-  public synchronized void registerOutputInvalid(String receiveAddress) {
-    receiveAddressesRejected.add(receiveAddress);
+  public void setLastReceiveAddressesRejected(String lastReceiveAddressesRejected) {
+    this.lastReceiveAddressesRejected = lastReceiveAddressesRejected;
   }
 
-  public String getRegisterOutputRejected() {
-    if (MixStatus.REGISTER_OUTPUT.equals(mixStatus) && !receiveAddressesRejected.isEmpty()) {
-      return receiveAddressesRejected.iterator().next();
+  public String getLastReceiveAddressesRejected() {
+    if (!MixStatus.REGISTER_OUTPUT.equals(mixStatus)) {
+      return null;
     }
-    return null;
+    return lastReceiveAddressesRejected;
   }
 
   public long getElapsedTime() {
@@ -290,6 +293,14 @@ public class Mix {
 
   public Set<String> getReceiveAddresses() {
     return receiveAddresses;
+  }
+
+  public boolean hasReceiveAddress(String receiveAddress) {
+    return receiveAddresses.contains(receiveAddress);
+  }
+
+  public boolean hasBordereau(byte[] bordereau) {
+    return bordereaux.contains(bordereau);
   }
 
   public boolean hasRevealedOutputUsername(String username) {

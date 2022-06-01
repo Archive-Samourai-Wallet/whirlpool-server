@@ -113,6 +113,7 @@ public class SigningServiceTest extends AbstractIntegrationTest {
         mix.getPool().computePremixBalanceMin(liquidity) + mix.getPool().getMinerFeeMix();
 
     // trick to simulate one first user registered
+    byte[] bordereau = ClientUtils.generateBordereau();
     String firstUsername = "firstUser";
     TxOutPoint firstTxOutPoint =
         createAndMockTxOutPoint(testUtils.generateSegwitAddress(), inputBalance, 10);
@@ -126,7 +127,7 @@ public class SigningServiceTest extends AbstractIntegrationTest {
                 "127.0.0.1",
                 null),
             "userHash1"));
-    mix.registerOutput(testUtils.generateSegwitAddress().getBech32AsString());
+    mix.registerOutput(testUtils.generateSegwitAddress().getBech32AsString(), bordereau);
 
     // prepare input
     ECKey ecKey = new ECKey();
@@ -210,11 +211,12 @@ public class SigningServiceTest extends AbstractIntegrationTest {
     waitMixLimitsService(mix);
 
     // confirm input
+    byte[] bordereau = ClientUtils.generateBordereau();
     RSAKeyParameters serverPublicKey = (RSAKeyParameters) mix.getKeyPair().getPublic();
     RSABlindingParameters blindingParams =
         clientCryptoService.computeBlindingParams(serverPublicKey);
     String receiveAddress = testUtils.generateSegwitAddress().getBech32AsString();
-    byte[] blindedBordereau = clientCryptoService.blind(receiveAddress, blindingParams);
+    byte[] blindedBordereau = clientCryptoService.blind(bordereau, blindingParams);
     byte[] signedBlindedBordereau =
         confirmInputService
             .confirmInputOrQueuePool(mixId, username, blindedBordereau, "userHash" + username)
@@ -224,7 +226,7 @@ public class SigningServiceTest extends AbstractIntegrationTest {
     byte[] unblindedSignedBordereau =
         clientCryptoService.unblind(signedBlindedBordereau, blindingParams);
     registerOutputService.registerOutput(
-        mix.computeInputsHash(), unblindedSignedBordereau, receiveAddress);
+        mix.computeInputsHash(), unblindedSignedBordereau, receiveAddress, bordereau);
 
     // signing
     Transaction txToSign = new Transaction(params, mix.getTx().bitcoinSerialize());
