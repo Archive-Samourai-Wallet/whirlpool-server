@@ -3,6 +3,7 @@ package com.samourai.whirlpool.server.services.rpc;
 import com.samourai.javaserver.utils.ServerUtils;
 import com.samourai.wallet.segwit.SegwitAddress;
 import com.samourai.wallet.segwit.bech32.Bech32UtilGeneric;
+import com.samourai.wallet.util.RandomUtil;
 import com.samourai.wallet.util.TxUtil;
 import com.samourai.whirlpool.server.beans.rpc.RpcTransaction;
 import com.samourai.whirlpool.server.services.CryptoService;
@@ -84,6 +85,11 @@ public class MockRpcClientServiceImpl implements RpcClientService {
   @Override
   public boolean isTxOutUnspent(String txid, long index) {
     return !mockSpentOutputs.containsKey(txid + ":" + index);
+  }
+
+  @Override
+  public int getBlockHeight() {
+    return RandomUtil.random(999999, 999999999);
   }
 
   public void mock(String txid, String rawTxHex, int confirmations) {

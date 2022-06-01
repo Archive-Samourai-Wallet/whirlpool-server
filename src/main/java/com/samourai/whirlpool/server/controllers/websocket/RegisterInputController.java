@@ -8,6 +8,9 @@ import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.exceptions.AlreadyRegisteredInputException;
+import com.samourai.whirlpool.server.exceptions.IllegalInputException;
+import com.samourai.whirlpool.server.exceptions.ServerErrorCode;
+import com.samourai.whirlpool.server.services.BlockchainDataService;
 import com.samourai.whirlpool.server.services.ExportService;
 import com.samourai.whirlpool.server.services.RegisterInputService;
 import com.samourai.whirlpool.server.services.WSMessageService;
@@ -30,15 +33,18 @@ public class RegisterInputController extends AbstractWebSocketController {
 
   private RegisterInputService registerInputService;
   private WhirlpoolServerConfig serverConfig;
+  private BlockchainDataService blockchainDataService;
 
   @Autowired
   public RegisterInputController(
       WSMessageService WSMessageService,
       ExportService exportService,
       RegisterInputService registerInputService,
+      BlockchainDataService blockchainDataService,
       WhirlpoolServerConfig serverConfig) {
     super(WSMessageService, exportService);
     this.registerInputService = registerInputService;
+    this.blockchainDataService = blockchainDataService;
     this.serverConfig = serverConfig;
   }
 
@@ -69,6 +75,14 @@ public class RegisterInputController extends AbstractWebSocketController {
 
     // failMode
     serverConfig.checkFailMode(FailMode.REGISTER_INPUT);
+
+    // check blockHeight
+    if (payload.blockHeight > 0) { // check disabled for protocol < 0.23.9
+      if (!blockchainDataService.checkBlockHeight(payload.blockHeight)) {
+        throw new IllegalInputException(
+            ServerErrorCode.INVALID_BLOCK_HEIGHT, "invalid blockHeight");
+      }
+    }
 
     // register input in pool
     try {

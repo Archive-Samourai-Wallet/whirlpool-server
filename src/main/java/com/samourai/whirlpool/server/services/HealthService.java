@@ -2,6 +2,7 @@ package com.samourai.whirlpool.server.services;
 
 import com.samourai.javaserver.utils.ServerUtils;
 import com.samourai.stomp.client.IStompClientService;
+import com.samourai.wallet.api.backend.beans.WalletResponse;
 import com.samourai.whirlpool.cli.config.CliConfig;
 import com.samourai.whirlpool.cli.services.CliTorClientService;
 import com.samourai.whirlpool.cli.services.JavaHttpClientService;
@@ -13,6 +14,7 @@ import com.samourai.whirlpool.client.mix.listener.MixFailReason;
 import com.samourai.whirlpool.client.mix.listener.MixStep;
 import com.samourai.whirlpool.client.wallet.beans.IndexRange;
 import com.samourai.whirlpool.client.wallet.beans.WhirlpoolServer;
+import com.samourai.whirlpool.client.wallet.data.chain.ChainSupplier;
 import com.samourai.whirlpool.client.whirlpool.ServerApi;
 import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientConfig;
 import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientImpl;
@@ -38,12 +40,16 @@ public class HealthService {
   private SimpUserRegistry simpUserRegistry;
   private String lastError;
   private WhirlpoolClientConfig whirlpoolClientConfig;
+  private BlockchainDataService blockchainDataService;
 
   @Autowired
   public HealthService(
-      WhirlpoolServerConfig whirlpoolServerConfig, SimpUserRegistry simpUserRegistry) {
+      WhirlpoolServerConfig whirlpoolServerConfig,
+      SimpUserRegistry simpUserRegistry,
+      BlockchainDataService blockchainDataService) {
     this.whirlpoolServerConfig = whirlpoolServerConfig;
     this.simpUserRegistry = simpUserRegistry;
+    this.blockchainDataService = blockchainDataService;
     this.lastError = null;
     this.whirlpoolClientConfig = null;
   }
@@ -151,9 +157,20 @@ public class HealthService {
             return null;
           }
         };
+    ChainSupplier chainSupplier =
+        () -> {
+          WalletResponse.InfoBlock infoBlock = new WalletResponse.InfoBlock();
+          infoBlock.height = blockchainDataService.getBlockHeight();
+          return infoBlock;
+        };
     MixParams mixParams =
         new MixParams(
-            poolConfig.getId(), poolConfig.getDenomination(), null, premixHandler, postmixHandler);
+            poolConfig.getId(),
+            poolConfig.getDenomination(),
+            null,
+            premixHandler,
+            postmixHandler,
+            chainSupplier);
     return mixParams;
   }
 

@@ -513,6 +513,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
     @NotEmpty private String user;
     private String password;
     private boolean mockTxBroadcast;
+    private int blockHeightMaxSpread;
 
     public String getProtocol() {
       return protocol;
@@ -560,6 +561,14 @@ public class WhirlpoolServerConfig extends ServerConfig {
 
     public void setMockTxBroadcast(boolean mockTxBroadcast) {
       this.mockTxBroadcast = mockTxBroadcast;
+    }
+
+    public int getBlockHeightMaxSpread() {
+      return blockHeightMaxSpread;
+    }
+
+    public void setBlockHeightMaxSpread(int blockHeightMaxSpread) {
+      this.blockHeightMaxSpread = blockHeightMaxSpread;
     }
   }
 

@@ -128,6 +128,15 @@ public class JSONRpcClientServiceImpl implements RpcClientService {
     }
   }
 
+  @Override
+  public int getBlockHeight() throws Exception {
+    try {
+      return rpcClient.getBlockCount();
+    } catch (RuntimeException e) {
+      throw new Exception(e);
+    }
+  }
+
   private String getRpcChain() {
     return whirlpoolServerConfig.isTestnet() ? CHAIN_TESTNET : CHAIN_MAINNET;
   }

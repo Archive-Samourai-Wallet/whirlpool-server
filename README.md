@@ -15,9 +15,13 @@ server.rpc-client.host = CONFIGURE-ME
 server.rpc-client.port = CONFIGURE-ME
 server.rpc-client.user = CONFIGURE-ME
 server.rpc-client.password = CONFIGURE-ME
+
+server.rpc-client.block-height-max-spread = 10
 ```
 The bitcoin node should be running on the same network (main or test).<br/>
-The node will be used to verify UTXO and broadcast tx.
+The node will be used to verify UTXO and broadcast tx.<br/>
+<br/>
+Server will reject clients announcing more than *block-height-max-spread* block-height difference.
 
 ### Pool: UTXO amounts
 ```

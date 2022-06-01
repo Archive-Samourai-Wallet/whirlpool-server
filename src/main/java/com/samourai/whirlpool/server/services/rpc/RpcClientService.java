@@ -12,4 +12,6 @@ public interface RpcClientService {
   boolean isTxOutUnspent(String txid, long index);
 
   void broadcastTransaction(Transaction tx) throws BroadcastException;
+
+  int getBlockHeight() throws Exception;
 }
