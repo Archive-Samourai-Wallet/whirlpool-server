@@ -12,6 +12,7 @@ import com.samourai.whirlpool.client.WhirlpoolClient;
 import com.samourai.whirlpool.client.mix.MixParams;
 import com.samourai.whirlpool.client.mix.handler.*;
 import com.samourai.whirlpool.client.wallet.beans.IndexRange;
+import com.samourai.whirlpool.client.wallet.data.chain.ChainSupplier;
 import com.samourai.whirlpool.client.whirlpool.ServerApi;
 import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientConfig;
 import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientImpl;
@@ -184,10 +185,16 @@ public class AssertMultiClientManager extends MultiClientManager {
     IPremixHandler premixHandler =
         new PremixHandler(utxo, ecKey, "userPreHash" + input.getHash() + input.getIndex());
     IPostmixHandler postmixHandler = new Bip84PostmixHandler(params, bip84Wallet, IndexRange.EVEN);
+    ChainSupplier chainSupplier = blockchainDataService.computeChainSupplier();
 
     MixParams mixParams =
         new MixParams(
-            pool.getPoolId(), pool.getDenomination(), null, premixHandler, postmixHandler);
+            pool.getPoolId(),
+            pool.getDenomination(),
+            null,
+            premixHandler,
+            postmixHandler,
+            chainSupplier);
 
     whirlpoolClient.whirlpool(mixParams, listener);
   }

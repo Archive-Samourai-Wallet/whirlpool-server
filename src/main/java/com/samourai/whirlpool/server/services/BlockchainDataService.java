@@ -1,7 +1,9 @@
 package com.samourai.whirlpool.server.services;
 
+import com.samourai.wallet.api.backend.beans.WalletResponse;
 import com.samourai.wallet.segwit.bech32.Bech32UtilGeneric;
 import com.samourai.wallet.util.AsyncUtil;
+import com.samourai.whirlpool.client.wallet.data.chain.ChainSupplier;
 import com.samourai.whirlpool.server.beans.rpc.RpcTransaction;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
@@ -65,13 +67,23 @@ public class BlockchainDataService {
     long spread = Math.abs(testBlockHeight - blockHeight);
     if (spread > serverConfig.getRpcClient().getBlockHeightMaxSpread()) {
       log.warn(
-          "checkBlockHeight: spread="
+          "blockHeight rejected: spread="
               + spread
-              + ": blockHeight="
+              + ", blockHeight="
               + blockHeight
               + ", testBlockHeight="
               + testBlockHeight);
       return false;
+    } else if (spread > 1) {
+      if (log.isDebugEnabled()) {
+        log.debug(
+            "blockHeight tolerance: spread="
+                + spread
+                + ", blockHeight="
+                + blockHeight
+                + ", testBlockHeight="
+                + testBlockHeight);
+      }
     }
     return true;
   }
@@ -122,5 +134,15 @@ public class BlockchainDataService {
 
   public Integer getBlockHeight() {
     return blockHeight;
+  }
+
+  public ChainSupplier computeChainSupplier() {
+    ChainSupplier chainSupplier =
+        () -> {
+          WalletResponse.InfoBlock infoBlock = new WalletResponse.InfoBlock();
+          infoBlock.height = getBlockHeight();
+          return infoBlock;
+        };
+    return chainSupplier;
   }
 }

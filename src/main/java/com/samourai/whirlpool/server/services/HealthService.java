@@ -2,7 +2,6 @@ package com.samourai.whirlpool.server.services;
 
 import com.samourai.javaserver.utils.ServerUtils;
 import com.samourai.stomp.client.IStompClientService;
-import com.samourai.wallet.api.backend.beans.WalletResponse;
 import com.samourai.whirlpool.cli.config.CliConfig;
 import com.samourai.whirlpool.cli.services.CliTorClientService;
 import com.samourai.whirlpool.cli.services.JavaHttpClientService;
@@ -157,12 +156,7 @@ public class HealthService {
             return null;
           }
         };
-    ChainSupplier chainSupplier =
-        () -> {
-          WalletResponse.InfoBlock infoBlock = new WalletResponse.InfoBlock();
-          infoBlock.height = blockchainDataService.getBlockHeight();
-          return infoBlock;
-        };
+    ChainSupplier chainSupplier = blockchainDataService.computeChainSupplier();
     MixParams mixParams =
         new MixParams(
             poolConfig.getId(),
