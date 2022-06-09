@@ -60,7 +60,8 @@ public class CryptoService {
   public byte[] signBlindedOutput(byte[] blindedOutput, AsymmetricCipherKeyPair keyPair) {
     // sign blinded output
     RSAEngine engine = new RSAEngine();
-    engine.init(false, keyPair.getPrivate());
+    // using 'true' always generates 256 bytes signature (otherwise it's sometimes 255 bytes)
+    engine.init(true, keyPair.getPrivate());
     return engine.processBlock(blindedOutput, 0, blindedOutput.length);
   }
 

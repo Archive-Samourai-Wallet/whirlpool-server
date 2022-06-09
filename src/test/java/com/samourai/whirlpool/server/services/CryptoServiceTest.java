@@ -186,4 +186,35 @@ public class CryptoServiceTest extends AbstractIntegrationTest {
         cryptoService.verifyUnblindedSignedBordereau(
             bordereau, unblindedSignedBordereau, serverKeyPair)); // reject
   }
+
+  @Test
+  public void testBlinding() throws Exception {
+    AsymmetricCipherKeyPair serverKeyPair = cryptoService.generateKeyPair();
+    RSAKeyParameters serverPublicKey = (RSAKeyParameters) serverKeyPair.getPublic();
+    RSABlindingParameters clientBlindingParams =
+        clientCryptoService.computeBlindingParams(serverPublicKey);
+
+    // blind bordereau
+    byte[] bordereau = ClientUtils.generateBordereau();
+
+    // make sure signedBlindedBordereau is always 256 bytes
+    for (int i = 0; i < 600; i++) {
+      byte[] blindedBordereau = clientCryptoService.blind(bordereau, clientBlindingParams);
+
+      byte[] signedBlindedBordereau =
+          cryptoService.signBlindedOutput(blindedBordereau, serverKeyPair);
+
+      byte[] unblindedSignedBordereau =
+          clientCryptoService.unblind(signedBlindedBordereau, clientBlindingParams);
+      if (!cryptoService.verifyUnblindedSignedBordereau(
+          bordereau, unblindedSignedBordereau, serverKeyPair)) {
+        Assertions.assertTrue(false);
+      }
+      Assertions.assertEquals(256, signedBlindedBordereau.length);
+
+      if (i % 100 == 0) {
+        log.debug("testBlinding #" + i);
+      }
+    }
+  }
 }
