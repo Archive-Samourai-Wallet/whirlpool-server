@@ -121,8 +121,13 @@ public class Tx0ValidationService {
     }
 
     // validate tx0
-    Tx0Validation tx0Validation = validate(tx, tx0Time, pool.getPoolFee());
-    return tx0Validation;
+    try {
+      Tx0Validation tx0Validation = validate(tx, tx0Time, pool.getPoolFee());
+      return tx0Validation;
+    } catch (Exception e) {
+      log.error("TX0 validation failed: " + tx.toString());
+      throw e;
+    }
   }
 
   protected Tx0Validation validate(Transaction tx0, long tx0Time, PoolFee poolFee)

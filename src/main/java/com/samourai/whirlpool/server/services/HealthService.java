@@ -107,7 +107,7 @@ public class HealthService {
 
   private WhirlpoolClientConfig computeWhirlpoolClientConfig() {
     if (whirlpoolClientConfig == null) {
-      CliConfig cliConfig = new CliConfig();
+      CliConfig cliConfig = new CliConfig(null, null);
       cliConfig.setServer(
           whirlpoolServerConfig.isTestnet() ? WhirlpoolServer.TESTNET : WhirlpoolServer.MAINNET);
 

@@ -126,7 +126,7 @@ public abstract class AbstractIntegrationTest {
         MockRpcClientServiceImpl.class.isAssignableFrom(rpcClientService.getClass()));
     this.params = cryptoService.getNetworkParameters();
 
-    cliConfig = new CliConfig();
+    cliConfig = new CliConfig(null, null);
 
     messageSignUtil = MessageSignUtilGeneric.getInstance();
 

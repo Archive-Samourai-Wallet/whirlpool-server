@@ -13,7 +13,7 @@
 		<dependency>
 			<groupId>io.samourai.code.whirlpool</groupId>
 			<artifactId>java-server</artifactId>
-			<version>1.0.7-SNAPSHOT</version>
+			<version>1.0.7</version>
 		</dependency>
         <dependency>
             <groupId>io.samourai.code.whirlpool</groupId>
@@ -48,7 +48,7 @@
 		<dependency>
 			<groupId>io.samourai.code.wallet</groupId>
 			<artifactId>extlibj</artifactId>
-			<version>0.0.32-SNAPSHOT</version>
+			<version>0.0.31-1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
