@@ -3,6 +3,7 @@ package com.samourai.whirlpool.server.config.security;
 import com.samourai.javaserver.config.ServerServicesConfig;
 import com.samourai.javawsserver.config.JWSSConfig;
 import com.samourai.whirlpool.protocol.WhirlpoolEndpoint;
+import com.samourai.whirlpool.server.controllers.rest.DexConfigController;
 import com.samourai.whirlpool.server.controllers.rest.SystemController;
 import com.samourai.whirlpool.server.controllers.web.*;
 import org.apache.commons.lang3.ArrayUtils;
@@ -43,7 +44,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         WhirlpoolEndpoint.REST_TX0_DATA_V1,
         WhirlpoolEndpoint.REST_TX0_PUSH,
         WhirlpoolEndpoint.REST_PREFIX + "tx0Notify", // @deprecated
-        SystemController.ENDPOINT_HEALTH
+        SystemController.ENDPOINT_HEALTH,
+        DexConfigController.ENDPOINT_DEXCONFIG
       };
 
   private JWSSConfig config;
