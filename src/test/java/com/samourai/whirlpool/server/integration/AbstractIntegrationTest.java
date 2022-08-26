@@ -8,6 +8,7 @@ import com.samourai.wallet.api.backend.BackendServer;
 import com.samourai.wallet.bip47.rpc.BIP47Account;
 import com.samourai.wallet.bip47.rpc.BIP47Wallet;
 import com.samourai.wallet.bip47.rpc.java.Bip47UtilJava;
+import com.samourai.wallet.bip47.rpc.java.SecretPointFactoryJava;
 import com.samourai.wallet.hd.HD_Wallet;
 import com.samourai.wallet.hd.HD_WalletFactoryGeneric;
 import com.samourai.wallet.segwit.SegwitAddress;
@@ -300,7 +301,14 @@ public abstract class AbstractIntegrationTest {
         };
     WhirlpoolWalletConfig config =
         new WhirlpoolWalletConfig(
-            dataSourceFactory, httpClientService, null, null, null, TestNet3Params.get(), false);
+            dataSourceFactory,
+            SecretPointFactoryJava.getInstance(),
+            httpClientService,
+            null,
+            null,
+            null,
+            TestNet3Params.get(),
+            false);
     return config;
   }
 

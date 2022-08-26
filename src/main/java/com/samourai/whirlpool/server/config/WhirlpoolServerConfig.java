@@ -44,6 +44,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
   private PartnerConfig[] partners;
   private PoolConfig[] pools;
   private long requestTimeout;
+  private SecretWalletConfig dexConfigWallet;
 
   public SamouraiFeeConfig getSamouraiFees() {
     return samouraiFees;
@@ -193,6 +194,14 @@ public class WhirlpoolServerConfig extends ServerConfig {
 
   public void setRequestTimeout(long requestTimeout) {
     this.requestTimeout = requestTimeout;
+  }
+
+  public SecretWalletConfig getDexConfigWallet() {
+    return dexConfigWallet;
+  }
+
+  public void setDexConfigWallet(SecretWalletConfig dexConfigWallet) {
+    this.dexConfigWallet = dexConfigWallet;
   }
 
   public static class RegisterInputConfig {
