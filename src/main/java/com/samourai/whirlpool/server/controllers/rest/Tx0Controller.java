@@ -1,6 +1,7 @@
 package com.samourai.whirlpool.server.controllers.rest;
 
 import com.google.common.collect.ImmutableMap;
+import com.samourai.wallet.util.MessageSignUtilGeneric;
 import com.samourai.whirlpool.protocol.WhirlpoolEndpoint;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.protocol.rest.Tx0DataRequestV2;
@@ -41,6 +42,7 @@ public class Tx0Controller extends AbstractRestController {
   private ExportService exportService;
   private WhirlpoolServerConfig serverConfig;
   private XManagerClient xManagerClient;
+  private MessageSignUtilGeneric messageSignUtil = MessageSignUtilGeneric.getInstance();
 
   @Autowired
   public Tx0Controller(
@@ -207,6 +209,7 @@ public class Tx0Controller extends AbstractRestController {
               + opReturnV0);
     }
     String feePaymentCode = tx0ValidationService.getFeePaymentCode(opReturnV0);
+    String feeOutputSignature = computeFeeOutputSignature(feeAddress, feeValue);
     return new Tx0DataResponseV2.Tx0Data(
         poolId,
         feePaymentCode,
@@ -215,7 +218,15 @@ public class Tx0Controller extends AbstractRestController {
         feeDiscountPercent,
         message,
         feePayload64,
-        feeAddress);
+        feeAddress,
+        feeOutputSignature);
+  }
+
+  private String computeFeeOutputSignature(String feeAddress, long feeValue) throws Exception {
+    String feeOutputSerialized =
+        Utils.serializeTransactionOutput(feeAddress, feeValue, serverConfig.getNetworkParameters());
+    return Utils.sign(
+        serverConfig.getSigningWallet(), serverConfig.getNetworkParameters(), feeOutputSerialized);
   }
 
   // OpReturnImplV0 as Tx0DataResponseV1

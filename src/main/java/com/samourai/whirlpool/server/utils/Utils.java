@@ -1,10 +1,16 @@
 package com.samourai.whirlpool.server.utils;
 
 import com.samourai.javaserver.utils.ServerUtils;
+import com.samourai.wallet.bipFormat.BIP_FORMAT;
+import com.samourai.wallet.hd.HD_Address;
+import com.samourai.wallet.hd.HD_Wallet;
+import com.samourai.wallet.hd.HD_WalletFactoryGeneric;
 import com.samourai.wallet.segwit.bech32.Bech32UtilGeneric;
+import com.samourai.wallet.util.MessageSignUtilGeneric;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
+import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.services.rpc.JSONRpcClientServiceImpl;
 import com.samourai.whirlpool.server.services.rpc.RpcClientService;
 import java.lang.invoke.MethodHandles;
@@ -18,6 +24,7 @@ import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.TransactionWitness;
 import org.bitcoinj.script.Script;
+import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -150,5 +157,33 @@ public class Utils {
     // comes from previous mix => ban UTXO
     String utxo = Utils.computeInputId(utxoHash, utxoIndex);
     return utxo;
+  }
+
+  public static String serializeTransactionOutput(
+      String address, long value, NetworkParameters params) throws Exception {
+    TransactionOutput txOut = BIP_FORMAT.PROVIDER.getTransactionOutput(address, value, params);
+    return Hex.toHexString(txOut.bitcoinSerialize());
+  }
+
+  private static HD_Address computeSigningAddress(
+      WhirlpoolServerConfig.SecretWalletConfig secretWalletConfig, NetworkParameters params)
+      throws Exception {
+    HD_Wallet bip44wallet =
+        HD_WalletFactoryGeneric.getInstance()
+            .restoreWallet(
+                secretWalletConfig.getWords(), secretWalletConfig.getPassphrase(), params);
+    return bip44wallet.getAddressAt(0, 0, 0);
+  }
+
+  public static String sign(
+      WhirlpoolServerConfig.SecretWalletConfig secretWalletConfig,
+      NetworkParameters params,
+      String payload)
+      throws Exception {
+    HD_Address signingAddress = computeSigningAddress(secretWalletConfig, params);
+    if (log.isDebugEnabled()) {
+      log.debug("signing address: " + signingAddress.getAddressString());
+    }
+    return MessageSignUtilGeneric.getInstance().signMessage(signingAddress.getECKey(), payload);
   }
 }

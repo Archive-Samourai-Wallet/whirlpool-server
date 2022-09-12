@@ -1,136 +1,144 @@
 package com.samourai.dex.config;
 // TODO temporary waiting dexconfig merge
 public class SamouraiConfig {
-    // extlibj: BackendServer
-    private String backendServerMainnetClear = "https://api.samouraiwallet.com/v2";
-    private String backendServerMainnetOnion = "http://d2oagweysnavqgcfsfawqwql2rwxend7xxpriq676lzsmtfwbt75qbqd.onion/v2";
-    private String backendServerTestnetClear = "https://api.samouraiwallet.com/test/v2";
-    private String backendServerTestnetOnion = "http://d2oagweysnavqgcfsfawqwql2rwxend7xxpriq676lzsmtfwbt75qbqd.onion/test/v2";
+  // extlibj: BackendServer
+  private String backendServerMainnetClear = "https://api.samouraiwallet.com/v2";
+  private String backendServerMainnetOnion =
+      "http://d2oagweysnavqgcfsfawqwql2rwxend7xxpriq676lzsmtfwbt75qbqd.onion/v2";
+  private String backendServerTestnetClear = "https://api.samouraiwallet.com/test/v2";
+  private String backendServerTestnetOnion =
+      "http://d2oagweysnavqgcfsfawqwql2rwxend7xxpriq676lzsmtfwbt75qbqd.onion/test/v2";
 
-    // extlibj: SorobanServer
-    private String sorobanServerTestnetClear = "https://soroban.samouraiwallet.com/test";
-    private String sorobanServerTestnetOnion = "http://sorob4sg7yiopktgz4eom7hl5mcodr6quvhmdpljl5qqhmt6po7oebid.onion/test";
-    private String sorobanServerMainnetClear = "https://soroban.samouraiwallet.com";
-    private String sorobanServerMainnetOnion = "http://sorob4sg7yiopktgz4eom7hl5mcodr6quvhmdpljl5qqhmt6po7oebid.onion";
+  // extlibj: SorobanServer
+  private String sorobanServerTestnetClear = "https://soroban.samouraiwallet.com/test";
+  private String sorobanServerTestnetOnion =
+      "http://sorob4sg7yiopktgz4eom7hl5mcodr6quvhmdpljl5qqhmt6po7oebid.onion/test";
+  private String sorobanServerMainnetClear = "https://soroban.samouraiwallet.com";
+  private String sorobanServerMainnetOnion =
+      "http://sorob4sg7yiopktgz4eom7hl5mcodr6quvhmdpljl5qqhmt6po7oebid.onion";
 
-    // whrilpool-client: WhrilpoolServer
-    private String whirlpoolServerTestnetClear = "https://pool.whirl.mx:8081";
-    private String whirlpoolServerTestnetOnion = "http://y5qvjlxvbohc73slq4j4qldoegyukvpp74mbsrjosnrsgg7w5fon6nyd.onion";
-    private String whirlpoolServerMainnetClear = "https://pool.whirl.mx:8080";
-    private String whirlpoolServerMainnetOnion = "http://udkmfc5j6zvv3ysavbrwzhwji4hpyfe3apqa6yst7c7l32mygf65g4ad.onion";
-    private String whirlpoolServerIntegrationClear = "https://pool.whirl.mx:8082";
-    private String whirlpoolServerIntegrationOnion = "http://yuvewbfkftftcbzn54lfx3i5s4jxr4sfgpsbkvcflgzcvumyxrkopmyd.onion";
+  // whrilpool-client: WhrilpoolServer
+  private String whirlpoolServerTestnetClear = "https://pool.whirl.mx:8081";
+  private String whirlpoolServerTestnetOnion =
+      "http://y5qvjlxvbohc73slq4j4qldoegyukvpp74mbsrjosnrsgg7w5fon6nyd.onion";
+  private String whirlpoolServerMainnetClear = "https://pool.whirl.mx:8080";
+  private String whirlpoolServerMainnetOnion =
+      "http://udkmfc5j6zvv3ysavbrwzhwji4hpyfe3apqa6yst7c7l32mygf65g4ad.onion";
+  private String whirlpoolServerIntegrationClear = "https://pool.whirl.mx:8082";
+  private String whirlpoolServerIntegrationOnion =
+      "http://yuvewbfkftftcbzn54lfx3i5s4jxr4sfgpsbkvcflgzcvumyxrkopmyd.onion";
 
-    public String getWhirlpoolServerIntegrationClear() {
-        return whirlpoolServerIntegrationClear;
-    }
+  public String getWhirlpoolServerIntegrationClear() {
+    return whirlpoolServerIntegrationClear;
+  }
 
-    public void setWhirlpoolServerIntegrationClear(String whirlpoolServerIntegrationClear) {
-        this.whirlpoolServerIntegrationClear = whirlpoolServerIntegrationClear;
-    }
+  public void setWhirlpoolServerIntegrationClear(String whirlpoolServerIntegrationClear) {
+    this.whirlpoolServerIntegrationClear = whirlpoolServerIntegrationClear;
+  }
 
-    public String getWhirlpoolServerIntegrationOnion() {
-        return whirlpoolServerIntegrationOnion;
-    }
+  public String getWhirlpoolServerIntegrationOnion() {
+    return whirlpoolServerIntegrationOnion;
+  }
 
-    public void setWhirlpoolServerIntegrationOnion(String whirlpoolServerIntegrationOnion) {
-        this.whirlpoolServerIntegrationOnion = whirlpoolServerIntegrationOnion;
-    }
-    public String getWhirlpoolServerTestnetClear() {
-        return whirlpoolServerTestnetClear;
-    }
+  public void setWhirlpoolServerIntegrationOnion(String whirlpoolServerIntegrationOnion) {
+    this.whirlpoolServerIntegrationOnion = whirlpoolServerIntegrationOnion;
+  }
 
-    public void setWhirlpoolServerTestnetClear(String whirlpoolServerTestnetClear) {
-        this.whirlpoolServerTestnetClear = whirlpoolServerTestnetClear;
-    }
+  public String getWhirlpoolServerTestnetClear() {
+    return whirlpoolServerTestnetClear;
+  }
 
-    public String getWhirlpoolServerTestnetOnion() {
-        return whirlpoolServerTestnetOnion;
-    }
+  public void setWhirlpoolServerTestnetClear(String whirlpoolServerTestnetClear) {
+    this.whirlpoolServerTestnetClear = whirlpoolServerTestnetClear;
+  }
 
-    public void setWhirlpoolServerTestnetOnion(String whirlpoolServerTestnetOnion) {
-        this.whirlpoolServerTestnetOnion = whirlpoolServerTestnetOnion;
-    }
+  public String getWhirlpoolServerTestnetOnion() {
+    return whirlpoolServerTestnetOnion;
+  }
 
-    public String getWhirlpoolServerMainnetClear() {
-        return whirlpoolServerMainnetClear;
-    }
+  public void setWhirlpoolServerTestnetOnion(String whirlpoolServerTestnetOnion) {
+    this.whirlpoolServerTestnetOnion = whirlpoolServerTestnetOnion;
+  }
 
-    public void setWhirlpoolServerMainnetClear(String whirlpoolServerMainnetClear) {
-        this.whirlpoolServerMainnetClear = whirlpoolServerMainnetClear;
-    }
+  public String getWhirlpoolServerMainnetClear() {
+    return whirlpoolServerMainnetClear;
+  }
 
-    public String getWhirlpoolServerMainnetOnion() {
-        return whirlpoolServerMainnetOnion;
-    }
+  public void setWhirlpoolServerMainnetClear(String whirlpoolServerMainnetClear) {
+    this.whirlpoolServerMainnetClear = whirlpoolServerMainnetClear;
+  }
 
-    public void setWhirlpoolServerMainnetOnion(String whirlpoolServerMainnetOnion) {
-        this.whirlpoolServerMainnetOnion = whirlpoolServerMainnetOnion;
-    }
+  public String getWhirlpoolServerMainnetOnion() {
+    return whirlpoolServerMainnetOnion;
+  }
 
-    public SamouraiConfig() {
-    }
+  public void setWhirlpoolServerMainnetOnion(String whirlpoolServerMainnetOnion) {
+    this.whirlpoolServerMainnetOnion = whirlpoolServerMainnetOnion;
+  }
 
-    public String getBackendServerMainnetClear() {
-        return backendServerMainnetClear;
-    }
+  public SamouraiConfig() {}
 
-    public void setBackendServerMainnetClear(String backendServerMainnetClear) {
-        this.backendServerMainnetClear = backendServerMainnetClear;
-    }
+  public String getBackendServerMainnetClear() {
+    return backendServerMainnetClear;
+  }
 
-    public String getBackendServerMainnetOnion() {
-        return backendServerMainnetOnion;
-    }
+  public void setBackendServerMainnetClear(String backendServerMainnetClear) {
+    this.backendServerMainnetClear = backendServerMainnetClear;
+  }
 
-    public void setBackendServerMainnetOnion(String backendServerMainnetOnion) {
-        this.backendServerMainnetOnion = backendServerMainnetOnion;
-    }
+  public String getBackendServerMainnetOnion() {
+    return backendServerMainnetOnion;
+  }
 
-    public String getBackendServerTestnetClear() {
-        return backendServerTestnetClear;
-    }
+  public void setBackendServerMainnetOnion(String backendServerMainnetOnion) {
+    this.backendServerMainnetOnion = backendServerMainnetOnion;
+  }
 
-    public void setBackendServerTestnetClear(String backendServerTestnetClear) {
-        this.backendServerTestnetClear = backendServerTestnetClear;
-    }
+  public String getBackendServerTestnetClear() {
+    return backendServerTestnetClear;
+  }
 
-    public String getBackendServerTestnetOnion() {
-        return backendServerTestnetOnion;
-    }
+  public void setBackendServerTestnetClear(String backendServerTestnetClear) {
+    this.backendServerTestnetClear = backendServerTestnetClear;
+  }
 
-    public void setBackendServerTestnetOnion(String backendServerTestnetOnion) {
-        this.backendServerTestnetOnion = backendServerTestnetOnion;
-    }
-    public String getSorobanServerTestnetClear() {
-        return sorobanServerTestnetClear;
-    }
+  public String getBackendServerTestnetOnion() {
+    return backendServerTestnetOnion;
+  }
 
-    public void setSorobanServerTestnetClear(String sorobanServerTestnetClear) {
-        this.sorobanServerTestnetClear = sorobanServerTestnetClear;
-    }
+  public void setBackendServerTestnetOnion(String backendServerTestnetOnion) {
+    this.backendServerTestnetOnion = backendServerTestnetOnion;
+  }
 
-    public String getSorobanServerTestnetOnion() {
-        return sorobanServerTestnetOnion;
-    }
+  public String getSorobanServerTestnetClear() {
+    return sorobanServerTestnetClear;
+  }
 
-    public void setSorobanServerTestnetOnion(String sorobanServerTestnetOnion) {
-        this.sorobanServerTestnetOnion = sorobanServerTestnetOnion;
-    }
+  public void setSorobanServerTestnetClear(String sorobanServerTestnetClear) {
+    this.sorobanServerTestnetClear = sorobanServerTestnetClear;
+  }
 
-    public String getSorobanServerMainnetClear() {
-        return sorobanServerMainnetClear;
-    }
+  public String getSorobanServerTestnetOnion() {
+    return sorobanServerTestnetOnion;
+  }
 
-    public void setSorobanServerMainnetClear(String sorobanServerMainnetClear) {
-        this.sorobanServerMainnetClear = sorobanServerMainnetClear;
-    }
+  public void setSorobanServerTestnetOnion(String sorobanServerTestnetOnion) {
+    this.sorobanServerTestnetOnion = sorobanServerTestnetOnion;
+  }
 
-    public String getSorobanServerMainnetOnion() {
-        return sorobanServerMainnetOnion;
-    }
+  public String getSorobanServerMainnetClear() {
+    return sorobanServerMainnetClear;
+  }
 
-    public void setSorobanServerMainnetOnion(String sorobanServerMainnetOnion) {
-        this.sorobanServerMainnetOnion = sorobanServerMainnetOnion;
-    }
+  public void setSorobanServerMainnetClear(String sorobanServerMainnetClear) {
+    this.sorobanServerMainnetClear = sorobanServerMainnetClear;
+  }
+
+  public String getSorobanServerMainnetOnion() {
+    return sorobanServerMainnetOnion;
+  }
+
+  public void setSorobanServerMainnetOnion(String sorobanServerMainnetOnion) {
+    this.sorobanServerMainnetOnion = sorobanServerMainnetOnion;
+  }
 }
