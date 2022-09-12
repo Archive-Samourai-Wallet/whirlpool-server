@@ -15,8 +15,14 @@ public class ScodeService {
 
   private WhirlpoolServerConfig serverConfig;
 
+  private final WhirlpoolServerConfig.ScodeSamouraiFeeConfig SCODE_CASCADING;
+
   public ScodeService(WhirlpoolServerConfig serverConfig) throws Exception {
     this.serverConfig = serverConfig;
+    this.SCODE_CASCADING = new WhirlpoolServerConfig.ScodeSamouraiFeeConfig();
+    SCODE_CASCADING.setExpiration(null);
+    SCODE_CASCADING.setFeeValuePercent(0);
+    SCODE_CASCADING.setPayload((short) 22222);
   }
 
   protected WhirlpoolServerConfig.ScodeSamouraiFeeConfig getByPayload(
@@ -53,5 +59,9 @@ public class ScodeService {
       return null;
     }
     return scodeConfig;
+  }
+
+  public WhirlpoolServerConfig.ScodeSamouraiFeeConfig getScodeCascading() {
+    return SCODE_CASCADING;
   }
 }

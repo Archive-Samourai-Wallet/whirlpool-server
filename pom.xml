@@ -15,6 +15,11 @@
 			<artifactId>java-server</artifactId>
 			<version>1.0.7</version>
 		</dependency>
+		<dependency>
+			<groupId>io.samourai.code.whirlpool</groupId>
+			<artifactId>whirlpool-client</artifactId>
+			<version>58ce27b7</version> <!-- features/tx0-cascade-noosphere888-review -->
+		</dependency>
         <dependency>
             <groupId>io.samourai.code.whirlpool</groupId>
             <artifactId>whirlpool-client-cli</artifactId>
