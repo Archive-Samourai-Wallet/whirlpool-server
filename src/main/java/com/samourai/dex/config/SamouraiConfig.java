@@ -2,29 +2,29 @@ package com.samourai.dex.config;
 // TODO temporary waiting dexconfig merge
 public class SamouraiConfig {
   // extlibj: BackendServer
-  private String backendServerMainnetClear = "https://api.samouraiwallet.com/v2";
+  private String backendServerMainnetClear = "https://82.221.128.176/v2";
   private String backendServerMainnetOnion =
       "http://d2oagweysnavqgcfsfawqwql2rwxend7xxpriq676lzsmtfwbt75qbqd.onion/v2";
-  private String backendServerTestnetClear = "https://api.samouraiwallet.com/test/v2";
+  private String backendServerTestnetClear = "https://82.221.128.176/test/v2";
   private String backendServerTestnetOnion =
       "http://d2oagweysnavqgcfsfawqwql2rwxend7xxpriq676lzsmtfwbt75qbqd.onion/test/v2";
 
   // extlibj: SorobanServer
-  private String sorobanServerTestnetClear = "https://soroban.samouraiwallet.com/test";
+  private String sorobanServerTestnetClear = "https://82.221.128.176/test";
   private String sorobanServerTestnetOnion =
       "http://sorob4sg7yiopktgz4eom7hl5mcodr6quvhmdpljl5qqhmt6po7oebid.onion/test";
-  private String sorobanServerMainnetClear = "https://soroban.samouraiwallet.com";
+  private String sorobanServerMainnetClear = "https://82.221.128.176";
   private String sorobanServerMainnetOnion =
       "http://sorob4sg7yiopktgz4eom7hl5mcodr6quvhmdpljl5qqhmt6po7oebid.onion";
 
   // whrilpool-client: WhrilpoolServer
-  private String whirlpoolServerTestnetClear = "https://pool.whirl.mx:8081";
+  private String whirlpoolServerTestnetClear = "https://82.221.131.94:8081";
   private String whirlpoolServerTestnetOnion =
       "http://y5qvjlxvbohc73slq4j4qldoegyukvpp74mbsrjosnrsgg7w5fon6nyd.onion";
-  private String whirlpoolServerMainnetClear = "https://pool.whirl.mx:8080";
+  private String whirlpoolServerMainnetClear = "https://82.221.131.94:8080";
   private String whirlpoolServerMainnetOnion =
       "http://udkmfc5j6zvv3ysavbrwzhwji4hpyfe3apqa6yst7c7l32mygf65g4ad.onion";
-  private String whirlpoolServerIntegrationClear = "https://pool.whirl.mx:8082";
+  private String whirlpoolServerIntegrationClear = "https://82.221.131.94:8082";
   private String whirlpoolServerIntegrationOnion =
       "http://yuvewbfkftftcbzn54lfx3i5s4jxr4sfgpsbkvcflgzcvumyxrkopmyd.onion";
 
