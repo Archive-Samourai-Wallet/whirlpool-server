@@ -34,12 +34,23 @@ public class Tx0ControllerTest extends AbstractIntegrationTest {
     Tx0DataRequestV2 request = new Tx0DataRequestV2(null, null, cascading);
     Tx0DataResponseV2 response = tx0Controller.tx0Data(null, request);
 
-    // 100% fee
+    // 100% fee (0% SCODE discount)
     for (Tx0DataResponseV2.Tx0Data tx0Data : response.tx0Datas) {
       Assertions.assertEquals(0, tx0Data.feeDiscountPercent);
       Assertions.assertTrue(tx0Data.feeValue > 0);
     }
   }
 
-  // TODO @noosphere888 add test for cascading (should not pay any fee when cascading)
+  @Test
+  public void tx0Data_cascading_noFee() throws Exception {
+    boolean cascading = true;
+    Tx0DataRequestV2 request = new Tx0DataRequestV2(null, null, cascading);
+    Tx0DataResponseV2 response = tx0Controller.tx0Data(null, request);
+
+    // 0% fee (100% SCODE discount)
+    for (Tx0DataResponseV2.Tx0Data tx0Data : response.tx0Datas) {
+      Assertions.assertEquals(100, tx0Data.feeDiscountPercent);
+      Assertions.assertTrue(tx0Data.feeValue == 0);
+    }
+  }
 }
