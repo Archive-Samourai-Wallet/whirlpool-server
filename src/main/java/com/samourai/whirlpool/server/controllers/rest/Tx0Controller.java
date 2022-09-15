@@ -202,14 +202,15 @@ public class Tx0Controller extends AbstractRestController {
               + ", feeIndex="
               + feeIndex
               + ", feeAddress="
-              + (feeAddress != null ? feeAddress : "")
+              + (feeAddress != null ? feeAddress : "null")
               + ", partnerId="
               + partner.getId()
               + ", opReturnV0="
               + opReturnV0);
     }
     String feePaymentCode = tx0ValidationService.getFeePaymentCode(opReturnV0);
-    String feeOutputSignature = computeFeeOutputSignature(feeAddress, feeValue);
+    String feeOutputSignature =
+        feeAddress != null ? computeFeeOutputSignature(feeAddress, feeValue) : null;
     return new Tx0DataResponseV2.Tx0Data(
         poolId,
         feePaymentCode,
