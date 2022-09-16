@@ -12,6 +12,8 @@ import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import com.samourai.whirlpool.server.exceptions.ServerErrorCode;
 import com.samourai.whirlpool.server.services.fee.WhirlpoolFeeData;
 import java.lang.invoke.MethodHandles;
+
+import com.samourai.whirlpool.server.services.rpc.RpcClientService;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Transaction;
 import org.slf4j.Logger;
@@ -25,16 +27,22 @@ public class InputValidationService {
   private WhirlpoolServerConfig whirlpoolServerConfig;
   private CryptoService cryptoService;
   private MessageSignUtilGeneric messageSignUtil;
+  private RpcClientService rpcClientService;
+  private PoolService poolService;
 
   public InputValidationService(
       Tx0ValidationService tx0ValidationService,
       WhirlpoolServerConfig whirlpoolServerConfig,
       CryptoService cryptoService,
-      MessageSignUtilGeneric messageSignUtil) {
+      MessageSignUtilGeneric messageSignUtil,
+      RpcClientService rpcClientService,
+      PoolService poolService) {
     this.tx0ValidationService = tx0ValidationService;
     this.whirlpoolServerConfig = whirlpoolServerConfig;
     this.cryptoService = cryptoService;
     this.messageSignUtil = messageSignUtil;
+    this.rpcClientService = rpcClientService;
+    this.poolService = poolService;
   }
 
   public void validateProvenance(
@@ -60,6 +68,21 @@ public class InputValidationService {
           "Input rejected: joined as mustMix but is as a liquidity");
     }
     return; // valid
+  }
+
+  protected boolean isValidTx0(RpcTransaction tx, Pool pool) throws Exception {
+    boolean hasMixTxid = false; // it's not a MIX tx
+    boolean isLiquidity = checkInputProvenance(tx.getTx(), tx.getTxTime(), pool.getPoolFee(), hasMixTxid);
+    return !isLiquidity; // not a MIX
+  }
+
+  protected void validateTx0Cascading(Transaction tx, long txTime) throws Exception {
+/*
+1. make sure that all inputs come from the same previous TXID (= it's the previous cascading TX0) or throw
+2. get this TX as RpcTransaction using rpcClientService.getRawTransaction()
+3. figure out which pool it was for, by checking tx outputs
+4. make sure it's a valid TX0 using isValidTx0()
+*/
   }
 
   protected boolean checkInputProvenance(
@@ -90,6 +113,12 @@ public class InputValidationService {
     try {
       // verify tx0
       Tx0Validation tx0Validation = tx0ValidationService.validate(tx, txTime, poolFee, feeData);
+
+      WhirlpoolServerConfig.ScodeSamouraiFeeConfig scodeConfig = tx0Validation.getScodeConfig();
+      if (scodeConfig != null && scodeConfig.isCascading()) {
+        // check TX0 cascading
+        validateTx0Cascading(tx, txTime);
+      }
       return false; // mustMix
     } catch (Exception e) {
       // invalid fees
