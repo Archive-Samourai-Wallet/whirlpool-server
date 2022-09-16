@@ -2,10 +2,10 @@ package com.samourai.dex.config;
 // TODO temporary waiting dexconfig merge
 public class SamouraiConfig {
   // extlibj: BackendServer
-  private String backendServerMainnetClear = "https://82.221.128.176/v2";
+  private String backendServerMainnetClear = "https://api.samouraiwallet.com/v2";
   private String backendServerMainnetOnion =
       "http://d2oagweysnavqgcfsfawqwql2rwxend7xxpriq676lzsmtfwbt75qbqd.onion/v2";
-  private String backendServerTestnetClear = "https://82.221.128.176/test/v2";
+  private String backendServerTestnetClear = "https://api.samouraiwallet.com/test/v2";
   private String backendServerTestnetOnion =
       "http://d2oagweysnavqgcfsfawqwql2rwxend7xxpriq676lzsmtfwbt75qbqd.onion/test/v2";
 
