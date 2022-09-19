@@ -154,6 +154,20 @@ public class InputValidationServiceTest extends AbstractIntegrationTest {
     doCheckInput("b3557587f87bcbd37e847a0fff0ded013b23026f153d85f28cb5d407d39ef2f3", 2);
   }
 
+  // TODO Make a working tests for cascading...
+  @Test
+  public void checkInput_cascading_valid() throws Exception {
+    // TODO...
+    setScodeConfig("myscode", (short) 12345, 0, null);
+//    setScodeConfig("myscode", ScodeService.SCODE_CASCADING_PAYLOAD, 100, null);
+    doCheckInput("b3557587f87bcbd37e847a0fff0ded013b23026f153d85f28cb5d407d39ef2f3", 2);
+  }
+
+  @Test
+  public void checkInput_cascading_invalid() throws Exception {
+    // TODO
+  }
+
   private boolean doCheckInput(String utxoHash, long utxoIndex) throws NotifiableException {
     PoolFee poolFee = new PoolFee(FEES_VALID, null);
     return doCheckInput(utxoHash, utxoIndex, poolFee);

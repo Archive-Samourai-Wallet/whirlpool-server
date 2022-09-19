@@ -12,10 +12,15 @@ import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import com.samourai.whirlpool.server.exceptions.ServerErrorCode;
 import com.samourai.whirlpool.server.services.fee.WhirlpoolFeeData;
 import java.lang.invoke.MethodHandles;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 
 import com.samourai.whirlpool.server.services.rpc.RpcClientService;
+import com.samourai.whirlpool.server.services.rpc.RpcRawTransactionResponse;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -72,17 +77,51 @@ public class InputValidationService {
 
   protected boolean isValidTx0(RpcTransaction tx, Pool pool) throws Exception {
     boolean hasMixTxid = false; // it's not a MIX tx
-    boolean isLiquidity = checkInputProvenance(tx.getTx(), tx.getTxTime(), pool.getPoolFee(), hasMixTxid);
+    boolean isLiquidity = checkInputProvenance(tx.getTx(), tx.getTxTime(), pool.getPoolFee(), hasMixTxid); // need to make sure doesn't get stuck in loop
     return !isLiquidity; // not a MIX
   }
 
   protected void validateTx0Cascading(Transaction tx, long txTime) throws Exception {
-/*
-1. make sure that all inputs come from the same previous TXID (= it's the previous cascading TX0) or throw
-2. get this TX as RpcTransaction using rpcClientService.getRawTransaction()
-3. figure out which pool it was for, by checking tx outputs
-4. make sure it's a valid TX0 using isValidTx0()
-*/
+    // 1. make sure that all inputs come from the same previous TXID (= it's the previous cascading TX0) or throw
+    List<TransactionInput> txInputs = tx.getInputs();
+    String txid = txInputs.get(0).getParentTransaction().getHashAsString();
+    for (TransactionInput txInput: txInputs) {
+      if (!txInput.getParentTransaction().getHashAsString().equals(txid)) {
+        log.error(
+            "Input rejected (invalid cascading for tx0="
+                + tx.getHashAsString()
+                + ")");
+        throw new IllegalInputException( // maybe make new cascading input exception ?
+            ServerErrorCode.INPUT_REJECTED,
+            "Input rejected (invalid cascading for tx0="
+                + tx.getHashAsString()
+                + ")");
+      }
+    }
+
+    // 2. get this TX as RpcTransaction using rpcClientService.getRawTransaction()
+    RpcTransaction rpcTransaction = new RpcTransaction(
+            rpcClientService.getRawTransaction(tx.getHashAsString()).get(),
+            cryptoService.getNetworkParameters());
+
+    // 3. figure out which pool it was for, by checking tx outputs
+    // Maybe handle this part better
+    long poolValue = tx.getOutputs().get(2).getValue().getValue(); // assumes 3rd output is utxo to be mixed (might have to adjust this)
+    Pool pool;
+    if (poolValue > 50000000) {
+        pool = poolService.getPool("0.5btc"); // maybe make static final constants ?
+    } else if (poolValue > 5000000) {
+        pool = poolService.getPool("0.05btc");
+    } else if (poolValue > 1000000) {
+        pool = poolService.getPool("0.01btc");
+    } else if (poolValue > 100000) {
+        pool = poolService.getPool("0.001btc");
+    } else {
+        throw new Exception("Pool not found..."); // maybe better exception ?
+    }
+
+    // 4. make sure it's a valid TX0 using isValidTx0()
+    isValidTx0(rpcTransaction, pool);
   }
 
   protected boolean checkInputProvenance(
