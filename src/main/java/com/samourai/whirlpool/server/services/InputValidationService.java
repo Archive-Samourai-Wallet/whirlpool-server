@@ -35,6 +35,11 @@ public class InputValidationService {
   private RpcClientService rpcClientService;
   private PoolService poolService;
 
+  private static final String POOL_50M = "0.5btc";
+  private static final String POOL_5M = "0.5btc";
+  private static final String POOL_1M = "0.01btc";
+  private static final String POOL_100K = "0.001btc";
+
   public InputValidationService(
       Tx0ValidationService tx0ValidationService,
       WhirlpoolServerConfig whirlpoolServerConfig,
@@ -75,55 +80,6 @@ public class InputValidationService {
     return; // valid
   }
 
-  protected boolean isValidTx0(RpcTransaction tx, Pool pool) throws Exception {
-    boolean hasMixTxid = false; // it's not a MIX tx
-    boolean isLiquidity = checkInputProvenance(tx.getTx(), tx.getTxTime(), pool.getPoolFee(), hasMixTxid); // need to make sure doesn't get stuck in loop
-    return !isLiquidity; // not a MIX
-  }
-
-  protected void validateTx0Cascading(Transaction tx, long txTime) throws Exception {
-    // 1. make sure that all inputs come from the same previous TXID (= it's the previous cascading TX0) or throw
-    List<TransactionInput> txInputs = tx.getInputs();
-    String txid = txInputs.get(0).getParentTransaction().getHashAsString();
-    for (TransactionInput txInput: txInputs) {
-      if (!txInput.getParentTransaction().getHashAsString().equals(txid)) {
-        log.error(
-            "Input rejected (invalid cascading for tx0="
-                + tx.getHashAsString()
-                + ")");
-        throw new IllegalInputException( // maybe make new cascading input exception ?
-            ServerErrorCode.INPUT_REJECTED,
-            "Input rejected (invalid cascading for tx0="
-                + tx.getHashAsString()
-                + ")");
-      }
-    }
-
-    // 2. get this TX as RpcTransaction using rpcClientService.getRawTransaction()
-    RpcTransaction rpcTransaction = new RpcTransaction(
-            rpcClientService.getRawTransaction(tx.getHashAsString()).get(),
-            cryptoService.getNetworkParameters());
-
-    // 3. figure out which pool it was for, by checking tx outputs
-    // Maybe handle this part better
-    long poolValue = tx.getOutputs().get(3).getValue().getValue(); // assumes 4th output is utxo to be mixed (might have to adjust this)
-    Pool pool;
-    if (poolValue > 50000000) {
-        pool = poolService.getPool("0.5btc"); // maybe make static final constants ?
-    } else if (poolValue > 5000000) {
-        pool = poolService.getPool("0.05btc");
-    } else if (poolValue > 1000000) {
-        pool = poolService.getPool("0.01btc");
-    } else if (poolValue > 100000) {
-        pool = poolService.getPool("0.001btc");
-    } else {
-        throw new Exception("Pool not found..."); // maybe better exception ?
-    }
-
-    // 4. make sure it's a valid TX0 using isValidTx0()
-    isValidTx0(rpcTransaction, pool);
-  }
-
   protected boolean checkInputProvenance(
       Transaction tx, long txTime, PoolFee poolFee, boolean hasMixTxid) throws NotifiableException {
     // is it a tx0?
@@ -153,11 +109,11 @@ public class InputValidationService {
       // verify tx0
       Tx0Validation tx0Validation = tx0ValidationService.validate(tx, txTime, poolFee, feeData);
 
-      validateTx0Cascading(tx, txTime); // temp
+//      validateTx0Cascading(tx, txTime); // temp
 
       WhirlpoolServerConfig.ScodeSamouraiFeeConfig scodeConfig = tx0Validation.getScodeConfig();
-      if (scodeConfig != null && scodeConfig.isCascading()) {
-        // check TX0 cascading
+      if (scodeConfig != null && scodeConfig.isCascading()) { // maybe move to seperate try/catch to catch exception specific to cascading
+        // check tx0 cascading
         validateTx0Cascading(tx, txTime);
       }
       return false; // mustMix
@@ -181,6 +137,72 @@ public class InputValidationService {
               + (feeData.getScodePayload() != FeePayloadService.SCODE_PAYLOAD_NONE ? "yes" : "no")
               + ")");
     }
+  }
+
+  protected void validateTx0Cascading(Transaction tx, long txTime) throws Exception {
+    /*
+    1. make sure that all inputs come from the same previous TXID (= it's the previous cascading TX0) or throw
+       (might not work, should only have 1 input: the change from previous tx0)
+    2. get this TX as RpcTransaction using rpcClientService.getRawTransaction() (parent tx or current tx?)
+    3. figure out which pool it was for, by checking tx outputs (parent tx or current tx?)
+    4. make sure it's a valid tx0 using isValidTx0() (parent tx or current tx?)
+    */
+
+    // cascading tx0 should only have 1 input (previous tx0 change)
+    List<TransactionInput> txInputs = tx.getInputs();
+    if (txInputs.size() != 1) {
+      log.error(
+          "Input rejected (invalid cascading for tx0="
+              + tx.getHashAsString()
+              + ")");
+      throw new IllegalInputException(
+          ServerErrorCode.INPUT_REJECTED,
+          "Input rejected (invalid cascading for tx0="
+              + tx.getHashAsString()
+              + ")");
+    }
+
+    // need to determine if comes from a previous tx0
+
+    // RPC of current tx or parent tx?
+    RpcTransaction rpcTransaction = new RpcTransaction(
+        rpcClientService.getRawTransaction(tx.getHashAsString()).get(),
+        cryptoService.getNetworkParameters());
+
+//    RpcTransaction parentRpcTransaction = new RpcTransaction(
+//        rpcClientService.getRawTransaction(tx.getInputs().get(0).getParentTransaction().getHashAsString()).get(),
+//        cryptoService.getNetworkParameters());
+
+
+    // get Pool of current tx or parent tx?
+    // Maybe handle this part better
+    long mixValue = tx.getOutputs().get(3).getValue().getValue(); // assumes 4th output is utxo to be mixed (might have to adjust this, might be 3rd)
+//    long mixValue = tx.getInputs().get(0).getParentTransaction().getOutputs().get(3).getValue().getValue(); // Parent Pool ?
+    Pool pool;
+    if (mixValue > 50000000) {
+      pool = poolService.getPool(POOL_50M);
+    } else if (mixValue > 5000000) {
+      pool = poolService.getPool(POOL_5M);
+    } else if (mixValue > 1000000) {
+      pool = poolService.getPool(POOL_1M);
+    } else if (mixValue > 100000) {
+      pool = poolService.getPool(POOL_100K);
+    } else {
+      throw new IllegalInputException(
+          ServerErrorCode.INPUT_REJECTED,
+          "Input rejected (Pool size not found for tx0="
+              + tx.getHashAsString()
+              + ")");
+    }
+
+    isValidTx0(rpcTransaction, pool); // this might cause a loop for calling checkInputProvenance() again
+//    isValidTx0(parentRpcTransaction, pool); // isValid() of with current tx rpc or parent tx rpc?
+  }
+
+  protected boolean isValidTx0(RpcTransaction tx, Pool pool) throws Exception {
+    boolean hasMixTxid = false; // it's not a MIX tx
+    boolean isLiquidity = checkInputProvenance(tx.getTx(), tx.getTxTime(), pool.getPoolFee(), hasMixTxid); // need to make sure doesn't get stuck in loop
+    return !isLiquidity; // not a MIX
   }
 
   public ECKey validateSignature(TxOutPoint txOutPoint, String message, String signature)
