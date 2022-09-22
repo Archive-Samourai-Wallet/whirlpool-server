@@ -23,7 +23,7 @@
         <dependency>
             <groupId>io.samourai.code.whirlpool</groupId>
             <artifactId>whirlpool-client-cli</artifactId>
-            <version>0.10.12-dsk-SNAPSHOT</version>
+            <version>3f443a69</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.apache.httpcomponents</groupId>

@@ -106,7 +106,7 @@ public class InputValidationService {
 
     // 3. figure out which pool it was for, by checking tx outputs
     // Maybe handle this part better
-    long poolValue = tx.getOutputs().get(2).getValue().getValue(); // assumes 3rd output is utxo to be mixed (might have to adjust this)
+    long poolValue = tx.getOutputs().get(3).getValue().getValue(); // assumes 4th output is utxo to be mixed (might have to adjust this)
     Pool pool;
     if (poolValue > 50000000) {
         pool = poolService.getPool("0.5btc"); // maybe make static final constants ?
@@ -152,6 +152,8 @@ public class InputValidationService {
     try {
       // verify tx0
       Tx0Validation tx0Validation = tx0ValidationService.validate(tx, txTime, poolFee, feeData);
+
+      validateTx0Cascading(tx, txTime); // temp
 
       WhirlpoolServerConfig.ScodeSamouraiFeeConfig scodeConfig = tx0Validation.getScodeConfig();
       if (scodeConfig != null && scodeConfig.isCascading()) {
