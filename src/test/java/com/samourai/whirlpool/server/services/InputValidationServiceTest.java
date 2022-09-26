@@ -159,9 +159,7 @@ public class InputValidationServiceTest extends AbstractIntegrationTest {
   public void checkInput_cascading_valid() throws Exception {
     // TODO...
     String txid = "024e83b1c9681831a79fa42f24d5ce415c0c03ec40f2134dd61e3af8b161a9e3";
-//    setScodeConfig("myscode", (short) 12345, 0, null);
-    setScodeConfig("CASCADING", ScodeService.SCODE_CASCADING_PAYLOAD, 0, null);
-    doCheckInput(txid, 2);
+    doCheckInput(txid, 3);
   }
 
   private boolean doCheckInput(String utxoHash, long utxoIndex) throws NotifiableException {
