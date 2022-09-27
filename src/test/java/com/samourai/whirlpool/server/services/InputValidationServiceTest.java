@@ -158,7 +158,8 @@ public class InputValidationServiceTest extends AbstractIntegrationTest {
   @Test
   public void checkInput_cascading_valid() throws Exception {
     // TODO...
-    String txid = "024e83b1c9681831a79fa42f24d5ce415c0c03ec40f2134dd61e3af8b161a9e3";
+    setScodeConfig("cascading_scode", (short) 22222, 0, null);
+    String txid = "024e83b1c9681831a79fa42f24d5ce415c0c03ec40f2134dd61e3af8b161a9e3"; // this tx throws "Invalid FeePayload version: 22800 vs 1"
     doCheckInput(txid, 3);
   }
 

@@ -38,7 +38,7 @@ public class InputValidationService {
   private PoolService poolService;
 
   private static final String POOL_50M = "0.5btc";
-  private static final String POOL_5M = "0.5btc";
+  private static final String POOL_5M = "0.05btc";
   private static final String POOL_1M = "0.01btc";
   private static final String POOL_100K = "0.001btc";
 
@@ -112,7 +112,7 @@ public class InputValidationService {
       Tx0Validation tx0Validation = tx0ValidationService.validate(tx, txTime, poolFee, feeData);
 
       WhirlpoolServerConfig.ScodeSamouraiFeeConfig scodeConfig = tx0Validation.getScodeConfig();
-      if (scodeConfig != null && scodeConfig.isCascading()) { // maybe move to seperate try/catch to catch exception specific to cascading
+      if (scodeConfig != null && scodeConfig.isCascading()) {
         // check tx0 cascading
         validateTx0Cascading(tx, txTime);
       }
@@ -126,7 +126,7 @@ public class InputValidationService {
               + feeData.getFeeIndice()
               + ", feeData={"
               + feeData
-              + "}");
+              + "})");
       throw new IllegalInputException(
           ServerErrorCode.INPUT_REJECTED,
           "Input rejected (invalid fee for tx0="
@@ -157,7 +157,7 @@ public class InputValidationService {
     // check if parent tx is valid tx0
     RpcTransaction parentRpcTx;
     String parentTxId = "";
-    long parentMixValue = 0;
+    long parentTxPool = 0;
     try {
       parentTxId = tx.getInput(0).getOutpoint().getHash().toString();
 
@@ -167,47 +167,67 @@ public class InputValidationService {
           cryptoService.getNetworkParameters());
 
       // get pool of parent tx
-      parentMixValue = parentRpcTx.getTx().getOutputs().get(3).getValue().getValue(); // assumes 4th output is utxo to be mixed (might have to adjust this, might be 3rd, might not be static)
+      parentTxPool = parentRpcTx.getTx().getOutputs().get(3).getValue().getValue(); // assumes 4th output is utxo to be mixed (might have to adjust this, might be 3rd, might not be static)
     } catch (Exception e) {
       log.error(
           "Input rejected (invalid cascading for tx0="
               + tx.getHashAsString()
-              + ". Invalid parent tx0="
+              + " --> invalid parent tx0="
               + parentTxId
-              +").");
+              +")");
       throw new IllegalInputException(
           ServerErrorCode.INPUT_REJECTED,
           "Input rejected (invalid cascading for tx0="
               + tx.getHashAsString()
-              + ". Invalid parent tx0="
+              + " --> invalid parent tx0="
               + parentTxId
-              +").");
+              +")");
     }
 
     Pool pool;
-    if (parentMixValue > 50000000) {
+    if (parentTxPool > 50000000) {
       pool = poolService.getPool(POOL_50M);
-    } else if (parentMixValue > 5000000) {
+    } else if (parentTxPool > 5000000) {
       pool = poolService.getPool(POOL_5M);
-    } else if (parentMixValue > 1000000) {
+    } else if (parentTxPool > 1000000) {
       pool = poolService.getPool(POOL_1M);
-    } else if (parentMixValue > 100000) {
+    } else if (parentTxPool > 100000) {
       pool = poolService.getPool(POOL_100K);
     } else {
       throw new IllegalInputException(
           ServerErrorCode.INPUT_REJECTED,
-          "Input rejected (Pool size not found for parent tx0="
+          "Input rejected (pool size not found for parent tx0="
               + parentTxId
               + ")");
     }
 
     // validate parent tx0
-    isValidTx0(parentRpcTx, pool);
+    try {
+      isValidTx0(parentRpcTx, pool);
+    } catch (Exception e) {
+      log.error(
+          "Input rejected (invalid cascading for tx0="
+              + tx.getHashAsString()
+              + " --> invalid parent tx0="
+              + parentRpcTx.getTx().getHashAsString()
+              + " in pool="
+              + pool
+              +")");
+      throw new IllegalInputException(
+          ServerErrorCode.INPUT_REJECTED,
+          "Input rejected (invalid cascading for tx0="
+              + tx.getHashAsString()
+              + " --> invalid parent tx0="
+              + parentRpcTx.getTx().getHashAsString()
+              + " in pool="
+              + pool
+              +")");
+    }
   }
 
   protected boolean isValidTx0(RpcTransaction tx, Pool pool) throws Exception {
     boolean hasMixTxid = false; // it's not a MIX tx
-    boolean isLiquidity = checkInputProvenance(tx.getTx(), tx.getTxTime(), pool.getPoolFee(), hasMixTxid); // need to make sure doesn't get stuck in loop
+    boolean isLiquidity = checkInputProvenance(tx.getTx(), tx.getTxTime(), pool.getPoolFee(), hasMixTxid);
     return !isLiquidity; // not a MIX
   }
 
