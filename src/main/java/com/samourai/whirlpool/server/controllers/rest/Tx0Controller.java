@@ -224,10 +224,8 @@ public class Tx0Controller extends AbstractRestController {
   }
 
   private String computeFeeOutputSignature(String feeAddress, long feeValue) throws Exception {
-    String feeOutputSerialized =
-        Utils.serializeTransactionOutput(feeAddress, feeValue, serverConfig.getNetworkParameters());
-    return Utils.sign(
-        serverConfig.getSigningWallet(), serverConfig.getNetworkParameters(), feeOutputSerialized);
+    return Utils.signTransactionOutput(
+        feeAddress, feeValue, serverConfig.getNetworkParameters(), serverConfig.getSigningWallet());
   }
 
   // OpReturnImplV0 as Tx0DataResponseV1

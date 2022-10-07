@@ -6,7 +6,6 @@ import com.samourai.wallet.hd.HD_Address;
 import com.samourai.wallet.hd.HD_Wallet;
 import com.samourai.wallet.hd.HD_WalletFactoryGeneric;
 import com.samourai.wallet.segwit.bech32.Bech32UtilGeneric;
-import com.samourai.wallet.util.MessageSignUtilGeneric;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
@@ -20,11 +19,11 @@ import java.util.*;
 import java.util.stream.Collectors;
 import org.apache.commons.text.CharacterPredicates;
 import org.apache.commons.text.RandomStringGenerator;
+import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.TransactionWitness;
 import org.bitcoinj.script.Script;
-import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -159,10 +158,10 @@ public class Utils {
     return utxo;
   }
 
-  public static String serializeTransactionOutput(
+  protected static byte[] serializeTransactionOutput(
       String address, long value, NetworkParameters params) throws Exception {
     TransactionOutput txOut = BIP_FORMAT.PROVIDER.getTransactionOutput(address, value, params);
-    return Hex.toHexString(txOut.bitcoinSerialize());
+    return txOut.bitcoinSerialize();
   }
 
   private static HD_Address computeSigningAddress(
@@ -175,15 +174,22 @@ public class Utils {
     return bip44wallet.getAddressAt(0, 0, 0);
   }
 
-  public static String sign(
-      WhirlpoolServerConfig.SecretWalletConfig secretWalletConfig,
+  public static String signTransactionOutput(
+      String feeAddress,
+      long feeValue,
       NetworkParameters params,
-      String payload)
+      WhirlpoolServerConfig.SecretWalletConfig secretWalletConfig)
       throws Exception {
     HD_Address signingAddress = computeSigningAddress(secretWalletConfig, params);
     if (log.isDebugEnabled()) {
       log.debug("signing address: " + signingAddress.getAddressString());
     }
-    return MessageSignUtilGeneric.getInstance().signMessage(signingAddress.getECKey(), payload);
+    return signTransactionOutput(feeAddress, feeValue, params, signingAddress.getECKey());
+  }
+
+  public static String signTransactionOutput(
+      String feeAddress, long feeValue, NetworkParameters params, ECKey ecKey) throws Exception {
+    byte[] feeOutputSerialized = serializeTransactionOutput(feeAddress, feeValue, params);
+    return ECKeyUtils.signMessage(ecKey, feeOutputSerialized);
   }
 }
