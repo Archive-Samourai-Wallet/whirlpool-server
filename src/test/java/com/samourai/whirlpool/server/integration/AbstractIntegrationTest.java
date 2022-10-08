@@ -2,7 +2,7 @@ package com.samourai.whirlpool.server.integration;
 
 import com.samourai.http.client.HttpUsage;
 import com.samourai.http.client.IHttpClient;
-import com.samourai.http.client.IHttpClientService;
+import com.samourai.http.client.IWhirlpoolHttpClientService;
 import com.samourai.javaserver.utils.ServerUtils;
 import com.samourai.wallet.api.backend.BackendServer;
 import com.samourai.wallet.bip47.rpc.BIP47Account;
@@ -17,7 +17,6 @@ import com.samourai.wallet.util.CryptoTestUtil;
 import com.samourai.wallet.util.FormatsUtilGeneric;
 import com.samourai.wallet.util.MessageSignUtilGeneric;
 import com.samourai.wallet.util.TxUtil;
-import com.samourai.whirlpool.cli.config.CliConfig;
 import com.samourai.whirlpool.client.utils.ClientCryptoService;
 import com.samourai.whirlpool.client.wallet.WhirlpoolWalletConfig;
 import com.samourai.whirlpool.client.wallet.data.dataSource.DataSourceFactory;
@@ -76,6 +75,8 @@ public abstract class AbstractIntegrationTest {
 
   @Autowired protected BlockchainDataService blockchainDataService;
 
+  @Autowired protected WhirlpoolClientService whirlpoolClientService;
+
   @Autowired protected MockRpcClientServiceImpl rpcClientService;
 
   @Autowired protected TestUtils testUtils;
@@ -114,8 +115,6 @@ public abstract class AbstractIntegrationTest {
 
   protected NetworkParameters params;
 
-  protected CliConfig cliConfig;
-
   @BeforeEach
   public void setUp() throws Exception {
     // enable debug
@@ -126,8 +125,6 @@ public abstract class AbstractIntegrationTest {
     Assertions.assertTrue(
         MockRpcClientServiceImpl.class.isAssignableFrom(rpcClientService.getClass()));
     this.params = cryptoService.getNetworkParameters();
-
-    cliConfig = new CliConfig(null, null);
 
     messageSignUtil = MessageSignUtilGeneric.getInstance();
 
@@ -243,6 +240,7 @@ public abstract class AbstractIntegrationTest {
             cryptoService,
             rpcClientService,
             blockchainDataService,
+            whirlpoolClientService,
             port,
             params);
     return multiClientManager;
@@ -289,8 +287,8 @@ public abstract class AbstractIntegrationTest {
   protected WhirlpoolWalletConfig computeWhirlpoolWalletConfig() {
     DataSourceFactory dataSourceFactory =
         new DojoDataSourceFactory(BackendServer.TESTNET, false, null);
-    IHttpClientService httpClientService =
-        new IHttpClientService() {
+    IWhirlpoolHttpClientService multiUsageHttpClientService =
+        new IWhirlpoolHttpClientService() {
           @Override
           public IHttpClient getHttpClient(HttpUsage httpUsage) {
             return null;
@@ -303,7 +301,7 @@ public abstract class AbstractIntegrationTest {
         new WhirlpoolWalletConfig(
             dataSourceFactory,
             SecretPointFactoryJava.getInstance(),
-            httpClientService,
+            multiUsageHttpClientService,
             null,
             null,
             null,

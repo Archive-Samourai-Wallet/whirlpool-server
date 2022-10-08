@@ -93,8 +93,7 @@ public class WhirlpoolSimpleIntegrationTest extends AbstractIntegrationTest {
         bip84Wallet,
         null,
         (int) utxo.getIndex(), // TODO wrong n
-        inputBalance,
-        cliConfig);
+        inputBalance);
 
     // register inputs...
     multiClientManager.assertMixStatusConfirmInput(1, false);

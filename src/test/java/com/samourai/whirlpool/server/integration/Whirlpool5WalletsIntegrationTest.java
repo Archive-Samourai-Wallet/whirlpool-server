@@ -429,8 +429,7 @@ public class Whirlpool5WalletsIntegrationTest extends AbstractIntegrationTest {
                 bip84Wallet,
                 null,
                 utxoIndex, // TODO wrong
-                premixer.biUnitSpendAmount.longValue(),
-                cliConfig);
+                premixer.biUnitSpendAmount.longValue());
           } catch (Exception e) {
             log.error("", e);
             Assertions.assertTrue(false);

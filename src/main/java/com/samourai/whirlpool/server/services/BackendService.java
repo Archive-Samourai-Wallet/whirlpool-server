@@ -1,6 +1,5 @@
 package com.samourai.whirlpool.server.services;
 
-import com.samourai.http.client.HttpUsage;
 import com.samourai.wallet.api.backend.BackendApi;
 import com.samourai.wallet.api.backend.BackendServer;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
@@ -12,7 +11,7 @@ public class BackendService extends BackendApi {
   public BackendService(
       JavaHttpClientService httpClientService, WhirlpoolServerConfig serverConfig) {
     super(
-        httpClientService.getHttpClient(HttpUsage.BACKEND),
+        httpClientService.getHttpClient(),
         serverConfig.isTestnet()
             ? BackendServer.TESTNET.getBackendUrlClear()
             : BackendServer.MAINNET.getBackendUrlClear(),

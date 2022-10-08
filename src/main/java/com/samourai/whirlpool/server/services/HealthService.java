@@ -1,20 +1,13 @@
 package com.samourai.whirlpool.server.services;
 
 import com.samourai.javaserver.utils.ServerUtils;
-import com.samourai.stomp.client.IStompClientService;
-import com.samourai.whirlpool.cli.config.CliConfig;
-import com.samourai.whirlpool.cli.services.CliTorClientService;
-import com.samourai.whirlpool.cli.services.JavaHttpClientService;
-import com.samourai.whirlpool.cli.services.JavaStompClientService;
 import com.samourai.whirlpool.client.WhirlpoolClient;
 import com.samourai.whirlpool.client.mix.MixParams;
 import com.samourai.whirlpool.client.mix.handler.*;
 import com.samourai.whirlpool.client.mix.listener.MixFailReason;
 import com.samourai.whirlpool.client.mix.listener.MixStep;
-import com.samourai.whirlpool.client.wallet.beans.IndexRange;
 import com.samourai.whirlpool.client.wallet.beans.WhirlpoolServer;
 import com.samourai.whirlpool.client.wallet.data.chain.ChainSupplier;
-import com.samourai.whirlpool.client.whirlpool.ServerApi;
 import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientConfig;
 import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientImpl;
 import com.samourai.whirlpool.client.whirlpool.listener.WhirlpoolClientListener;
@@ -40,16 +33,19 @@ public class HealthService {
   private String lastError;
   private WhirlpoolClientConfig whirlpoolClientConfig;
   private BlockchainDataService blockchainDataService;
+  private WhirlpoolClientService whirlpoolClientService;
 
   @Autowired
   public HealthService(
       WhirlpoolServerConfig whirlpoolServerConfig,
       SimpUserRegistry simpUserRegistry,
-      BlockchainDataService blockchainDataService) {
+      BlockchainDataService blockchainDataService,
+      WhirlpoolClientService whirlpoolClientService) {
     this.whirlpoolServerConfig = whirlpoolServerConfig;
     this.simpUserRegistry = simpUserRegistry;
     this.blockchainDataService = blockchainDataService;
     this.lastError = null;
+    this.whirlpoolClientService = whirlpoolClientService;
     this.whirlpoolClientConfig = null;
   }
 
@@ -107,27 +103,11 @@ public class HealthService {
 
   private WhirlpoolClientConfig computeWhirlpoolClientConfig() {
     if (whirlpoolClientConfig == null) {
-      CliConfig cliConfig = new CliConfig(null, null);
-      cliConfig.setServer(
-          whirlpoolServerConfig.isTestnet() ? WhirlpoolServer.TESTNET : WhirlpoolServer.MAINNET);
-
-      CliTorClientService cliTorClientService = new CliTorClientService(cliConfig);
-      JavaHttpClientService httpClientService =
-          new JavaHttpClientService(cliTorClientService, cliConfig);
-      IStompClientService stompClientService = new JavaStompClientService(httpClientService);
-
-      String serverUrl = cliConfig.getServer().getServerUrlClear();
+      WhirlpoolServer whirlpoolServer =
+          whirlpoolServerConfig.isTestnet() ? WhirlpoolServer.TESTNET : WhirlpoolServer.MAINNET;
+      String serverUrl = whirlpoolServer.getServerUrlClear();
       NetworkParameters params = whirlpoolServerConfig.getNetworkParameters();
-      ServerApi serverApi = new ServerApi(serverUrl, httpClientService);
-      whirlpoolClientConfig =
-          new WhirlpoolClientConfig(
-              httpClientService,
-              stompClientService,
-              cliTorClientService,
-              serverApi,
-              null,
-              params,
-              IndexRange.FULL);
+      whirlpoolClientConfig = whirlpoolClientService.createWhirlpoolClientConfig(serverUrl, params);
     }
     return whirlpoolClientConfig;
   }
