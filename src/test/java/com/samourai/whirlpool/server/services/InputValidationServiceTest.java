@@ -19,7 +19,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public class InputValidationServiceTest extends AbstractIntegrationTest {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-  private static final long FEES_VALID = 975000;
+  private static final PoolFee POOL_FEE = new PoolFee(975000, null);
 
   @BeforeEach
   public void beforeEach() {
@@ -35,7 +35,8 @@ public class InputValidationServiceTest extends AbstractIntegrationTest {
     Assertions.assertFalse(hasMixTxid(txid, 1000000));
 
     // reject when invalid
-    Exception e = Assertions.assertThrows(IllegalInputException.class, () -> doCheckInput(txid, 0));
+    Exception e =
+        Assertions.assertThrows(IllegalInputException.class, () -> doCheckInput(txid, 0, POOL_FEE));
     Assertions.assertEquals("Input rejected (not a premix or whirlpool input)", e.getMessage());
   }
 
@@ -51,7 +52,8 @@ public class InputValidationServiceTest extends AbstractIntegrationTest {
 
     // reject when invalid denomination
     Assertions.assertFalse(hasMixTxid(txid, denomination)); // invalid
-    Exception e = Assertions.assertThrows(IllegalInputException.class, () -> doCheckInput(txid, 0));
+    Exception e =
+        Assertions.assertThrows(IllegalInputException.class, () -> doCheckInput(txid, 0, POOL_FEE));
     Assertions.assertEquals("Input rejected (not a premix or whirlpool input)", e.getMessage());
   }
 
@@ -67,7 +69,7 @@ public class InputValidationServiceTest extends AbstractIntegrationTest {
 
     // accept when valid
     Assertions.assertTrue(hasMixTxid(txid, denomination)); // valid
-    Assertions.assertTrue(doCheckInput(txid, 0)); // liquidity
+    Assertions.assertTrue(doCheckInput(txid, 0, POOL_FEE)); // liquidity
   }
 
   private boolean hasMixTxid(String utxoHash, long denomination) {
@@ -141,7 +143,9 @@ public class InputValidationServiceTest extends AbstractIntegrationTest {
             IllegalInputException.class,
             () ->
                 doCheckInput(
-                    "b3557587f87bcbd37e847a0fff0ded013b23026f153d85f28cb5d407d39ef2f3", 2));
+                    "b3557587f87bcbd37e847a0fff0ded013b23026f153d85f28cb5d407d39ef2f3",
+                    2,
+                    POOL_FEE));
     Assertions.assertEquals(
         "Input rejected (invalid fee for tx0=b3557587f87bcbd37e847a0fff0ded013b23026f153d85f28cb5d407d39ef2f3, x=11, scodePayload=yes)",
         e.getMessage());
@@ -151,7 +155,7 @@ public class InputValidationServiceTest extends AbstractIntegrationTest {
   public void checkInput_feePayload_valid() throws Exception {
     // accept when valid feePayload
     setScodeConfig("myscode", (short) 12345, 0, null);
-    doCheckInput("b3557587f87bcbd37e847a0fff0ded013b23026f153d85f28cb5d407d39ef2f3", 2);
+    doCheckInput("b3557587f87bcbd37e847a0fff0ded013b23026f153d85f28cb5d407d39ef2f3", 2, POOL_FEE);
   }
 
   // TODO Make a working tests for tx0 cascading...
@@ -160,12 +164,7 @@ public class InputValidationServiceTest extends AbstractIntegrationTest {
     // TODO...
     setScodeConfig("cascading_scode", (short) 22222, 0, null);
     String txid = "024e83b1c9681831a79fa42f24d5ce415c0c03ec40f2134dd61e3af8b161a9e3"; // this tx throws "Invalid FeePayload version: 22800 vs 1"
-    doCheckInput(txid, 3);
-  }
-
-  private boolean doCheckInput(String utxoHash, long utxoIndex) throws NotifiableException {
-    PoolFee poolFee = new PoolFee(FEES_VALID, null);
-    return doCheckInput(utxoHash, utxoIndex, poolFee);
+    doCheckInput(txid, 3, POOL_FEE);
   }
 
   private boolean doCheckInput(String utxoHash, long utxoIndex, PoolFee poolFee)

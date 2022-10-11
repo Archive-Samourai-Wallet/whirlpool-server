@@ -1,9 +1,12 @@
 package com.samourai.whirlpool.server.controllers;
 
+import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
+
 import com.samourai.whirlpool.protocol.rest.Tx0DataRequestV2;
 import com.samourai.whirlpool.protocol.rest.Tx0DataResponseV2;
 import com.samourai.whirlpool.server.controllers.rest.Tx0Controller;
 import com.samourai.whirlpool.server.integration.AbstractIntegrationTest;
+import java.lang.invoke.MethodHandles;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,10 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-
-import java.lang.invoke.MethodHandles;
-
-import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public class Tx0ControllerTest extends AbstractIntegrationTest {

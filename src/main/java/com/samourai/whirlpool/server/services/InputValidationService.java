@@ -11,15 +11,14 @@ import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import com.samourai.whirlpool.server.exceptions.ServerErrorCode;
 import com.samourai.whirlpool.server.services.fee.WhirlpoolFeeData;
+import java.lang.invoke.MethodHandles;
+import java.util.List;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-
-import java.lang.invoke.MethodHandles;
-import java.util.List;
 
 @Service
 public class InputValidationService {
@@ -96,16 +95,10 @@ public class InputValidationService {
       log.trace("Validating input: txid=" + tx.getHashAsString() + ", feeData={" + feeData + "}");
     }
 
+    Tx0Validation tx0Validation;
     try {
       // verify tx0
-      Tx0Validation tx0Validation = tx0ValidationService.validate(tx, txTime, poolFee, feeData);
-
-      WhirlpoolServerConfig.ScodeSamouraiFeeConfig scodeConfig = tx0Validation.getScodeConfig();
-      if (scodeConfig != null && scodeConfig.isCascading()) {
-        // check tx0 cascading
-        validateTx0Cascading(tx, txTime);
-      }
-      return false; // mustMix
+      tx0Validation = tx0ValidationService.validate(tx, txTime, poolFee, feeData);
     } catch (Exception e) {
       // invalid fees
       log.error(
@@ -126,21 +119,30 @@ public class InputValidationService {
               + (feeData.getScodePayload() != FeePayloadService.SCODE_PAYLOAD_NONE ? "yes" : "no")
               + ")");
     }
+
+    WhirlpoolServerConfig.ScodeSamouraiFeeConfig scodeConfig = tx0Validation.getScodeConfig();
+    if (scodeConfig != null && scodeConfig.isCascading()) {
+      // check tx0 cascading
+      try {
+        validateTx0Cascading(tx, txTime);
+      } catch (Exception e) {
+        log.error("Input rejected (invalid cascading for tx0=" + tx.getHashAsString(), e);
+        throw new IllegalInputException(
+            ServerErrorCode.INPUT_REJECTED,
+            "Input rejected (invalid cascading for tx0=" + tx.getHashAsString());
+      }
+    }
+    return false; // mustMix
   }
 
   protected void validateTx0Cascading(Transaction tx, long txTime) throws Exception {
     // cascading tx0 should only have 1 input (previous tx0 change)
     List<TransactionInput> txInputs = tx.getInputs();
     if (txInputs.size() != 1) {
-      log.error(
-          "Input rejected (invalid cascading for tx0="
-              + tx.getHashAsString()
-              + ")");
+      log.error("Input rejected (invalid inputs for cascading tx0=" + tx.getHashAsString() + ")");
       throw new IllegalInputException(
           ServerErrorCode.INPUT_REJECTED,
-          "Input rejected (invalid cascading for tx0="
-              + tx.getHashAsString()
-              + ")");
+          "Input rejected (invalid inputs for cascading tx0=" + tx.getHashAsString() + ")");
     }
 
     // check if parent tx is valid tx0
@@ -154,22 +156,29 @@ public class InputValidationService {
       parentRpcTx = blockchainDataService.getRpcTransaction(parentTxId).get();
 
       // get pool of parent tx
-      long mustMixValue = parentRpcTx.getTx().getOutputs().get(3).getValue().getValue(); // assumes 4th output is utxo to be mixed (might have to adjust this, might be 3rd, might not be static)
+      long mustMixValue =
+          parentRpcTx
+              .getTx()
+              .getOutputs()
+              .get(3)
+              .getValue()
+              .getValue(); // assumes 4th output is utxo to be mixed (might have to adjust this,
+      // might be 3rd, might not be static)
       parentTxPool = poolService.findByInputValue(mustMixValue, false).get();
     } catch (Exception e) {
       log.error(
-          "Input rejected (invalid cascading for tx0="
+          "Input rejected (no pool for cascading tx0="
               + tx.getHashAsString()
               + " --> invalid parent tx0="
               + parentTxId
-              +")");
+              + ")");
       throw new IllegalInputException(
           ServerErrorCode.INPUT_REJECTED,
-          "Input rejected (invalid cascading for tx0="
+          "Input rejected (no pool for cascading tx0="
               + tx.getHashAsString()
               + " --> invalid parent tx0="
               + parentTxId
-              +")");
+              + ")");
     }
 
     // validate parent tx0
@@ -179,28 +188,29 @@ public class InputValidationService {
       }
     } catch (Exception e) {
       log.error(
-          "Input rejected (invalid cascading for tx0="
+          "Input rejected (invalid cascading tx0="
               + tx.getHashAsString()
               + " --> invalid parent tx0="
               + parentRpcTx.getTx().getHashAsString()
               + " in pool="
               + parentTxPool
-              +")");
+              + ")");
       throw new IllegalInputException(
           ServerErrorCode.INPUT_REJECTED,
-          "Input rejected (invalid cascading for tx0="
+          "Input rejected (invalid cascading tx0="
               + tx.getHashAsString()
               + " --> invalid parent tx0="
               + parentRpcTx.getTx().getHashAsString()
               + " in pool="
               + parentTxPool
-              +")");
+              + ")");
     }
   }
 
   protected boolean isValidTx0(RpcTransaction tx, Pool pool) throws Exception {
     boolean hasMixTxid = false; // it's not a MIX tx
-    boolean isLiquidity = checkInputProvenance(tx.getTx(), tx.getTxTime(), pool.getPoolFee(), hasMixTxid);
+    boolean isLiquidity =
+        checkInputProvenance(tx.getTx(), tx.getTxTime(), pool.getPoolFee(), hasMixTxid);
     return !isLiquidity; // not a MIX
   }
 
