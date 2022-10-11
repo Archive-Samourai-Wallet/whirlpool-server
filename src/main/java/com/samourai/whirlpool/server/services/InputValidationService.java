@@ -126,10 +126,10 @@ public class InputValidationService {
       try {
         validateTx0Cascading(tx, txTime);
       } catch (Exception e) {
-        log.error("Input rejected (invalid cascading for tx0=" + tx.getHashAsString(), e);
+        log.error("Input rejected (invalid cascading for tx0=" + tx.getHashAsString() + ")", e);
         throw new IllegalInputException(
             ServerErrorCode.INPUT_REJECTED,
-            "Input rejected (invalid cascading for tx0=" + tx.getHashAsString());
+            "Input rejected (invalid cascading for tx0=" + tx.getHashAsString() + ")");
       }
     }
     return false; // mustMix
@@ -139,71 +139,30 @@ public class InputValidationService {
     // cascading tx0 should only have 1 input (previous tx0 change)
     List<TransactionInput> txInputs = tx.getInputs();
     if (txInputs.size() != 1) {
-      log.error("Input rejected (invalid inputs for cascading tx0=" + tx.getHashAsString() + ")");
-      throw new IllegalInputException(
-          ServerErrorCode.INPUT_REJECTED,
-          "Input rejected (invalid inputs for cascading tx0=" + tx.getHashAsString() + ")");
+      throw new Exception("Invalid inputs.size for cascading tx0=" + tx.getHashAsString() + ")");
     }
 
     // check if parent tx is valid tx0
-    RpcTransaction parentRpcTx;
-    String parentTxId = "";
-    Pool parentTxPool;
-    try {
-      parentTxId = tx.getInput(0).getOutpoint().getHash().toString();
+    String parentTxId = tx.getInput(0).getOutpoint().getHash().toString();
 
-      // get rpc tx of parent tx
-      parentRpcTx = blockchainDataService.getRpcTransaction(parentTxId).get();
-
-      // get pool of parent tx
-      long mustMixValue =
-          parentRpcTx
-              .getTx()
-              .getOutputs()
-              .get(3)
-              .getValue()
-              .getValue(); // assumes 4th output is utxo to be mixed (might have to adjust this,
-      // might be 3rd, might not be static)
-      parentTxPool = poolService.findByInputValue(mustMixValue, false).get();
-    } catch (Exception e) {
-      log.error(
-          "Input rejected (no pool for cascading tx0="
-              + tx.getHashAsString()
-              + " --> invalid parent tx0="
-              + parentTxId
-              + ")");
-      throw new IllegalInputException(
-          ServerErrorCode.INPUT_REJECTED,
-          "Input rejected (no pool for cascading tx0="
-              + tx.getHashAsString()
-              + " --> invalid parent tx0="
-              + parentTxId
-              + ")");
+    // get rpc tx of parent tx
+    RpcTransaction parentRpcTx = blockchainDataService.getRpcTransaction(parentTxId).get();
+    int FIRST_MUSTMIX_OUTPUT_INDEX = 3; // TODO assumes 4th output is utxo to be mixed
+    if (parentRpcTx.getTx().getOutputs().size() < (FIRST_MUSTMIX_OUTPUT_INDEX + 1)) {
+      throw new Exception("Invalid outputs.size for parentTx=" + parentTxId + ")");
     }
 
+    // get pool of parent tx
+    long mustMixValue =
+        parentRpcTx.getTx().getOutputs().get(FIRST_MUSTMIX_OUTPUT_INDEX).getValue().getValue();
+    Pool parentTxPool =
+        poolService
+            .findByInputValue(mustMixValue, false)
+            .orElseThrow(() -> new Exception("No pool found for parentTx=" + parentTxId + ")"));
+
     // validate parent tx0
-    try {
-      if (!isValidTx0(parentRpcTx, parentTxPool)) {
-        throw new Exception("Parent tx0 is not valid");
-      }
-    } catch (Exception e) {
-      log.error(
-          "Input rejected (invalid cascading tx0="
-              + tx.getHashAsString()
-              + " --> invalid parent tx0="
-              + parentRpcTx.getTx().getHashAsString()
-              + " in pool="
-              + parentTxPool
-              + ")");
-      throw new IllegalInputException(
-          ServerErrorCode.INPUT_REJECTED,
-          "Input rejected (invalid cascading tx0="
-              + tx.getHashAsString()
-              + " --> invalid parent tx0="
-              + parentRpcTx.getTx().getHashAsString()
-              + " in pool="
-              + parentTxPool
-              + ")");
+    if (!isValidTx0(parentRpcTx, parentTxPool)) {
+      throw new Exception("Not a valid tx0 for parentTx=" + parentTxId);
     }
   }
 
