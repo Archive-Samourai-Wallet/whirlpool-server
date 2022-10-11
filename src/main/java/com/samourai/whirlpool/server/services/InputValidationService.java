@@ -11,21 +11,15 @@ import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import com.samourai.whirlpool.server.exceptions.ServerErrorCode;
 import com.samourai.whirlpool.server.services.fee.WhirlpoolFeeData;
-import java.lang.invoke.MethodHandles;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-
-import com.samourai.whirlpool.server.services.rpc.RpcClientService;
-import com.samourai.whirlpool.server.services.rpc.RpcRawTransactionResponse;
 import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionInput;
-import org.bitcoinj.core.TransactionOutPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+
+import java.lang.invoke.MethodHandles;
+import java.util.List;
 
 @Service
 public class InputValidationService {
@@ -34,26 +28,21 @@ public class InputValidationService {
   private WhirlpoolServerConfig whirlpoolServerConfig;
   private CryptoService cryptoService;
   private MessageSignUtilGeneric messageSignUtil;
-  private RpcClientService rpcClientService;
+  private BlockchainDataService blockchainDataService;
   private PoolService poolService;
-
-  private static final String POOL_50M = "0.5btc";
-  private static final String POOL_5M = "0.05btc";
-  private static final String POOL_1M = "0.01btc";
-  private static final String POOL_100K = "0.001btc";
 
   public InputValidationService(
       Tx0ValidationService tx0ValidationService,
       WhirlpoolServerConfig whirlpoolServerConfig,
       CryptoService cryptoService,
       MessageSignUtilGeneric messageSignUtil,
-      RpcClientService rpcClientService,
+      BlockchainDataService blockchainDataService,
       PoolService poolService) {
     this.tx0ValidationService = tx0ValidationService;
     this.whirlpoolServerConfig = whirlpoolServerConfig;
     this.cryptoService = cryptoService;
     this.messageSignUtil = messageSignUtil;
-    this.rpcClientService = rpcClientService;
+    this.blockchainDataService = blockchainDataService;
     this.poolService = poolService;
   }
 
@@ -157,17 +146,16 @@ public class InputValidationService {
     // check if parent tx is valid tx0
     RpcTransaction parentRpcTx;
     String parentTxId = "";
-    long parentTxPool = 0;
+    Pool parentTxPool;
     try {
       parentTxId = tx.getInput(0).getOutpoint().getHash().toString();
 
       // get rpc tx of parent tx
-      parentRpcTx = new RpcTransaction(
-          rpcClientService.getRawTransaction(parentTxId).get(),
-          cryptoService.getNetworkParameters());
+      parentRpcTx = blockchainDataService.getRpcTransaction(parentTxId).get();
 
       // get pool of parent tx
-      parentTxPool = parentRpcTx.getTx().getOutputs().get(3).getValue().getValue(); // assumes 4th output is utxo to be mixed (might have to adjust this, might be 3rd, might not be static)
+      long mustMixValue = parentRpcTx.getTx().getOutputs().get(3).getValue().getValue(); // assumes 4th output is utxo to be mixed (might have to adjust this, might be 3rd, might not be static)
+      parentTxPool = poolService.findByInputValue(mustMixValue, false).get();
     } catch (Exception e) {
       log.error(
           "Input rejected (invalid cascading for tx0="
@@ -182,28 +170,13 @@ public class InputValidationService {
               + " --> invalid parent tx0="
               + parentTxId
               +")");
-    }
-
-    Pool pool;
-    if (parentTxPool > 50000000) {
-      pool = poolService.getPool(POOL_50M);
-    } else if (parentTxPool > 5000000) {
-      pool = poolService.getPool(POOL_5M);
-    } else if (parentTxPool > 1000000) {
-      pool = poolService.getPool(POOL_1M);
-    } else if (parentTxPool > 100000) {
-      pool = poolService.getPool(POOL_100K);
-    } else {
-      throw new IllegalInputException(
-          ServerErrorCode.INPUT_REJECTED,
-          "Input rejected (pool size not found for parent tx0="
-              + parentTxId
-              + ")");
     }
 
     // validate parent tx0
     try {
-      isValidTx0(parentRpcTx, pool);
+      if (!isValidTx0(parentRpcTx, parentTxPool)) {
+        throw new Exception("Parent tx0 is not valid");
+      }
     } catch (Exception e) {
       log.error(
           "Input rejected (invalid cascading for tx0="
@@ -211,7 +184,7 @@ public class InputValidationService {
               + " --> invalid parent tx0="
               + parentRpcTx.getTx().getHashAsString()
               + " in pool="
-              + pool
+              + parentTxPool
               +")");
       throw new IllegalInputException(
           ServerErrorCode.INPUT_REJECTED,
@@ -220,7 +193,7 @@ public class InputValidationService {
               + " --> invalid parent tx0="
               + parentRpcTx.getTx().getHashAsString()
               + " in pool="
-              + pool
+              + parentTxPool
               +")");
     }
   }
