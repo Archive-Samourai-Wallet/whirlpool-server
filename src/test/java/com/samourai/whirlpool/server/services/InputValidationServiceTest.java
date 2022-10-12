@@ -233,7 +233,7 @@ public class InputValidationServiceTest extends AbstractIntegrationTest {
 
   @Test
   public void checkInput_cascading_invalid_2() throws Exception {
-    // this fake cascading TX0 uses CASCADING scode but input#0 is not a parent TX0.
+    // these fake cascading TX0s use CASCADING scode but input#0 is not a parent TX0.
     /*
     fa39e6d6d27d4d2fb40c0771b9937528acc6f7b80894e2ba42842fe7417d5e2c
      in    0.02048008 BTC
@@ -263,6 +263,45 @@ public class InputValidationServiceTest extends AbstractIntegrationTest {
     } catch (IllegalInputException e) {
       Assertions.assertEquals(
           "Input rejected (invalid cascading for tx0=fa39e6d6d27d4d2fb40c0771b9937528acc6f7b80894e2ba42842fe7417d5e2c)",
+          e.getMessage());
+    }
+
+
+    /*
+    024e83b1c9681831a79fa42f24d5ce415c0c03ec40f2134dd61e3af8b161a9e3
+     in    0.01650948 BTC
+          outpoint:12c7ea3bef2db0f3d5f59b5e71c240c10dbf7747f417db6c79fe6bf287e83338:0
+     out  RETURN PUSHDATA1[2a0de72b49f73828c8dfd1bf9ead5ab2ad8746b2127f7ee721d050c5ba1953c8ffeeabf77157dccd9c3dc7f5b83402252aa688a079a1fd3a4243a558dfa856f4afb66c2951e644403d766f020ac7a001] 0.00 BTC
+     out  0[] PUSHDATA(20)[cc74b026a280e55d3dd5fac329f70aa2fe5d7d31] 0.00004000 BTC
+     out  0[] PUSHDATA(20)[193030f6e91fcedc31fa84da240776f8f32e5e68] 0.00041985 BTC
+     out  0[] PUSHDATA(20)[0334c6d05d054233c645f3a44b6068fcc6b63e91] 0.00100262 BTC
+     out  0[] PUSHDATA(20)[183c0467bc3510d60f93ea7d70b7afd0f789c48a] 0.00100262 BTC
+     out  0[] PUSHDATA(20)[1ce1352fbb0e3f8098d812c96d9c0e0d7dda55b0] 0.00100262 BTC
+     out  0[] PUSHDATA(20)[3d0c8616aaf68caa52da7eaa693010d5740512e0] 0.00100262 BTC
+     out  0[] PUSHDATA(20)[462631410ee8937acf907daa56fabecddceb0570] 0.00100262 BTC
+     out  0[] PUSHDATA(20)[476d5f080faae42e41e57b047abe47f54e76bae1] 0.00100262 BTC
+     out  0[] PUSHDATA(20)[6396e374b9af0de2016911534f025af3c3398f52] 0.00100262 BTC
+     out  0[] PUSHDATA(20)[641b0da8819d88bd105492a787a8e8167e0b1473] 0.00100262 BTC
+     out  0[] PUSHDATA(20)[7059c98e2f7c6113c28d03db3be950187f07d703] 0.00100262 BTC
+     out  0[] PUSHDATA(20)[73cee6cbd7ac8a081070aaf4a19456057562b3ff] 0.00100262 BTC
+     out  0[] PUSHDATA(20)[8b77cc648ef1e2ad85f6475c86f892dfbab88f9d] 0.00100262 BTC
+     out  0[] PUSHDATA(20)[91b6e7342ead4f1e4e47ec1c29172a92be6bbf83] 0.00100262 BTC
+     out  0[] PUSHDATA(20)[abb32425cc7ff5494f4c22dba4ec547b8eaedc89] 0.00100262 BTC
+     out  0[] PUSHDATA(20)[baf4dd8df648b02d830bd4a9afea20bc568f314a] 0.00100262 BTC
+     out  0[] PUSHDATA(20)[bc44825dcf7d0c69e56d9c3fd7bd4b96171a2e28] 0.00100262 BTC
+     out  0[] PUSHDATA(20)[e93c005ec50cf7c038cbaac327a93a5fac741a7c] 0.00100262 BTC
+    */
+
+    // check initial TX0
+    try {
+      doCheckInput(
+          "024e83b1c9681831a79fa42f24d5ce415c0c03ec40f2134dd61e3af8b161a9e3",
+          2,
+          new PoolFee(5000, null));
+      Assertions.assertTrue(false);
+    } catch (IllegalInputException e) {
+      Assertions.assertEquals(
+          "Input rejected (invalid cascading for tx0=024e83b1c9681831a79fa42f24d5ce415c0c03ec40f2134dd61e3af8b161a9e3)",
           e.getMessage());
     }
   }
