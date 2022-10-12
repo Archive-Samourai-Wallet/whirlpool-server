@@ -10,7 +10,7 @@ import org.bouncycastle.util.encoders.Base64;
 
 public class ECKeyUtils {
   // adapted from bitcoinj.Utils.formatMessageForSigning(String) to format byte[]
-  private static byte[] formatMessageForSigning(byte[] messageBytes) {
+  public static byte[] formatMessageForSigning(byte[] messageBytes) {
     try {
       ByteArrayOutputStream bos = new ByteArrayOutputStream();
       bos.write(org.bitcoinj.core.Utils.BITCOIN_SIGNED_MESSAGE_HEADER_BYTES.length);
@@ -25,8 +25,7 @@ public class ECKeyUtils {
   }
 
   // adapted from ECKey.signMessage(String) to sign byte[] for Straylight
-  public static String signMessage(ECKey ecKey, byte[] message) throws Exception {
-    Sha256Hash hash = Sha256Hash.twiceOf(formatMessageForSigning(message));
+  public static String signMessage(ECKey ecKey, Sha256Hash hash) throws Exception {
     ECKey.ECDSASignature sig = ecKey.sign(hash);
 
     int recId = -1;

@@ -8,6 +8,7 @@ import com.samourai.wallet.hd.HD_WalletFactoryGeneric;
 import com.samourai.wallet.segwit.bech32.Bech32UtilGeneric;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.server.beans.RegisteredInput;
+import com.samourai.whirlpool.server.beans.TxOutSignature;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.services.rpc.JSONRpcClientServiceImpl;
@@ -19,10 +20,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import org.apache.commons.text.CharacterPredicates;
 import org.apache.commons.text.RandomStringGenerator;
-import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.TransactionOutput;
-import org.bitcoinj.core.TransactionWitness;
+import org.bitcoinj.core.*;
 import org.bitcoinj.script.Script;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -174,22 +172,23 @@ public class Utils {
     return bip44wallet.getAddressAt(0, 0, 0);
   }
 
-  public static String signTransactionOutput(
+  public static TxOutSignature signTransactionOutput(
       String feeAddress,
       long feeValue,
       NetworkParameters params,
       WhirlpoolServerConfig.SecretWalletConfig secretWalletConfig)
       throws Exception {
     HD_Address signingAddress = computeSigningAddress(secretWalletConfig, params);
-    if (log.isDebugEnabled()) {
-      log.debug("signing address: " + signingAddress.getAddressString());
-    }
     return signTransactionOutput(feeAddress, feeValue, params, signingAddress.getECKey());
   }
 
-  public static String signTransactionOutput(
+  public static TxOutSignature signTransactionOutput(
       String feeAddress, long feeValue, NetworkParameters params, ECKey ecKey) throws Exception {
+    String signingAddress = BIP_FORMAT.LEGACY.getToAddress(ecKey, params);
     byte[] feeOutputSerialized = serializeTransactionOutput(feeAddress, feeValue, params);
-    return ECKeyUtils.signMessage(ecKey, feeOutputSerialized);
+    Sha256Hash preHash =
+        Sha256Hash.twiceOf(ECKeyUtils.formatMessageForSigning(feeOutputSerialized));
+    String signature = ECKeyUtils.signMessage(ecKey, preHash);
+    return new TxOutSignature(signingAddress, preHash.toString(), signature);
   }
 }
