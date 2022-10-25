@@ -301,6 +301,7 @@ public abstract class AbstractIntegrationTest {
         new WhirlpoolWalletConfig(
             dataSourceFactory,
             SecretPointFactoryJava.getInstance(),
+            null,
             multiUsageHttpClientService,
             null,
             null,

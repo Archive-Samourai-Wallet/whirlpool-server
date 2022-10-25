@@ -6,6 +6,7 @@ import com.samourai.wallet.hd.HD_Address;
 import com.samourai.wallet.hd.HD_Wallet;
 import com.samourai.wallet.hd.HD_WalletFactoryGeneric;
 import com.samourai.wallet.segwit.bech32.Bech32UtilGeneric;
+import com.samourai.wallet.util.MessageSignUtilGeneric;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.beans.TxOutSignature;
@@ -162,7 +163,7 @@ public class Utils {
     return txOut.bitcoinSerialize();
   }
 
-  private static HD_Address computeSigningAddress(
+  public static HD_Address computeSigningAddress(
       WhirlpoolServerConfig.SecretWalletConfig secretWalletConfig, NetworkParameters params)
       throws Exception {
     HD_Wallet bip44wallet =
@@ -190,5 +191,17 @@ public class Utils {
         Sha256Hash.twiceOf(ECKeyUtils.formatMessageForSigning(feeOutputSerialized));
     String signature = ECKeyUtils.signMessage(ecKey, preHash);
     return new TxOutSignature(signingAddress, preHash.toString(), signature);
+  }
+
+  public static String signMessage(
+      WhirlpoolServerConfig.SecretWalletConfig secretWalletConfig,
+      NetworkParameters params,
+      String payload)
+      throws Exception {
+    HD_Address signingAddress = computeSigningAddress(secretWalletConfig, params);
+    if (log.isDebugEnabled()) {
+      log.debug("signing address: " + signingAddress.getAddressString());
+    }
+    return MessageSignUtilGeneric.getInstance().signMessage(signingAddress.getECKey(), payload);
   }
 }

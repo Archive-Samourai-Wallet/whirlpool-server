@@ -5,11 +5,13 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 import com.samourai.wallet.util.PrivKeyReader;
 import com.samourai.whirlpool.server.beans.ConfirmedInput;
 import com.samourai.whirlpool.server.beans.TxOutSignature;
+import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.integration.AbstractIntegrationTest;
 import java.lang.invoke.MethodHandles;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.params.MainNetParams;
+import org.bitcoinj.params.TestNet3Params;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -64,7 +66,8 @@ public class UtilsTest extends AbstractIntegrationTest {
         Utils.signTransactionOutput(
             "bc1q8yxgcltjgu6zekqspuhk7acdvht8pevwal23ye", 42500, params, ecKey);
     Assertions.assertEquals("1PWJ3QckGV921bZrrMwQXokhxXsUrKD3wt", tos.signingAddress);
-    Assertions.assertEquals("8e27a1795f45b0a8c87b5ea4a77cd0dfd57e58cdb724fced5db1cdf8f6f23ca3", tos.preHash);
+    Assertions.assertEquals(
+        "8e27a1795f45b0a8c87b5ea4a77cd0dfd57e58cdb724fced5db1cdf8f6f23ca3", tos.preHash);
     Assertions.assertEquals(
         "H1wBU1SJnkQ8K4QDn36TVQ9xYwKbF0zh2Ooqd+pKxqdrEiG7uWDGIFSNKyJanwlNFcB1XWrdhp+hyAYucTyPxM0=",
         tos.signature);
@@ -79,9 +82,34 @@ public class UtilsTest extends AbstractIntegrationTest {
             params,
             serverConfig.getSigningWallet());
     Assertions.assertEquals("mi42XN9J3eLdZae4tjQnJnVkCcNDRuAtz4", tos.signingAddress);
-    Assertions.assertEquals("41ac962525d867004e034ce22327c8ea5f5c57ea96e39502339c146fc306556c", tos.preHash);
+    Assertions.assertEquals(
+        "41ac962525d867004e034ce22327c8ea5f5c57ea96e39502339c146fc306556c", tos.preHash);
     Assertions.assertEquals(
         "H+LHNMd4uOy5Nr/iMQqW+4IifA5v7WPQFnoxuoBQw0++aMFfeuYl1PFUXnKHqqotYg8oDvtcpA0ZhwGS+suGPAU=",
         tos.signature);
+  }
+
+  @Test
+  public void signMessage() throws Exception {
+    String message = "foo";
+    WhirlpoolServerConfig.SecretWalletConfig signingWallet = serverConfig.getSigningWallet();
+    String signingAddress = Utils.computeSigningAddress(signingWallet, params).getAddressString();
+    Assertions.assertEquals("mi42XN9J3eLdZae4tjQnJnVkCcNDRuAtz4", signingAddress);
+
+    String signature = Utils.signMessage(signingWallet, params, message);
+    Assertions.assertEquals(
+        "IOPYuUGGRACTiF8miDxEcVukQeORxK8wTo9tZc26R7hqSW11gwG8Zs32w4Q4pRtf3kV7bBfdItbXJaCA8mR9sEs=",
+        signature);
+
+    Assertions.assertTrue(
+        messageSignUtil.verifySignedMessage(signingAddress, message, signature, params));
+  }
+
+  @Test
+  public void computeSigningAddress() throws Exception {
+    NetworkParameters params = TestNet3Params.get();
+    WhirlpoolServerConfig.SecretWalletConfig signingWallet = serverConfig.getSigningWallet();
+    String signingAddress = Utils.computeSigningAddress(signingWallet, params).getAddressString();
+    Assertions.assertEquals("mi42XN9J3eLdZae4tjQnJnVkCcNDRuAtz4", signingAddress);
   }
 }
