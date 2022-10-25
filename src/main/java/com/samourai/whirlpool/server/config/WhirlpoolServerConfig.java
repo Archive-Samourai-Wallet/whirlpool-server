@@ -716,6 +716,9 @@ public class WhirlpoolServerConfig extends ServerConfig {
       if (payload == null || payload == 0) {
         throw new Exception("Invalid scode.payload");
       }
+      if (payload.equals(ScodeService.SCODE_CASCADING_PAYLOAD)) {
+        throw new Exception("Invalid scode.payload: value is reserved for CASCADING");
+      }
       if (feeValuePercent == null || feeValuePercent < 0 || feeValuePercent > 99) {
         throw new Exception("Invalid scode.feeValuePercent");
       }
