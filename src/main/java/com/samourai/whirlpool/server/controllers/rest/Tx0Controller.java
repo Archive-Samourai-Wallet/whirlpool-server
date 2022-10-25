@@ -221,7 +221,7 @@ public class Tx0Controller extends AbstractRestController {
         message,
         feePayload64,
         feeAddress,
-        txOutSignature);
+        txOutSignature.signature);
   }
 
   private TxOutSignature computeFeeOutputSignature(String feeAddress, long feeValue)
