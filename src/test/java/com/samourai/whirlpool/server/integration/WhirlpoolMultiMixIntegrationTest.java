@@ -61,7 +61,7 @@ public class WhirlpoolMultiMixIntegrationTest extends AbstractIntegrationTest {
     // connect 2 clients
     log.info("# Connect 2 clients for first mix...");
     for (int i = 0; i < NB_CLIENTS_FIRST_MIX; i++) {
-      taskExecutor.execute(() -> multiClientManager.connectWithMockOrFail(false, cliConfig));
+      taskExecutor.execute(() -> multiClientManager.connectWithMockOrFail(false));
     }
 
     // all clients should have registered their outputs and signed

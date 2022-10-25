@@ -1,6 +1,5 @@
 package com.samourai.whirlpool.server.config;
 
-import com.samourai.http.client.HttpUsage;
 import com.samourai.javaserver.config.ServerServicesConfig;
 import com.samourai.javaserver.utils.ServerUtils;
 import com.samourai.javawsserver.config.JWSSConfig;
@@ -106,8 +105,7 @@ public class ServicesConfig extends ServerServicesConfig {
   @Bean
   XManagerClient xManagerClient(
       WhirlpoolServerConfig serverConfig, JavaHttpClientService httpClient) {
-    return new XManagerClient(
-        httpClient.getHttpClient(HttpUsage.COORDINATOR_REST), serverConfig.isTestnet(), false);
+    return new XManagerClient(httpClient.getHttpClient(), serverConfig.isTestnet(), false);
   }
 
   @Bean

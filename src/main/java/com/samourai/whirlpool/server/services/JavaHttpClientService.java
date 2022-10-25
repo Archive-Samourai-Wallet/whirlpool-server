@@ -1,8 +1,8 @@
 package com.samourai.whirlpool.server.services;
 
-import com.samourai.http.client.HttpUsage;
 import com.samourai.http.client.IHttpClientService;
-import com.samourai.http.client.JavaHttpClient;
+import com.samourai.http.client.JettyHttpClient;
+import com.samourai.whirlpool.client.utils.ClientUtils;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import java.lang.invoke.MethodHandles;
 import org.slf4j.Logger;
@@ -14,27 +14,26 @@ public class JavaHttpClientService implements IHttpClientService {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private WhirlpoolServerConfig config;
-  private JavaHttpClient httpClient;
+  private JettyHttpClient httpClient;
 
   public JavaHttpClientService(WhirlpoolServerConfig config) {
     this.config = config;
     this.httpClient = null;
   }
 
-  // httpUsage is useless for whirlpool-server
-  public JavaHttpClient getHttpClient(HttpUsage httpUsage) {
+  @Override
+  public JettyHttpClient getHttpClient() {
     if (httpClient == null) {
       if (log.isDebugEnabled()) {
         log.debug("+httpClient");
       }
-      httpClient = this.computeHttpClient(httpUsage);
+      httpClient = this.computeHttpClient();
     }
-
     return httpClient;
   }
 
-  private JavaHttpClient computeHttpClient(HttpUsage httpUsage) {
-    return new JavaHttpClient(this.config.getRequestTimeout(), null, httpUsage);
+  private JettyHttpClient computeHttpClient() {
+    return new JettyHttpClient(this.config.getRequestTimeout(), null, ClientUtils.USER_AGENT);
   }
 
   @Override

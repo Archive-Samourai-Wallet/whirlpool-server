@@ -10,6 +10,7 @@ import com.samourai.whirlpool.protocol.rest.Tx0DataResponseV2;
 import com.samourai.whirlpool.server.beans.Partner;
 import com.samourai.whirlpool.server.beans.Pool;
 import com.samourai.whirlpool.server.beans.PoolFee;
+import com.samourai.whirlpool.server.beans.TxOutSignature;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.services.*;
@@ -207,14 +208,14 @@ public class Tx0Controller extends AbstractRestController {
               + ", feeIndex="
               + feeIndex
               + ", feeAddress="
-              + (feeAddress != null ? feeAddress : "")
+              + (feeAddress != null ? feeAddress : "null")
               + ", partnerId="
               + partner.getId()
               + ", opReturnV0="
               + opReturnV0);
     }
     String feePaymentCode = tx0ValidationService.getFeePaymentCode(opReturnV0);
-    String feeOutputSignature =
+    TxOutSignature txOutSignature =
         feeAddress != null ? computeFeeOutputSignature(feeAddress, feeValue) : null;
     return new Tx0DataResponseV2.Tx0Data(
         poolId,
@@ -225,14 +226,21 @@ public class Tx0Controller extends AbstractRestController {
         message,
         feePayload64,
         feeAddress,
-        feeOutputSignature);
+        txOutSignature);
   }
 
-  private String computeFeeOutputSignature(String feeAddress, long feeValue) throws Exception {
-    String feeOutputSerialized =
-        Utils.serializeTransactionOutput(feeAddress, feeValue, serverConfig.getNetworkParameters());
-    return Utils.sign(
-        serverConfig.getSigningWallet(), serverConfig.getNetworkParameters(), feeOutputSerialized);
+  private TxOutSignature computeFeeOutputSignature(String feeAddress, long feeValue)
+      throws Exception {
+    TxOutSignature txOutSignature =
+        Utils.signTransactionOutput(
+            feeAddress,
+            feeValue,
+            serverConfig.getNetworkParameters(),
+            serverConfig.getSigningWallet());
+    if (log.isDebugEnabled()) {
+      log.debug("feeAddress=" + feeAddress + ", feeValue=" + feeValue + ", " + txOutSignature);
+    }
+    return txOutSignature;
   }
 
   // OpReturnImplV0 as Tx0DataResponseV1

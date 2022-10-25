@@ -4,16 +4,11 @@ import com.samourai.wallet.bipWallet.BipWallet;
 import com.samourai.wallet.hd.BIP_WALLET;
 import com.samourai.wallet.segwit.SegwitAddress;
 import com.samourai.wallet.util.TxUtil;
-import com.samourai.whirlpool.cli.config.CliConfig;
-import com.samourai.whirlpool.cli.services.CliTorClientService;
-import com.samourai.whirlpool.cli.services.JavaHttpClientService;
-import com.samourai.whirlpool.cli.services.JavaStompClientService;
 import com.samourai.whirlpool.client.WhirlpoolClient;
 import com.samourai.whirlpool.client.mix.MixParams;
 import com.samourai.whirlpool.client.mix.handler.*;
 import com.samourai.whirlpool.client.wallet.beans.IndexRange;
 import com.samourai.whirlpool.client.wallet.data.chain.ChainSupplier;
-import com.samourai.whirlpool.client.whirlpool.ServerApi;
 import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientConfig;
 import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientImpl;
 import com.samourai.whirlpool.protocol.websocket.notifications.MixStatus;
@@ -24,6 +19,7 @@ import com.samourai.whirlpool.server.beans.rpc.RpcTransaction;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.services.BlockchainDataService;
 import com.samourai.whirlpool.server.services.CryptoService;
+import com.samourai.whirlpool.server.services.WhirlpoolClientService;
 import com.samourai.whirlpool.server.services.rpc.MockRpcClientServiceImpl;
 import java.lang.invoke.MethodHandles;
 import org.bitcoinj.core.ECKey;
@@ -40,6 +36,7 @@ public class AssertMultiClientManager extends MultiClientManager {
   private CryptoService cryptoService;
   private MockRpcClientServiceImpl rpcClientService;
   private BlockchainDataService blockchainDataService;
+  private WhirlpoolClientService whirlpoolClientService;
   private int port;
 
   private Mix mix;
@@ -56,6 +53,7 @@ public class AssertMultiClientManager extends MultiClientManager {
       CryptoService cryptoService,
       MockRpcClientServiceImpl rpcClientService,
       BlockchainDataService blockchainDataService,
+      WhirlpoolClientService whirlpoolClientService,
       int port,
       NetworkParameters params) {
     this.mix = mix;
@@ -63,6 +61,7 @@ public class AssertMultiClientManager extends MultiClientManager {
     this.cryptoService = cryptoService;
     this.rpcClientService = rpcClientService;
     this.blockchainDataService = blockchainDataService;
+    this.whirlpoolClientService = whirlpoolClientService;
     this.port = port;
 
     inputs = new TxOutPoint[nbClients];
@@ -71,27 +70,17 @@ public class AssertMultiClientManager extends MultiClientManager {
     this.params = params;
   }
 
-  private WhirlpoolClient createClient(CliConfig cliConfig) {
-    String server = "http://127.0.0.1:" + port;
-    CliTorClientService cliTorClientService = new CliTorClientService(new CliConfig(null, null));
-    JavaHttpClientService httpClientService =
-        new JavaHttpClientService(cliTorClientService, cliConfig);
+  private WhirlpoolClient createClient() {
+    String serverUrl = "http://127.0.0.1:" + port;
     WhirlpoolClientConfig config =
-        new WhirlpoolClientConfig(
-            httpClientService,
-            new JavaStompClientService(httpClientService),
-            cliTorClientService,
-            new ServerApi(server, httpClientService),
-            null,
-            cryptoService.getNetworkParameters(),
-            IndexRange.EVEN);
+        whirlpoolClientService.createWhirlpoolClientConfig(serverUrl, params);
     return new WhirlpoolClientImpl(config);
   }
 
-  private int prepareClientWithMock(long inputBalance, CliConfig cliConfig) throws Exception {
+  private int prepareClientWithMock(long inputBalance) throws Exception {
     SegwitAddress inputAddress = testUtils.generateSegwitAddress();
     BipWallet bip84Wallet = testUtils.generateWallet().getBip84Wallet(BIP_WALLET.DEPOSIT_BIP84);
-    return prepareClientWithMock(inputAddress, bip84Wallet, null, null, inputBalance, cliConfig);
+    return prepareClientWithMock(inputAddress, bip84Wallet, null, null, inputBalance);
   }
 
   private int prepareClientWithMock(
@@ -99,8 +88,7 @@ public class AssertMultiClientManager extends MultiClientManager {
       BipWallet bip84Wallet,
       Integer nbConfirmations,
       Integer utxoIndex,
-      long inputBalance,
-      CliConfig cliConfig)
+      long inputBalance)
       throws Exception {
 
     if (utxoIndex == null) {
@@ -114,13 +102,12 @@ public class AssertMultiClientManager extends MultiClientManager {
     TxOutPoint utxo = blockchainDataService.getOutPoint(rpcTransaction, utxoIndex).get();
     ECKey utxoKey = inputAddress.getECKey();
 
-    return prepareClient(utxo, utxoKey, bip84Wallet, cliConfig);
+    return prepareClient(utxo, utxoKey, bip84Wallet);
   }
 
-  private synchronized int prepareClient(
-      TxOutPoint utxo, ECKey utxoKey, BipWallet bip84Wallet, CliConfig cliConfig) {
+  private synchronized int prepareClient(TxOutPoint utxo, ECKey utxoKey, BipWallet bip84Wallet) {
     int i = clients.size();
-    register(createClient(cliConfig));
+    register(createClient());
     bip84Wallets[i] = bip84Wallet;
     inputs[i] = utxo;
     inputKeys[i] = utxoKey;
@@ -135,22 +122,22 @@ public class AssertMultiClientManager extends MultiClientManager {
     return premixBalanceMin;
   }
 
-  public void connectWithMockOrFail(boolean liquidity, CliConfig cliConfig) {
+  public void connectWithMockOrFail(boolean liquidity) {
     long premixBalanceMin = computePremixBalanceMin(liquidity);
-    connectWithMockOrFail(premixBalanceMin, cliConfig);
+    connectWithMockOrFail(premixBalanceMin);
   }
 
-  public void connectWithMockOrFail(long inputBalance, CliConfig cliConfig) {
+  public void connectWithMockOrFail(long inputBalance) {
     try {
-      connectWithMock(inputBalance, cliConfig);
+      connectWithMock(inputBalance);
     } catch (Exception e) {
       log.error("", e);
       Assertions.assertTrue(false);
     }
   }
 
-  public void connectWithMock(long inputBalance, CliConfig cliConfig) throws Exception {
-    int i = prepareClientWithMock(inputBalance, cliConfig);
+  public void connectWithMock(long inputBalance) throws Exception {
+    int i = prepareClientWithMock(inputBalance);
     whirlpool(i);
   }
 
@@ -159,17 +146,15 @@ public class AssertMultiClientManager extends MultiClientManager {
       BipWallet bip84Wallet,
       Integer nbConfirmations,
       Integer utxoIndex,
-      long inputBalance,
-      CliConfig cliConfig)
+      long inputBalance)
       throws Exception {
     int i =
-        prepareClientWithMock(
-            inputAddress, bip84Wallet, nbConfirmations, utxoIndex, inputBalance, cliConfig);
+        prepareClientWithMock(inputAddress, bip84Wallet, nbConfirmations, utxoIndex, inputBalance);
     whirlpool(i);
   }
 
-  public void connect(TxOutPoint utxo, ECKey utxoKey, BipWallet bip84Wallet, CliConfig cliConfig) {
-    int i = prepareClient(utxo, utxoKey, bip84Wallet, cliConfig);
+  public void connect(TxOutPoint utxo, ECKey utxoKey, BipWallet bip84Wallet) {
+    int i = prepareClient(utxo, utxoKey, bip84Wallet);
     whirlpool(i);
   }
 

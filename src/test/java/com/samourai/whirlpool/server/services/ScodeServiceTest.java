@@ -2,7 +2,6 @@ package com.samourai.whirlpool.server.services;
 
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
-import com.samourai.whirlpool.client.wallet.WhirlpoolWalletConfig;
 import com.samourai.whirlpool.server.integration.AbstractIntegrationTest;
 import java.lang.invoke.MethodHandles;
 import org.junit.jupiter.api.Assertions;
@@ -28,8 +27,6 @@ public class ScodeServiceTest extends AbstractIntegrationTest {
   private static final short SCODE_EXP_PAYLOAD = 3344;
   private static final long SCODE_EXP_EXPIRATION = System.currentTimeMillis();
 
-  private WhirlpoolWalletConfig whirlpoolWalletConfig;
-
   @BeforeEach
   @Override
   public void setUp() throws Exception {
@@ -42,8 +39,6 @@ public class ScodeServiceTest extends AbstractIntegrationTest {
     setScodeConfig(SCODE_MIN_50, SCODE_MIN_PAYLOAD, 50, null);
     setScodeConfig(SCODE_MAX_80, SCODE_MAX_PAYLOAD, 80, null);
     setScodeConfig(SCODE_EXP_90, SCODE_EXP_PAYLOAD, 90, SCODE_EXP_EXPIRATION);
-
-    whirlpoolWalletConfig = computeWhirlpoolWalletConfig();
   }
 
   @Test
