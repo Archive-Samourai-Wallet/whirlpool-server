@@ -57,7 +57,7 @@ public class TestUtils {
   }
 
   public SegwitAddress generateSegwitAddress() {
-    return cryptoTestUtil.generateSegwitAddress(cryptoService.getNetworkParameters());
+    return new SegwitAddress(new ECKey(), cryptoService.getNetworkParameters());
   }
 
   public BIP47WalletAndHDWallet generateWallet(byte[] seed, String passphrase) throws Exception {

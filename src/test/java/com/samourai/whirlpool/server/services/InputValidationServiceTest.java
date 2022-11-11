@@ -15,7 +15,9 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
+@ActiveProfiles("testInputValidation") // use specific config for secretWallet
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public class InputValidationServiceTest extends AbstractIntegrationTest {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -265,7 +267,6 @@ public class InputValidationServiceTest extends AbstractIntegrationTest {
           "Input rejected (invalid cascading for tx0=fa39e6d6d27d4d2fb40c0771b9937528acc6f7b80894e2ba42842fe7417d5e2c)",
           e.getMessage());
     }
-
 
     /*
     024e83b1c9681831a79fa42f24d5ce415c0c03ec40f2134dd61e3af8b161a9e3
