@@ -35,7 +35,7 @@ public class DexConfigController extends AbstractRestController {
           JSONUtils.getInstance().getObjectMapper().writeValueAsString(samouraiConfig);
       String signature =
           Utils.signMessage(
-              serverConfig.getDexConfigWallet(),
+              serverConfig.getSigningWallet(),
               serverConfig.getNetworkParameters(),
               samouraiConfigJson);
       dexConfigResponse = new DexConfigResponse(samouraiConfigJson, signature);
