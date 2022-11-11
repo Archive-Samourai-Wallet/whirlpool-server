@@ -15,12 +15,26 @@ public class ScodeService {
 
   private WhirlpoolServerConfig serverConfig;
 
+  private final WhirlpoolServerConfig.ScodeSamouraiFeeConfig SCODE_CASCADING;
+  public static final short SCODE_CASCADING_PAYLOAD = 22222; // reserved payload
+
   public ScodeService(WhirlpoolServerConfig serverConfig) throws Exception {
     this.serverConfig = serverConfig;
+
+    // instanciate cascading SCODE
+    this.SCODE_CASCADING = new WhirlpoolServerConfig.ScodeSamouraiFeeConfig();
+    SCODE_CASCADING.setExpiration(null);
+    SCODE_CASCADING.setFeeValuePercent(0);
+    SCODE_CASCADING.setPayload(SCODE_CASCADING_PAYLOAD);
   }
 
   protected WhirlpoolServerConfig.ScodeSamouraiFeeConfig getByPayload(
       short scodePayload, long tx0Time) {
+    // cascading
+    if (scodePayload == SCODE_CASCADING_PAYLOAD) {
+      return SCODE_CASCADING;
+    }
+
     // find
     Optional<Entry<String, WhirlpoolServerConfig.ScodeSamouraiFeeConfig>> feePayloadEntry =
         serverConfig.getSamouraiFees().getScodes().entrySet().stream()
@@ -53,5 +67,9 @@ public class ScodeService {
       return null;
     }
     return scodeConfig;
+  }
+
+  public WhirlpoolServerConfig.ScodeSamouraiFeeConfig getScodeCascading() {
+    return SCODE_CASCADING;
   }
 }

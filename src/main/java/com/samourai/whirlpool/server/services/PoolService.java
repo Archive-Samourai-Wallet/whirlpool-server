@@ -13,6 +13,7 @@ import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import com.samourai.whirlpool.server.exceptions.ServerErrorCode;
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -115,6 +116,15 @@ public class PoolService {
 
   public Collection<Pool> getPools() {
     return pools.values();
+  }
+
+  public Optional<Pool> findByInputValue(long inputValue, boolean liquidity) {
+    Comparator<Pool> comparatorPoolsByDenominationDesc =
+        Comparator.comparing(Pool::getDenomination).reversed();
+    return pools.values().stream()
+        .sorted(comparatorPoolsByDenominationDesc)
+        .filter(pool -> pool.checkInputBalance(inputValue, liquidity))
+        .findFirst();
   }
 
   public Pool getPool(String poolId) throws IllegalInputException {

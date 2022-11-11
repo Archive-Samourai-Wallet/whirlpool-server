@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>io.samourai.code.whirlpool</groupId>
 	<artifactId>whirlpool-server</artifactId>
-	<version>0.23.33-SNAPSHOT</version>
+	<version>0.23.34-SNAPSHOT</version>
 	<name>whirlpool-server</name>
 	<properties>
 		<spring-boot.version>2.6.2</spring-boot.version>
@@ -88,12 +88,12 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
-        <dependency><!-- last compatible for tests -->
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <version>1.4.198</version>
-            <scope>test</scope>
-        </dependency>
+		<dependency><!-- last compatible for tests -->
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<version>1.4.198</version>
+			<scope>test</scope>
+		</dependency>
 		<dependency>
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-core</artifactId>
@@ -131,16 +131,16 @@
 				</executions>
 			</plugin>
 			<plugin>
-					<groupId>com.coveo</groupId>
-					<artifactId>fmt-maven-plugin</artifactId>
-					<version>2.9</version>
-					<executions>
-							<execution>
-									<goals>
-											<goal>format</goal>
-									</goals>
-							</execution>
-					</executions>
+				<groupId>com.coveo</groupId>
+				<artifactId>fmt-maven-plugin</artifactId>
+				<version>2.9</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>format</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

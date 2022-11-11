@@ -114,8 +114,13 @@ public class Tx0Controller extends AbstractRestController {
               + opReturnV0);
     }
 
-    WhirlpoolServerConfig.ScodeSamouraiFeeConfig scodeConfig =
-        scodeService.getByScode(scode, System.currentTimeMillis());
+    WhirlpoolServerConfig.ScodeSamouraiFeeConfig scodeConfig = null;
+    if (tx0DataRequest.cascading) {
+      scodeConfig = scodeService.getScodeCascading();
+    } else {
+      scodeConfig = scodeService.getByScode(scode, System.currentTimeMillis());
+    }
+
     if (scodeConfig == null && scode != null) {
       log.warn("Tx0Data: Invalid SCODE: " + scode);
     }

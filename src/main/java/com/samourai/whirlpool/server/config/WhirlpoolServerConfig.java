@@ -5,6 +5,7 @@ import com.samourai.javaserver.exceptions.NotifiableException;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.server.beans.FailMode;
 import com.samourai.whirlpool.server.exceptions.ServerErrorCode;
+import com.samourai.whirlpool.server.services.ScodeService;
 import com.samourai.whirlpool.server.utils.Utils;
 import com.samourai.xmanager.protocol.XManagerService;
 import java.lang.invoke.MethodHandles;
@@ -706,6 +707,9 @@ public class WhirlpoolServerConfig extends ServerConfig {
       if (payload == null || payload == 0) {
         throw new Exception("Invalid scode.payload");
       }
+      if (payload.equals(ScodeService.SCODE_CASCADING_PAYLOAD)) {
+        throw new Exception("Invalid scode.payload: value is reserved for CASCADING");
+      }
       if (feeValuePercent == null || feeValuePercent < 0 || feeValuePercent > 99) {
         throw new Exception("Invalid scode.feeValuePercent");
       }
@@ -727,6 +731,10 @@ public class WhirlpoolServerConfig extends ServerConfig {
         }
       }
       return true;
+    }
+
+    public boolean isCascading() {
+      return payload.equals(ScodeService.SCODE_CASCADING_PAYLOAD);
     }
 
     public Short getPayload() {
