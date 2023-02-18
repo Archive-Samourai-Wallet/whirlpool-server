@@ -46,6 +46,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
   private PoolConfig[] pools;
   private long requestTimeout;
   private SecretWalletConfig signingWallet;
+  private String externalIp;
 
   public SamouraiFeeConfig getSamouraiFees() {
     return samouraiFees;
@@ -203,6 +204,14 @@ public class WhirlpoolServerConfig extends ServerConfig {
 
   public void setSigningWallet(SecretWalletConfig signingWallet) {
     this.signingWallet = signingWallet;
+  }
+
+  public String getExternalIp() {
+    return externalIp;
+  }
+
+  public void setExternalIp(String externalIp) {
+    this.externalIp = externalIp;
   }
 
   public static class RegisterInputConfig {

@@ -74,7 +74,7 @@ public class Tx0ValidationServiceV0Test extends AbstractIntegrationTest {
     tx0PreviewService =
         new Tx0PreviewService(new BasicMinerFeeSupplier(1, 9999), whirlpoolWalletConfig);
 
-    tx0Service = new Tx0Service(whirlpoolWalletConfig, tx0PreviewService, feeOpReturnImplV1);
+    tx0Service = new Tx0Service(params, tx0PreviewService, feeOpReturnImplV1);
   }
 
   private void assertFeeData(String txid, int feeIndice, short scodePayload) throws Exception {

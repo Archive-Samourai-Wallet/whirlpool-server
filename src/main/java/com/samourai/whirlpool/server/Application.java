@@ -59,6 +59,10 @@ public class Application extends ServerApplication {
     MinerFee minerFee = backendService.fetchMinerFee();
     log.info("Backend minerFee: " + minerFee._getMap());
 
+    // find externalIp
+    serverConfig.setExternalIp(Utils.findExternalIp());
+    log.info("External ip: " + serverConfig.getExternalIp());
+
     // log activity
     ActivityCsv activityCsv = new ActivityCsv("STARTUP", null, null, null, null, null);
     exportService.exportActivity(activityCsv);

@@ -1,6 +1,9 @@
 package com.samourai.whirlpool.server.utils;
 
 import com.samourai.javaserver.utils.ServerUtils;
+import com.samourai.wallet.bip47.rpc.BIP47Wallet;
+import com.samourai.wallet.bip47.rpc.PaymentCode;
+import com.samourai.wallet.bip47.rpc.java.Bip47UtilJava;
 import com.samourai.wallet.bipFormat.BIP_FORMAT;
 import com.samourai.wallet.hd.HD_Address;
 import com.samourai.wallet.hd.HD_Wallet;
@@ -16,6 +19,8 @@ import com.samourai.whirlpool.server.services.rpc.JSONRpcClientServiceImpl;
 import com.samourai.whirlpool.server.services.rpc.RpcClientService;
 import java.lang.invoke.MethodHandles;
 import java.math.BigDecimal;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -163,14 +168,26 @@ public class Utils {
     return txOut.bitcoinSerialize();
   }
 
+  public static PaymentCode computeSigningPaymentCode(
+      WhirlpoolServerConfig.SecretWalletConfig secretWalletConfig, NetworkParameters params)
+      throws Exception {
+    HD_Wallet bip44w = computeSigningBip44Wallet(secretWalletConfig, params);
+    BIP47Wallet bip47Wallet = new BIP47Wallet(bip44w);
+    return Bip47UtilJava.getInstance().getPaymentCode(bip47Wallet);
+  }
+
   public static HD_Address computeSigningAddress(
       WhirlpoolServerConfig.SecretWalletConfig secretWalletConfig, NetworkParameters params)
       throws Exception {
-    HD_Wallet bip44wallet =
-        HD_WalletFactoryGeneric.getInstance()
-            .restoreWallet(
-                secretWalletConfig.getWords(), secretWalletConfig.getPassphrase(), params);
-    return bip44wallet.getAddressAt(0, 0, 0);
+    HD_Wallet bip44w = computeSigningBip44Wallet(secretWalletConfig, params);
+    return bip44w.getAddressAt(0, 0, 0);
+  }
+
+  private static HD_Wallet computeSigningBip44Wallet(
+      WhirlpoolServerConfig.SecretWalletConfig secretWalletConfig, NetworkParameters params)
+      throws Exception {
+    return HD_WalletFactoryGeneric.getInstance()
+        .restoreWallet(secretWalletConfig.getWords(), secretWalletConfig.getPassphrase(), params);
   }
 
   public static TxOutSignature signTransactionOutput(
@@ -203,5 +220,12 @@ public class Utils {
       log.debug("signing address: " + signingAddress.getAddressString());
     }
     return MessageSignUtilGeneric.getInstance().signMessage(signingAddress.getECKey(), payload);
+  }
+
+  public static String findExternalIp() throws Exception {
+    try (final DatagramSocket datagramSocket = new DatagramSocket()) {
+      datagramSocket.connect(InetAddress.getByName("8.8.8.8"), 12345);
+      return datagramSocket.getLocalAddress().getHostAddress();
+    }
   }
 }

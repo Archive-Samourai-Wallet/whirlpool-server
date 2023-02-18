@@ -1,9 +1,9 @@
 package com.samourai.whirlpool.server.services;
 
 import com.samourai.wallet.api.backend.beans.WalletResponse;
+import com.samourai.wallet.chain.ChainSupplier;
 import com.samourai.wallet.segwit.bech32.Bech32UtilGeneric;
 import com.samourai.wallet.util.AsyncUtil;
-import com.samourai.whirlpool.client.wallet.data.chain.ChainSupplier;
 import com.samourai.whirlpool.server.beans.rpc.RpcTransaction;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
