@@ -168,11 +168,17 @@ public class Utils {
     return txOut.bitcoinSerialize();
   }
 
-  public static PaymentCode computeSigningPaymentCode(
+  public static BIP47Wallet computeSigningBip47Wallet(
       WhirlpoolServerConfig.SecretWalletConfig secretWalletConfig, NetworkParameters params)
       throws Exception {
     HD_Wallet bip44w = computeSigningBip44Wallet(secretWalletConfig, params);
-    BIP47Wallet bip47Wallet = new BIP47Wallet(bip44w);
+    return new BIP47Wallet(bip44w);
+  }
+
+  public static PaymentCode computeSigningPaymentCode(
+      WhirlpoolServerConfig.SecretWalletConfig secretWalletConfig, NetworkParameters params)
+      throws Exception {
+    BIP47Wallet bip47Wallet = computeSigningBip47Wallet(secretWalletConfig, params);
     return Bip47UtilJava.getInstance().getPaymentCode(bip47Wallet);
   }
 

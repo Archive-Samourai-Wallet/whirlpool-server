@@ -1,17 +1,22 @@
 package com.samourai.whirlpool.server.services;
 
 import com.samourai.javaserver.utils.ServerUtils;
+import com.samourai.soroban.client.RpcWallet;
+import com.samourai.soroban.client.RpcWalletImpl;
+import com.samourai.wallet.bip47.rpc.BIP47Wallet;
+import com.samourai.wallet.hd.HD_Wallet;
+import com.samourai.wallet.hd.HD_WalletFactoryGeneric;
 import com.samourai.whirlpool.client.WhirlpoolClient;
 import com.samourai.whirlpool.client.mix.MixParams;
 import com.samourai.whirlpool.client.mix.handler.*;
 import com.samourai.whirlpool.client.mix.listener.MixFailReason;
 import com.samourai.whirlpool.client.mix.listener.MixStep;
 import com.samourai.whirlpool.client.wallet.beans.WhirlpoolServer;
-import com.samourai.whirlpool.client.wallet.data.chain.ChainSupplier;
 import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientConfig;
 import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientImpl;
 import com.samourai.whirlpool.client.whirlpool.listener.WhirlpoolClientListener;
 import com.samourai.whirlpool.protocol.beans.Utxo;
+import com.samourai.whirlpool.server.beans.Pool;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -28,25 +33,36 @@ import org.springframework.stereotype.Service;
 @Service
 public class HealthService {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final String MOCK_SEED_WORDS = "all all all all all all all all all all all all";
+  private static final String MOCK_SEED_PASSPHRASE = "all";
   private WhirlpoolServerConfig whirlpoolServerConfig;
   private SimpUserRegistry simpUserRegistry;
   private String lastError;
   private WhirlpoolClientConfig whirlpoolClientConfig;
-  private BlockchainDataService blockchainDataService;
   private WhirlpoolClientService whirlpoolClientService;
+  private PoolService poolService;
+  private RpcWallet rpcWallet;
 
   @Autowired
   public HealthService(
       WhirlpoolServerConfig whirlpoolServerConfig,
       SimpUserRegistry simpUserRegistry,
-      BlockchainDataService blockchainDataService,
-      WhirlpoolClientService whirlpoolClientService) {
+      WhirlpoolClientService whirlpoolClientService,
+      PoolService poolService,
+      HD_WalletFactoryGeneric walletFactory)
+      throws Exception {
     this.whirlpoolServerConfig = whirlpoolServerConfig;
     this.simpUserRegistry = simpUserRegistry;
-    this.blockchainDataService = blockchainDataService;
     this.lastError = null;
     this.whirlpoolClientService = whirlpoolClientService;
+    this.poolService = poolService;
     this.whirlpoolClientConfig = null;
+
+    HD_Wallet hdw84 =
+        walletFactory.restoreWallet(
+            MOCK_SEED_WORDS, MOCK_SEED_PASSPHRASE, whirlpoolServerConfig.getNetworkParameters());
+    BIP47Wallet bip47Wallet = new BIP47Wallet(hdw84);
+    this.rpcWallet = new RpcWalletImpl(bip47Wallet);
   }
 
   @Scheduled(fixedDelay = 120000)
@@ -54,7 +70,12 @@ public class HealthService {
     try {
       WhirlpoolClientConfig config = computeWhirlpoolClientConfig();
       WhirlpoolClient whirlpoolClient = new WhirlpoolClientImpl(config);
-      MixParams mixParams = computeMixParams();
+      Pool pool = poolService.getPools().iterator().next();
+      UtxoWithBalance utxoWithBalance =
+          new UtxoWithBalance(
+              new Utxo(RegisterInputService.HEALTH_CHECK_UTXO, 0), pool.getDenomination());
+      MixParams mixParams =
+          whirlpoolClientService.computeMixParams(rpcWallet, pool, utxoWithBalance, new ECKey());
       WhirlpoolClientListener listener =
           new WhirlpoolClientListener() {
             @Override
@@ -101,7 +122,7 @@ public class HealthService {
     }
   }
 
-  private WhirlpoolClientConfig computeWhirlpoolClientConfig() {
+  private WhirlpoolClientConfig computeWhirlpoolClientConfig() throws Exception {
     if (whirlpoolClientConfig == null) {
       WhirlpoolServer whirlpoolServer =
           whirlpoolServerConfig.isTestnet() ? WhirlpoolServer.TESTNET : WhirlpoolServer.MAINNET;
@@ -110,42 +131,6 @@ public class HealthService {
       whirlpoolClientConfig = whirlpoolClientService.createWhirlpoolClientConfig(serverUrl, params);
     }
     return whirlpoolClientConfig;
-  }
-
-  private MixParams computeMixParams() {
-    WhirlpoolServerConfig.PoolConfig poolConfig = whirlpoolServerConfig.getPools()[0];
-    UtxoWithBalance utxoWithBalance =
-        new UtxoWithBalance(
-            new Utxo(RegisterInputService.HEALTH_CHECK_UTXO, 0), poolConfig.getDenomination());
-    IPremixHandler premixHandler = new PremixHandler(utxoWithBalance, new ECKey(), "healthCheck");
-    IPostmixHandler postmixHandler =
-        new IPostmixHandler() {
-          @Override
-          public MixDestination computeDestination() throws Exception {
-            return null;
-          }
-
-          @Override
-          public void onRegisterOutput() {}
-
-          @Override
-          public void onMixFail() {}
-
-          @Override
-          public MixDestination getDestination() {
-            return null;
-          }
-        };
-    ChainSupplier chainSupplier = blockchainDataService.computeChainSupplier();
-    MixParams mixParams =
-        new MixParams(
-            poolConfig.getId(),
-            poolConfig.getDenomination(),
-            null,
-            premixHandler,
-            postmixHandler,
-            chainSupplier);
-    return mixParams;
   }
 
   public String getLastError() {

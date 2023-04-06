@@ -6,6 +6,7 @@ import com.samourai.javawsserver.config.JWSSConfig;
 import com.samourai.wallet.api.explorer.ExplorerApi;
 import com.samourai.wallet.bip47.rpc.java.SecretPointFactoryJava;
 import com.samourai.wallet.bip47.rpc.secretPoint.ISecretPointFactory;
+import com.samourai.wallet.crypto.CryptoUtil;
 import com.samourai.wallet.hd.HD_WalletFactoryGeneric;
 import com.samourai.wallet.segwit.bech32.Bech32UtilGeneric;
 import com.samourai.wallet.util.CryptoTestUtil;
@@ -95,6 +96,11 @@ public class ServicesConfig extends ServerServicesConfig {
   @Bean
   CryptoTestUtil cryptoTestUtil() {
     return CryptoTestUtil.getInstance();
+  }
+
+  @Bean
+  CryptoUtil cryptoUtil() {
+    return CryptoUtil.getInstanceJava();
   }
 
   @Bean

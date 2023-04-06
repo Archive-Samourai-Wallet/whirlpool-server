@@ -413,7 +413,7 @@ public class Whirlpool5WalletsIntegrationTest extends AbstractIntegrationTest {
 
             final ECKey utxoKey = premixer.toPrivKeys.get(fromAddress);
             final SegwitAddress segwitAddress = new SegwitAddress(utxoKey, params);
-            final Script redeemScript = segwitAddress.segWitRedeemScript();
+            final Script redeemScript = segwitAddress.segwitRedeemScript();
 
             String toUtxo = expectedToUTXO.get(Hex.toHexString(redeemScript.getProgram()));
             String[] utxoHashSplit = toUtxo.split("-");

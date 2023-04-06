@@ -3,7 +3,6 @@ package com.samourai.whirlpool.server.services.rpc;
 import com.samourai.javaserver.utils.ServerUtils;
 import com.samourai.wallet.segwit.SegwitAddress;
 import com.samourai.wallet.segwit.bech32.Bech32UtilGeneric;
-import com.samourai.wallet.util.RandomUtil;
 import com.samourai.wallet.util.TxUtil;
 import com.samourai.whirlpool.server.beans.rpc.RpcTransaction;
 import com.samourai.whirlpool.server.services.CryptoService;
@@ -39,6 +38,7 @@ public class MockRpcClientServiceImpl implements RpcClientService {
 
   public static final int MOCK_TX_CONFIRMATIONS = 99;
   private static final long MOCK_TX_TIME = 900000;
+  private static final int MOCK_BLOCK_HEIGHT = 11223344;
 
   public MockRpcClientServiceImpl(CryptoService cryptoService, Bech32UtilGeneric bech32Util) {
     log.info("Instanciating MockRpcClientServiceImpl");
@@ -89,7 +89,7 @@ public class MockRpcClientServiceImpl implements RpcClientService {
 
   @Override
   public int getBlockHeight() {
-    return RandomUtil.random(999999, 999999999);
+    return MOCK_BLOCK_HEIGHT;
   }
 
   public void mock(String txid, String rawTxHex, int confirmations) {

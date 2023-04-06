@@ -1,6 +1,8 @@
 package com.samourai.whirlpool.server.beans;
 
+import com.samourai.wallet.bip47.rpc.PaymentCode;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
+import com.samourai.whirlpool.server.utils.Utils;
 
 public class RegisteredInput {
   private static final String IP_TOR = "127.0.0.1";
@@ -10,6 +12,8 @@ public class RegisteredInput {
   private TxOutPoint outPoint;
   private boolean liquidity;
   private String ip;
+  private PaymentCode sorobanPaymentCode; // null for non-Soroban clients
+  private Long sorobanHeartbeat; // last seen time on Soroban
   private String lastUserHash; // unknown until confirmInput attempt
 
   public RegisteredInput(
@@ -18,13 +22,19 @@ public class RegisteredInput {
       boolean liquidity,
       TxOutPoint outPoint,
       String ip,
+      PaymentCode sorobanPaymentCode,
       String lastUserHash) {
     this.poolId = poolId;
     this.username = username;
     this.liquidity = liquidity;
     this.outPoint = outPoint;
     this.ip = ip;
+    this.sorobanPaymentCode = sorobanPaymentCode;
     this.lastUserHash = lastUserHash;
+  }
+
+  public void setSorobanHeartBeat() {
+    this.sorobanHeartbeat = System.currentTimeMillis();
   }
 
   public long computeMinerFees(Pool pool) {
@@ -51,6 +61,14 @@ public class RegisteredInput {
     return ip;
   }
 
+  public boolean isSoroban() {
+    return sorobanPaymentCode != null;
+  }
+
+  public PaymentCode getSorobanPaymentCode() {
+    return sorobanPaymentCode;
+  }
+
   public String getLastUserHash() {
     return lastUserHash;
   }
@@ -66,16 +84,19 @@ public class RegisteredInput {
   @Override
   public String toString() {
     return "poolId="
-        + poolId
-        + ", outPoint="
-        + outPoint
-        + ", liquidity="
-        + liquidity
-        + ", username="
-        + username
-        + ", ip="
-        + ip
-        + ",lastUserHash="
-        + (lastUserHash != null ? lastUserHash : "null");
+                + poolId
+                + ", outPoint="
+                + outPoint
+                + ", liquidity="
+                + liquidity
+                + ", username="
+                + username
+                + ", ip="
+                + ip
+                + ", sorobanPaymentCode="
+                + Utils.obfuscateString(sorobanPaymentCode.toString(), 3)
+            != null
+        ? sorobanPaymentCode.toString()
+        : "null" + ",lastUserHash=" + (lastUserHash != null ? lastUserHash : "null");
   }
 }

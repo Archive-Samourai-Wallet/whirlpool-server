@@ -10,10 +10,12 @@ import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.services.BackendService;
 import com.samourai.whirlpool.server.services.ExportService;
 import com.samourai.whirlpool.server.services.rpc.RpcClientService;
+import com.samourai.whirlpool.server.services.soroban.SorobanCoordinatorService;
 import com.samourai.whirlpool.server.utils.Utils;
 import com.samourai.xmanager.client.XManagerClient;
 import com.samourai.xmanager.protocol.XManagerService;
 import com.samourai.xmanager.protocol.rest.AddressIndexResponse;
+import javax.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
@@ -38,6 +40,8 @@ public class Application extends ServerApplication {
   @Autowired private XManagerClient xManagerClient;
 
   @Autowired private BackendService backendService;
+
+  @Autowired private SorobanCoordinatorService sorobanCoordinatorService;
 
   public static void main(String[] args) {
     SpringApplication.run(Application.class, args);
@@ -85,5 +89,10 @@ public class Application extends ServerApplication {
         Level.ERROR.toString());
 
     LogbackUtils.setLogLevel("com.samourai.javawsserver.config", Level.INFO.toString());
+  }
+
+  @PreDestroy
+  public void preDestroy() {
+    sorobanCoordinatorService.stop();
   }
 }

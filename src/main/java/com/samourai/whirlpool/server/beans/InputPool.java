@@ -46,6 +46,11 @@ public class InputPool {
         .findFirst();
   }
 
+  public Optional<RegisteredInput> findByUtxo(String utxoHash, long utxoIndex) {
+    String key = Utils.computeInputId(utxoHash, utxoIndex);
+    return Optional.ofNullable(inputsById.get(key));
+  }
+
   public synchronized Optional<RegisteredInput> removeRandom(
       Predicate<Map.Entry<String, RegisteredInput>> filter) {
     List<String> eligibleInputIds =
@@ -68,12 +73,21 @@ public class InputPool {
   }
 
   public synchronized Optional<RegisteredInput> removeByUsername(String username) {
-    Optional<RegisteredInput> inputByUsername = findByUsername(username);
-    if (inputByUsername.isPresent()) {
-      String inputId = Utils.computeInputId(inputByUsername.get().getOutPoint());
+    Optional<RegisteredInput> input = findByUsername(username);
+    if (input.isPresent()) {
+      String inputId = Utils.computeInputId(input.get().getOutPoint());
       inputsById.remove(inputId);
     }
-    return inputByUsername;
+    return input;
+  }
+
+  public synchronized Optional<RegisteredInput> removeByUtxo(String utxoHash, long utxoIndex) {
+    Optional<RegisteredInput> input = findByUtxo(utxoHash, utxoIndex);
+    if (input.isPresent()) {
+      String inputId = Utils.computeInputId(input.get().getOutPoint());
+      inputsById.remove(inputId);
+    }
+    return input;
   }
 
   public synchronized Collection<RegisteredInput> clear() {
@@ -90,7 +104,7 @@ public class InputPool {
   // ------------
 
   public boolean hasInput(TxOutPoint outPoint) {
-    return inputsById.containsKey(Utils.computeInputId(outPoint));
+    return findByUtxo(outPoint.getHash(), outPoint.getIndex()).isPresent();
   }
 
   public boolean hasInputs() {

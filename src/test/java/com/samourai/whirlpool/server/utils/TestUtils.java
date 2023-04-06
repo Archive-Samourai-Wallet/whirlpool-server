@@ -2,6 +2,7 @@ package com.samourai.whirlpool.server.utils;
 
 import com.samourai.wallet.api.backend.beans.UnspentOutput;
 import com.samourai.wallet.bip47.rpc.BIP47Wallet;
+import com.samourai.wallet.bip47.rpc.PaymentCode;
 import com.samourai.wallet.hd.HD_Wallet;
 import com.samourai.wallet.hd.HD_WalletFactoryGeneric;
 import com.samourai.wallet.segwit.SegwitAddress;
@@ -76,6 +77,11 @@ public class TestUtils {
     return generateWallet(seed, "test");
   }
 
+  public PaymentCode generatePaymentCode() throws Exception {
+    BIP47Wallet bip47Wallet = generateWallet().getBip47Wallet();
+    return new PaymentCode(bip47Wallet.getAccount(0).getPaymentCode());
+  }
+
   public void assertPool(int nbMustMix, int nbLiquidity, Pool pool) {
     Assertions.assertEquals(nbMustMix, pool.getMustMixQueue().getSize());
     Assertions.assertEquals(nbLiquidity, pool.getLiquidityQueue().getSize());
@@ -125,7 +131,7 @@ public class TestUtils {
       String poolId, String utxoHash, long utxoIndex, boolean liquidity) {
     TxOutPoint outPoint = new TxOutPoint(utxoHash, utxoIndex, 1234, 99, null, "fakeReceiveAddress");
     RegisteredInput registeredInput =
-        new RegisteredInput(poolId, "foo", liquidity, outPoint, "127.0.0.1", null);
+        new RegisteredInput(poolId, "foo", liquidity, outPoint, "127.0.0.1", null, null);
     ConfirmedInput confirmedInput =
         new ConfirmedInput(registeredInput, "userHash" + utxoHash + utxoIndex);
     return confirmedInput;

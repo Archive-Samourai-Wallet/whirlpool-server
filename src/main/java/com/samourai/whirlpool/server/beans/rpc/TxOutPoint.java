@@ -1,5 +1,7 @@
 package com.samourai.whirlpool.server.beans.rpc;
 
+import com.samourai.whirlpool.client.mix.handler.UtxoWithBalance;
+import com.samourai.whirlpool.protocol.beans.Utxo;
 import com.samourai.whirlpool.server.utils.Utils;
 
 public class TxOutPoint {
@@ -51,6 +53,14 @@ public class TxOutPoint {
 
   public String toKey() {
     return Utils.computeInputId(this);
+  }
+
+  public Utxo toUtxo() {
+    return new Utxo(hash, index);
+  }
+
+  public UtxoWithBalance toUtxoWithBalance() {
+    return new UtxoWithBalance(toUtxo(), value);
   }
 
   @Override

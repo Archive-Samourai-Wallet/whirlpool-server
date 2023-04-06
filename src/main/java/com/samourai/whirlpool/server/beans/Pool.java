@@ -1,8 +1,11 @@
 package com.samourai.whirlpool.server.beans;
 
+import com.samourai.wallet.util.FeeUtil;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 
 public class Pool {
+  private static final FeeUtil feeUtil = FeeUtil.getInstance();
+
   private String poolId;
   private long denomination; // in satoshis
   private PoolFee poolFee;
@@ -11,6 +14,7 @@ public class Pool {
   private int anonymitySet;
   private int tx0MaxOutputs;
   private PoolMinerFee minerFee;
+  private int txSize;
 
   private Mix currentMix;
   private InputPool mustMixQueue;
@@ -33,6 +37,7 @@ public class Pool {
     this.anonymitySet = anonymitySet;
     this.tx0MaxOutputs = tx0MaxOutputs;
     this.minerFee = minerFee;
+    this.txSize = feeUtil.estimatedSizeSegwit(0, 0, anonymitySet, anonymitySet, 0);
 
     this.mustMixQueue = new InputPool();
     this.liquidityQueue = new InputPool();
@@ -57,6 +62,12 @@ public class Pool {
   public long computePremixBalanceMax(boolean liquidity) {
     return WhirlpoolProtocol.computePremixBalanceMax(
         denomination, computeMustMixBalanceMax(), liquidity);
+  }
+
+  public long computePremixValue(long feePerB) {
+    long mixFeesEstimate = feeUtil.calculateFee(txSize, feePerB);
+    long premixValue = mixFeesEstimate / minMustMix;
+    return premixValue;
   }
 
   // tests only

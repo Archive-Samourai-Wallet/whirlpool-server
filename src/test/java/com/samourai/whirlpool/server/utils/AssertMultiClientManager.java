@@ -1,6 +1,10 @@
 package com.samourai.whirlpool.server.utils;
 
+import com.samourai.soroban.client.RpcWallet;
+import com.samourai.soroban.client.RpcWalletImpl;
+import com.samourai.wallet.bip47.rpc.BIP47Wallet;
 import com.samourai.wallet.bipWallet.BipWallet;
+import com.samourai.wallet.chain.ChainSupplier;
 import com.samourai.wallet.hd.BIP_WALLET;
 import com.samourai.wallet.segwit.SegwitAddress;
 import com.samourai.wallet.util.TxUtil;
@@ -8,7 +12,6 @@ import com.samourai.whirlpool.client.WhirlpoolClient;
 import com.samourai.whirlpool.client.mix.MixParams;
 import com.samourai.whirlpool.client.mix.handler.*;
 import com.samourai.whirlpool.client.wallet.beans.IndexRange;
-import com.samourai.whirlpool.client.wallet.data.chain.ChainSupplier;
 import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientConfig;
 import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientImpl;
 import com.samourai.whirlpool.protocol.websocket.notifications.MixStatus;
@@ -37,7 +40,7 @@ public class AssertMultiClientManager extends MultiClientManager {
   private MockRpcClientServiceImpl rpcClientService;
   private BlockchainDataService blockchainDataService;
   private WhirlpoolClientService whirlpoolClientService;
-  private int port;
+  private WhirlpoolClientConfig whirlpoolClientConfig;
 
   private Mix mix;
 
@@ -54,7 +57,7 @@ public class AssertMultiClientManager extends MultiClientManager {
       MockRpcClientServiceImpl rpcClientService,
       BlockchainDataService blockchainDataService,
       WhirlpoolClientService whirlpoolClientService,
-      int port,
+      WhirlpoolClientConfig whirlpoolClientConfig,
       NetworkParameters params) {
     this.mix = mix;
     this.testUtils = testUtils;
@@ -62,7 +65,7 @@ public class AssertMultiClientManager extends MultiClientManager {
     this.rpcClientService = rpcClientService;
     this.blockchainDataService = blockchainDataService;
     this.whirlpoolClientService = whirlpoolClientService;
-    this.port = port;
+    this.whirlpoolClientConfig = whirlpoolClientConfig;
 
     inputs = new TxOutPoint[nbClients];
     inputKeys = new ECKey[nbClients];
@@ -71,10 +74,7 @@ public class AssertMultiClientManager extends MultiClientManager {
   }
 
   private WhirlpoolClient createClient() {
-    String serverUrl = "http://127.0.0.1:" + port;
-    WhirlpoolClientConfig config =
-        whirlpoolClientService.createWhirlpoolClientConfig(serverUrl, params);
-    return new WhirlpoolClientImpl(config);
+    return new WhirlpoolClientImpl(whirlpoolClientConfig);
   }
 
   private int prepareClientWithMock(long inputBalance) throws Exception {
@@ -166,20 +166,24 @@ public class AssertMultiClientManager extends MultiClientManager {
     ECKey ecKey = inputKeys[i];
 
     BipWallet bip84Wallet = bip84Wallets[i];
-    UtxoWithBalance utxo = new UtxoWithBalance(input.getHash(), input.getIndex(), input.getValue());
+    UtxoWithBalance utxo = input.toUtxoWithBalance();
     IPremixHandler premixHandler =
         new PremixHandler(utxo, ecKey, "userPreHash" + input.getHash() + input.getIndex());
     IPostmixHandler postmixHandler = new Bip84PostmixHandler(params, bip84Wallet, IndexRange.EVEN);
     ChainSupplier chainSupplier = blockchainDataService.computeChainSupplier();
-
+    BIP47Wallet bip47Wallet = new BIP47Wallet(bip84Wallet.getHdWallet());
+    RpcWallet rpcWallet = new RpcWalletImpl(bip47Wallet);
     MixParams mixParams =
         new MixParams(
             pool.getPoolId(),
             pool.getDenomination(),
+            pool.computeMustMixBalanceMin(),
+            pool.computeMustMixBalanceMax(),
             null,
             premixHandler,
             postmixHandler,
-            chainSupplier);
+            chainSupplier,
+            rpcWallet);
 
     whirlpoolClient.whirlpool(mixParams, listener);
   }

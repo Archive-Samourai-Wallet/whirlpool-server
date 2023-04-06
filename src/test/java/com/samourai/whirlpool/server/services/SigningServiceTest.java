@@ -58,8 +58,7 @@ public class SigningServiceTest extends AbstractIntegrationTest {
         createAndMockTxOutPoint(new SegwitAddress(ecKey.getPubKey(), params), inputBalance, 10);
 
     // valid signature
-    UtxoWithBalance utxoWithBalance =
-        new UtxoWithBalance(txOutPoint.getHash(), txOutPoint.getIndex(), inputBalance);
+    UtxoWithBalance utxoWithBalance = txOutPoint.toUtxoWithBalance();
     PremixHandler premixHandler = new PremixHandler(utxoWithBalance, ecKey, "userPreHash");
 
     // test
@@ -85,8 +84,7 @@ public class SigningServiceTest extends AbstractIntegrationTest {
         createAndMockTxOutPoint(new SegwitAddress(ecKey.getPubKey(), params), inputBalance, 10);
 
     // valid signature
-    UtxoWithBalance utxoWithBalance =
-        new UtxoWithBalance(txOutPoint.getHash(), txOutPoint.getIndex(), inputBalance);
+    UtxoWithBalance utxoWithBalance = txOutPoint.toUtxoWithBalance();
     PremixHandler premixHandler = new PremixHandler(utxoWithBalance, ecKey, "userPreHash");
 
     // test
@@ -125,6 +123,7 @@ public class SigningServiceTest extends AbstractIntegrationTest {
                 false,
                 firstTxOutPoint,
                 "127.0.0.1",
+                null,
                 null),
             "userHash1"));
     mix.registerOutput(testUtils.generateSegwitAddress().getBech32AsString(), bordereau);
@@ -135,8 +134,7 @@ public class SigningServiceTest extends AbstractIntegrationTest {
         createAndMockTxOutPoint(new SegwitAddress(ecKey.getPubKey(), params), inputBalance, 10);
 
     // valid signature
-    UtxoWithBalance utxoWithBalance =
-        new UtxoWithBalance(txOutPoint.getHash(), txOutPoint.getIndex(), inputBalance);
+    UtxoWithBalance utxoWithBalance = txOutPoint.toUtxoWithBalance();
     PremixHandler premixHandler = new PremixHandler(utxoWithBalance, ecKey, "userPreHash");
 
     // test
@@ -169,8 +167,7 @@ public class SigningServiceTest extends AbstractIntegrationTest {
         createAndMockTxOutPoint(new SegwitAddress(ecKey.getPubKey(), params), inputBalance, 10);
 
     // invalid signature (invalid key)
-    UtxoWithBalance utxoWithBalance =
-        new UtxoWithBalance(txOutPoint.getHash(), txOutPoint.getIndex(), inputBalance);
+    UtxoWithBalance utxoWithBalance = txOutPoint.toUtxoWithBalance();
     PremixHandler premixHandler =
         new PremixHandler(utxoWithBalance, new ECKey(), "userPreHash"); // invalid key
 
@@ -207,7 +204,10 @@ public class SigningServiceTest extends AbstractIntegrationTest {
         txOutPoint.getHash(),
         txOutPoint.getIndex(),
         liquidity,
-        "127.0.0.1");
+        "127.0.0.1",
+        blockchainDataService.getBlockHeight(),
+        null,
+        null);
     waitMixLimitsService(mix);
 
     // confirm input
@@ -219,7 +219,13 @@ public class SigningServiceTest extends AbstractIntegrationTest {
     byte[] blindedBordereau = clientCryptoService.blind(bordereau, blindingParams);
     byte[] signedBlindedBordereau =
         confirmInputService
-            .confirmInputOrQueuePool(mixId, username, blindedBordereau, "userHash" + username)
+            .confirmInputOrQueuePool(
+                mixId,
+                username,
+                blindedBordereau,
+                "userHash" + username,
+                txOutPoint.getHash(),
+                txOutPoint.getIndex())
             .get();
 
     // register output

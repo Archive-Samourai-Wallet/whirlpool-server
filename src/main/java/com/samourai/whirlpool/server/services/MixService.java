@@ -15,6 +15,7 @@ import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.exceptions.*;
 import com.samourai.whirlpool.server.services.rpc.RpcClientService;
+import com.samourai.whirlpool.server.services.soroban.SorobanCoordinatorService;
 import com.samourai.whirlpool.server.utils.Utils;
 import java.lang.invoke.MethodHandles;
 import java.util.*;
@@ -31,6 +32,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class MixService {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final int INVITE_INPUT_DELAY = 2000;
+
   private WSMessageService WSMessageService;
   private CryptoService cryptoService;
   private BlameService blameService;
@@ -44,6 +47,7 @@ public class MixService {
   private MetricService metricService;
   private TaskService taskService;
   private TxUtil txUtil;
+  private SorobanCoordinatorService sorobanCoordinatorService;
 
   private Map<String, Mix> currentMixs;
 
@@ -64,6 +68,7 @@ public class MixService {
       MetricService metricService,
       TaskService taskService,
       TxUtil txUtil,
+      SorobanCoordinatorService sorobanCoordinatorService,
       WSSessionService wsSessionService) {
     this.cryptoService = cryptoService;
     this.blameService = blameService;
@@ -79,6 +84,7 @@ public class MixService {
     this.metricService = metricService;
     this.taskService = taskService;
     this.txUtil = txUtil;
+    this.sorobanCoordinatorService = sorobanCoordinatorService;
 
     this.__reset();
 
@@ -224,18 +230,37 @@ public class MixService {
   }
 
   public synchronized byte[] confirmInput(
-      String mixId, String username, byte[] blindedBordereau, String userHash)
+      String mixId,
+      String username,
+      byte[] blindedBordereau,
+      String userHash,
+      String utxoHashOrNull,
+      Long utxoIndexOrNull)
       throws IllegalInputException, MixException, QueueInputException {
     Mix mix = getMix(mixId);
 
     // find confirming input
-    RegisteredInput registeredInput =
-        mix.removeConfirmingInputByUsername(username)
-            .orElseThrow(
-                () ->
-                    new IllegalInputException(
-                        ServerErrorCode.SERVER_ERROR,
-                        "Confirming input not found: username=" + username));
+    RegisteredInput registeredInput;
+    if (utxoHashOrNull != null && utxoIndexOrNull != null) {
+      registeredInput =
+          mix.removeConfirmingInputByUtxo(utxoHashOrNull, utxoIndexOrNull)
+              .orElseThrow(
+                  () ->
+                      new IllegalInputException(
+                          ServerErrorCode.SERVER_ERROR,
+                          "Confirming input not found: utxo="
+                              + utxoHashOrNull
+                              + ":"
+                              + utxoIndexOrNull));
+    } else {
+      registeredInput =
+          mix.removeConfirmingInputByUsername(username)
+              .orElseThrow(
+                  () ->
+                      new IllegalInputException(
+                          ServerErrorCode.SERVER_ERROR,
+                          "Confirming input not found: username=" + username));
+    }
 
     // set lastUserHash
     registeredInput.setLastUserHash(userHash);
@@ -588,6 +613,7 @@ public class MixService {
                 confirmingInput.isLiquidity(),
                 confirmingInput.getOutPoint(),
                 confirmingInput.getIp(),
+                confirmingInput.getSorobanPaymentCode(),
                 confirmingInput.getLastUserHash());
           } catch (Exception e) {
             log.error("requeue confirming input failed", e);
@@ -947,7 +973,7 @@ public class MixService {
     mixLimitsService.manage(mix);
   }
 
-  public Predicate<Map.Entry<String, RegisteredInput>> computeFilterInputMixable(Mix mix) {
+  private Predicate<Map.Entry<String, RegisteredInput>> computeFilterInputMixable(Mix mix) {
     return entry -> {
       RegisteredInput registeredInput = entry.getValue();
       try {
@@ -957,6 +983,132 @@ public class MixService {
         return false; // not mixable
       }
     };
+  }
+
+  public void confirmInputs(Mix mix) {
+    int liquiditiesToAdd;
+    if (mix.hasMinMustMixAndFeeReached()) {
+      // enough mustMixs => add missing liquidities
+      liquiditiesToAdd = mix.getPool().getAnonymitySet() - mix.getNbInputs();
+    } else {
+      // not enough mustMixs => add minimal liquidities, then missing mustMixs
+      liquiditiesToAdd = mix.getMinLiquidityMixRemaining();
+    }
+    confirmInputs(mix, liquiditiesToAdd);
+  }
+
+  private void confirmInputs(Mix mix, int liquiditiesToAdd) {
+    int liquiditiesInvited = 0, mustMixsInvited = 0;
+
+    int nbInputs = mix.getNbInputs();
+
+    // invite liquidities first (to allow concurrent liquidity remixing)
+    if (liquiditiesToAdd > 0 && mix.getPool().getLiquidityQueue().hasInputs()) {
+      liquiditiesInvited = inviteToMix(mix, true, liquiditiesToAdd);
+    }
+
+    // invite mustMixs
+    int mustMixsToAdd =
+        mix.getPool().getAnonymitySet()
+            - Math.max(mix.getMinLiquidityMixRemaining(), (nbInputs + liquiditiesInvited));
+    if (mustMixsToAdd > 0 && mix.getPool().getMustMixQueue().hasInputs()) {
+      mustMixsInvited = inviteToMix(mix, false, mustMixsToAdd);
+    }
+
+    if (liquiditiesInvited > 0 || mustMixsInvited > 0) {
+      if (log.isDebugEnabled()) {
+        log.debug(
+            "["
+                + mix.getMixId()
+                + "] ("
+                + nbInputs
+                + "/"
+                + mix.getPool().getAnonymitySet()
+                + ") anonymitySet => invited "
+                + liquiditiesInvited
+                + "/"
+                + liquiditiesToAdd
+                + " "
+                + "liquidities + "
+                + mustMixsInvited
+                + "/"
+                + mustMixsToAdd
+                + " mustMixs");
+      }
+    }
+  }
+
+  private void inviteToMix(Mix mix, RegisteredInput registeredInput) throws Exception {
+    log.info(
+        "["
+            + mix.getMixId()
+            + "] "
+            + registeredInput.getUsername()
+            + " inviting "
+            + (registeredInput.isLiquidity() ? "liquidity" : "mustMix")
+            + " to mix: "
+            + registeredInput.getOutPoint());
+
+    // register confirming input
+    mix.registerConfirmingInput(registeredInput);
+
+    if (registeredInput.isSoroban()) {
+      sorobanCoordinatorService.inviteToMix(registeredInput, mix).subscribe();
+    } else {
+      // add delay as we are called from LimitsWatcher which may run just after an input registered
+      String publicKey64 = WhirlpoolProtocol.encodeBytes(mix.getPublicKey());
+      ConfirmInputMixStatusNotification confirmInputMixStatusNotification =
+          new ConfirmInputMixStatusNotification(mix.getMixId(), publicKey64);
+      taskService.runOnce(
+          INVITE_INPUT_DELAY,
+          () -> {
+            // send invite to mix
+            WSMessageService.sendPrivate(
+                registeredInput.getUsername(), confirmInputMixStatusNotification);
+          });
+    }
+  }
+
+  private synchronized int inviteToMix(Mix mix, boolean liquidity, int maxInvites) {
+    Predicate<Map.Entry<String, RegisteredInput>> filterInputMixable =
+        computeFilterInputMixable(mix);
+    InputPool queue =
+        (liquidity ? mix.getPool().getLiquidityQueue() : mix.getPool().getMustMixQueue());
+    int nbInvited = 0;
+    while (true) {
+      // stop when enough invites
+      if (nbInvited >= maxInvites) {
+        break;
+      }
+
+      // stop when no more input to invite
+      Optional<RegisteredInput> registeredInput = queue.removeRandom(filterInputMixable);
+      if (!registeredInput.isPresent()) {
+        break;
+      }
+
+      // invite one more
+      try {
+        inviteToMix(mix, registeredInput.get());
+        nbInvited++;
+      } catch (Exception e) {
+        log.error("inviteToMix failed", e);
+      }
+    }
+    if (nbInvited > 0) {
+      if (log.isTraceEnabled()) {
+        log.trace(
+            "["
+                + mix.getMixId()
+                + "] invited "
+                + nbInvited
+                + "/"
+                + maxInvites
+                + " "
+                + (liquidity ? "liquidities" : "remixs"));
+      }
+    }
+    return nbInvited;
   }
 
   public MixLimitsService __getMixLimitsService() {

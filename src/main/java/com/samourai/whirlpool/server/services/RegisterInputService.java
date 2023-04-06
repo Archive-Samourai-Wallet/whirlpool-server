@@ -1,8 +1,10 @@
 package com.samourai.whirlpool.server.services;
 
 import com.samourai.javaserver.exceptions.NotifiableException;
+import com.samourai.wallet.bip47.rpc.PaymentCode;
 import com.samourai.whirlpool.server.beans.Pool;
 import com.samourai.whirlpool.server.beans.RegisteredInput;
+import com.samourai.whirlpool.server.beans.export.ActivityCsv;
 import com.samourai.whirlpool.server.beans.rpc.RpcTransaction;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.exceptions.BannedInputException;
@@ -10,6 +12,8 @@ import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import com.samourai.whirlpool.server.exceptions.ServerErrorCode;
 import com.samourai.whirlpool.server.persistence.to.BanTO;
 import java.lang.invoke.MethodHandles;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,8 +60,20 @@ public class RegisterInputService {
       String utxoHash,
       long utxoIndex,
       boolean liquidity,
-      String ip)
+      String ip,
+      int blockHeight,
+      PaymentCode sorobanPaymentCodeOrNull,
+      Map<String, String> clientDetails)
       throws NotifiableException {
+
+    // check blockHeight
+    if (blockHeight > 0) { // check disabled for protocol < 0.23.9
+      if (!blockchainDataService.checkBlockHeight(blockHeight)) {
+        throw new IllegalInputException(
+            ServerErrorCode.INVALID_BLOCK_HEIGHT, "invalid blockHeight");
+      }
+    }
+
     if (HEALTH_CHECK_UTXO.equals(utxoHash)) {
       throw new IllegalInputException(ServerErrorCode.INPUT_REJECTED, HEALTH_CHECK_SUCCESS);
     }
@@ -112,7 +128,18 @@ public class RegisterInputService {
 
       // register input to pool
       RegisteredInput registeredInput =
-          poolService.registerInput(poolId, username, liquidity, txOutPoint, ip, null);
+          poolService.registerInput(
+              poolId, username, liquidity, txOutPoint, ip, sorobanPaymentCodeOrNull, null);
+
+      // log activity
+      if (clientDetails == null) {
+        clientDetails = new LinkedHashMap<>();
+      }
+      clientDetails.put("soroban", sorobanPaymentCodeOrNull != null ? "true" : "false");
+      ActivityCsv activityCsv =
+          new ActivityCsv("REGISTER_INPUT", poolId, registeredInput, null, clientDetails);
+      exportService.exportActivity(activityCsv);
+
       return registeredInput;
     } catch (NotifiableException e) { // validation error or input rejected
       log.warn("Input rejected (" + utxoHash + ":" + utxoIndex + "): " + e.getMessage());

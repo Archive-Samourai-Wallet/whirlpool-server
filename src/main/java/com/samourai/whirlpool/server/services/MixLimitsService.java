@@ -120,7 +120,7 @@ public class MixLimitsService {
             }
             switch (mix.getMixStatus()) {
               case CONFIRM_INPUT:
-                poolService.confirmInputs(mix, mixService);
+                mixService.confirmInputs(mix);
                 break;
 
               case REGISTER_OUTPUT:

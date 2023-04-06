@@ -562,7 +562,7 @@ public class Whirlpool5WalletsProceduralIntegrationTest extends AbstractIntegrat
 
       final ECKey ecKey = toPrivKeys.get(fromAddress);
       final SegwitAddress segwitAddress = new SegwitAddress(ecKey, params);
-      final Script redeemScript = segwitAddress.segWitRedeemScript();
+      final Script redeemScript = segwitAddress.segwitRedeemScript();
 
       String utxo = toUTXO.get(Hex.toHexString(redeemScript.getProgram()));
       String[] s = utxo.split("-");
@@ -609,7 +609,7 @@ public class Whirlpool5WalletsProceduralIntegrationTest extends AbstractIntegrat
 
       final ECKey ecKey = toPrivKeys.get(fromAddress);
       final SegwitAddress segwitAddress = new SegwitAddress(ecKey, params);
-      final Script redeemScript = segwitAddress.segWitRedeemScript();
+      final Script redeemScript = segwitAddress.segwitRedeemScript();
       final Script scriptCode = redeemScript.scriptCode();
 
       TransactionSignature sig =

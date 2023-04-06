@@ -29,11 +29,18 @@ public class ConfirmInputService {
   }
 
   public synchronized Optional<byte[]> confirmInputOrQueuePool(
-      String mixId, String username, byte[] blindedBordereau, String userHash)
+      String mixId,
+      String username,
+      byte[] blindedBordereau,
+      String userHash,
+      String utxoHashOrNull,
+      Long utxoIndexOrNull)
       throws NotifiableException {
     try {
       // add input to mix & reply confirmInputResponse
-      return Optional.of(mixService.confirmInput(mixId, username, blindedBordereau, userHash));
+      return Optional.of(
+          mixService.confirmInput(
+              mixId, username, blindedBordereau, userHash, utxoHashOrNull, utxoIndexOrNull));
     } catch (QueueInputException e) {
       // input queued => re-enqueue in pool
       RegisteredInput registeredInput = e.getRegisteredInput();
@@ -61,6 +68,7 @@ public class ConfirmInputService {
           registeredInput.isLiquidity(),
           registeredInput.getOutPoint(),
           registeredInput.getIp(),
+          registeredInput.getSorobanPaymentCode(),
           userHash);
       return Optional.empty();
     } catch (MixException e) {

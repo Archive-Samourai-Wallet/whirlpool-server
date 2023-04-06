@@ -175,6 +175,16 @@ public class Mix {
     return confirmingInput;
   }
 
+  public synchronized Optional<RegisteredInput> removeConfirmingInputByUtxo(
+      String utxoHash, long utxoIndex) {
+    Optional<RegisteredInput> confirmingInput = confirmingInputs.removeByUtxo(utxoHash, utxoIndex);
+    if (confirmingInput.isPresent()) {
+      log.info(
+          "[" + mixId + "] " + utxoHash + ":" + utxoIndex + " unregistered from confirming inputs");
+    }
+    return confirmingInput;
+  }
+
   public int getNbConfirmingInputs() {
     return confirmingInputs.getSize();
   }

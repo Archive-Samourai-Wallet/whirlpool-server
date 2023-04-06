@@ -72,7 +72,10 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
           txOutPoint.getHash(),
           txOutPoint.getIndex(),
           liquidity,
-          "127.0.0.1");
+          "127.0.0.1",
+          blockchainDataService.getBlockHeight(),
+          null,
+          null);
       waitMixLimitsService(mix);
 
     } catch (Exception e) {
@@ -123,8 +126,6 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
 
     // VERIFY
     Mix mix = __getCurrentMix();
-    Pool pool = mix.getPool();
-    InputPool liquidityPool = mix.getPool().getLiquidityQueue();
 
     // liquidity should be queued then invited
     testUtils.assertMix(0, 1, mix);
@@ -192,7 +193,10 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
                   txOutPoint.getHash(),
                   txOutPoint.getIndex(),
                   false,
-                  "127.0.0.1");
+                  "127.0.0.1",
+                  blockchainDataService.getBlockHeight(),
+                  null,
+                  null);
             });
     Assertions.assertEquals("Pool not found", e.getMessage());
 
@@ -236,7 +240,10 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
             txOutPoint.getHash(),
             txOutPoint.getIndex(),
             false,
-            "127.0.0.1");
+            "127.0.0.1",
+            blockchainDataService.getBlockHeight(),
+            null,
+            null);
 
         // VERIFY
         testUtils.assertPool(1, 0, mix.getPool()); // mustMix queued
@@ -271,7 +278,10 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
                   txOutPoint.getHash(),
                   txOutPoint.getIndex(),
                   false,
-                  "127.0.0.1");
+                  "127.0.0.1",
+                  blockchainDataService.getBlockHeight(),
+                  null,
+                  null);
             });
     Assertions.assertEquals("Invalid signature", e.getMessage());
 
@@ -306,7 +316,10 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
                   txOutPoint.getHash(),
                   txOutPoint.getIndex(),
                   false,
-                  "127.0.0.1");
+                  "127.0.0.1",
+                  blockchainDataService.getBlockHeight(),
+                  null,
+                  null);
             });
     Assertions.assertEquals("Invalid signature", e.getMessage());
 
@@ -337,7 +350,10 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
         txOutPoint.getHash(),
         txOutPoint.getIndex(),
         false,
-        "127.0.0.1");
+        "127.0.0.1",
+        blockchainDataService.getBlockHeight(),
+        null,
+        null);
     waitMixLimitsService(mix);
     testUtils.assertPoolEmpty(pool);
     testUtils.assertMix(0, 1, mix); // confirming
@@ -349,7 +365,10 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
         txOutPoint.getHash(),
         txOutPoint.getIndex(),
         false,
-        "127.0.0.1"); // AlreadyRegisteredInputException thrown in background
+        "127.0.0.1",
+        blockchainDataService.getBlockHeight(),
+        null,
+        null); // AlreadyRegisteredInputException thrown in background
     waitMixLimitsService(mix);
     testUtils.assertPoolEmpty(pool);
     testUtils.assertMix(0, 1, mix); // not confirming twice
@@ -381,7 +400,10 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
                   txOutPoint.getHash(),
                   txOutPoint.getIndex(),
                   false,
-                  "127.0.0.1");
+                  "127.0.0.1",
+                  blockchainDataService.getBlockHeight(),
+                  null,
+                  null);
             });
     Assertions.assertEquals(
         "Invalid input balance (expected: 50000102-50010000, actual:50000101)", e.getMessage());
@@ -415,7 +437,10 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
         txOutPoint.getHash(),
         txOutPoint.getIndex(),
         false,
-        "127.0.0.1");
+        "127.0.0.1",
+        blockchainDataService.getBlockHeight(),
+        null,
+        null);
     waitMixLimitsService(mix);
 
     // VERIFY
@@ -448,7 +473,10 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
                   txOutPoint.getHash(),
                   txOutPoint.getIndex(),
                   false,
-                  "127.0.0.1");
+                  "127.0.0.1",
+                  blockchainDataService.getBlockHeight(),
+                  null,
+                  null);
             });
     Assertions.assertEquals(
         "Invalid input balance (expected: 50000102-50010000, actual:50010001)", e.getMessage());
@@ -467,7 +495,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
         Assertions.assertThrows(
             IllegalInputException.class,
             () -> {
-              registerInput(mix, "user1", 0, liquidity);
+              registerInput(mix, "user1", 0, liquidity, null);
             });
     Assertions.assertEquals("Input is not confirmed", e.getMessage());
 
@@ -494,7 +522,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
         Assertions.assertThrows(
             IllegalInputException.class,
             () -> {
-              registerInput(mix, "user1", MIN_CONFIRMATIONS_MUSTMIX - 1, liquidity);
+              registerInput(mix, "user1", MIN_CONFIRMATIONS_MUSTMIX - 1, liquidity, null);
             });
     Assertions.assertEquals("Input is not confirmed", e.getMessage());
 
@@ -521,12 +549,12 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
     testUtils.assertMixEmpty(mix);
 
     // mustMix
-    registerInput(mix, "user1", MIN_CONFIRMATIONS_MUSTMIX + 1, false);
+    registerInput(mix, "user1", MIN_CONFIRMATIONS_MUSTMIX + 1, false, null);
     testUtils.assertPoolEmpty(pool);
     testUtils.assertMix(0, 1, mix);
 
     // liquidity
-    registerInput(mix, "user2", MIN_CONFIRMATIONS_LIQUIDITY + 1, true);
+    registerInput(mix, "user2", MIN_CONFIRMATIONS_LIQUIDITY + 1, true, null);
     testUtils.assertPoolEmpty(pool);
     testUtils.assertMix(0, 2, mix);
   }

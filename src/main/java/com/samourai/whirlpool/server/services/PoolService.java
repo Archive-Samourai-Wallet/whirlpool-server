@@ -2,22 +2,16 @@ package com.samourai.whirlpool.server.services;
 
 import com.google.common.collect.ImmutableMap;
 import com.samourai.javaserver.exceptions.NotifiableException;
-import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
+import com.samourai.wallet.bip47.rpc.PaymentCode;
+import com.samourai.whirlpool.protocol.rest.PoolInfo;
+import com.samourai.whirlpool.protocol.rest.PoolInfoSoroban;
 import com.samourai.whirlpool.protocol.websocket.messages.SubscribePoolResponse;
-import com.samourai.whirlpool.protocol.websocket.notifications.ConfirmInputMixStatusNotification;
 import com.samourai.whirlpool.server.beans.*;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import com.samourai.whirlpool.server.exceptions.ServerErrorCode;
-import java.lang.invoke.MethodHandles;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,35 +19,36 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
+import java.lang.invoke.MethodHandles;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+
 @Service
 public class PoolService {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-  private static final int INVITE_INPUT_DELAY = 2000;
 
   private WhirlpoolServerConfig whirlpoolServerConfig;
   private CryptoService cryptoService;
-  private WSMessageService WSMessageService;
   private ExportService exportService;
   private MetricService metricService;
-  private TaskService taskService;
   private Map<String, Pool> pools;
 
   @Autowired
   public PoolService(
       WhirlpoolServerConfig whirlpoolServerConfig,
       CryptoService cryptoService,
-      WSMessageService WSMessageService,
       ExportService exportService,
       MetricService metricService,
       WSSessionService wsSessionService,
-      TaskService taskService,
       TaskScheduler taskScheduler) {
     this.whirlpoolServerConfig = whirlpoolServerConfig;
     this.cryptoService = cryptoService;
-    this.WSMessageService = WSMessageService;
     this.exportService = exportService;
     this.metricService = metricService;
-    this.taskService = taskService;
     __reset();
 
     // listen websocket onDisconnect
@@ -118,6 +113,53 @@ public class PoolService {
     return pools.values();
   }
 
+  public Collection<PoolInfo> computePoolInfos() {
+    return getPools()
+        .parallelStream()
+        .map(
+            pool -> {
+              Mix currentMix = pool.getCurrentMix();
+              int nbRegistered =
+                  currentMix.getNbConfirmingInputs()
+                      + pool.getMustMixQueue().getSize()
+                      + pool.getLiquidityQueue().getSize();
+              int nbConfirmed = currentMix.getNbInputs();
+              return new PoolInfo(
+                  pool.getPoolId(),
+                  pool.getDenomination(),
+                  pool.getPoolFee().getFeeValue(),
+                  pool.computeMustMixBalanceMin(),
+                  pool.computeMustMixBalanceCap(),
+                  pool.computeMustMixBalanceMax(),
+                  pool.getAnonymitySet(),
+                  pool.getMinMustMix(),
+                  pool.getTx0MaxOutputs(),
+                  nbRegistered,
+                  pool.getAnonymitySet(),
+                  currentMix.getMixStatus(),
+                  currentMix.getElapsedTime(),
+                  nbConfirmed);
+            })
+        .collect(Collectors.toList());
+  }
+
+  public Collection<PoolInfoSoroban> computePoolInfosSoroban(long feePerB) {
+    return getPools()
+        .parallelStream()
+        .map(
+            pool ->
+                new PoolInfoSoroban(
+                    pool.getPoolId(),
+                    pool.getDenomination(),
+                    pool.getPoolFee().getFeeValue(),
+                    pool.computePremixValue(feePerB),
+                    pool.computeMustMixBalanceMin(),
+                    pool.computeMustMixBalanceMax(),
+                    pool.getTx0MaxOutputs(),
+                    pool.getAnonymitySet()))
+        .collect(Collectors.toList());
+  }
+
   public Optional<Pool> findByInputValue(long inputValue, boolean liquidity) {
     Comparator<Pool> comparatorPoolsByDenominationDesc =
         Comparator.comparing(Pool::getDenomination).reversed();
@@ -154,6 +196,7 @@ public class PoolService {
       boolean liquidity,
       TxOutPoint txOutPoint,
       String ip,
+      PaymentCode sorobanPaymentCodeOrNull,
       String lastUserHash)
       throws NotifiableException {
     Pool pool = getPool(poolId);
@@ -175,7 +218,8 @@ public class PoolService {
     }
 
     RegisteredInput registeredInput =
-        new RegisteredInput(poolId, username, liquidity, txOutPoint, ip, lastUserHash);
+        new RegisteredInput(
+            poolId, username, liquidity, txOutPoint, ip, sorobanPaymentCodeOrNull, lastUserHash);
 
     // verify confirmations
     if (!isUtxoConfirmed(txOutPoint, liquidity)) {
@@ -207,129 +251,6 @@ public class PoolService {
 
     // queue input
     queue.register(registeredInput);
-  }
-
-  private void inviteToMix(Mix mix, RegisteredInput registeredInput) throws NotifiableException {
-    log.info(
-        "["
-            + mix.getMixId()
-            + "] "
-            + registeredInput.getUsername()
-            + " inviting "
-            + (registeredInput.isLiquidity() ? "liquidity" : "mustMix")
-            + " to mix: "
-            + registeredInput.getOutPoint());
-
-    // register confirming input
-    String publicKey64 = WhirlpoolProtocol.encodeBytes(mix.getPublicKey());
-    ConfirmInputMixStatusNotification confirmInputMixStatusNotification =
-        new ConfirmInputMixStatusNotification(mix.getMixId(), publicKey64);
-    mix.registerConfirmingInput(registeredInput);
-
-    // add delay as we are called from LimitsWatcher which may run just after an input registered
-    taskService.runOnce(
-        INVITE_INPUT_DELAY,
-        () -> {
-          // send invite to mix
-          WSMessageService.sendPrivate(
-              registeredInput.getUsername(), confirmInputMixStatusNotification);
-        });
-  }
-
-  public void confirmInputs(Mix mix, MixService mixService) {
-    int liquiditiesToAdd;
-    if (mix.hasMinMustMixAndFeeReached()) {
-      // enough mustMixs => add missing liquidities
-      liquiditiesToAdd = mix.getPool().getAnonymitySet() - mix.getNbInputs();
-    } else {
-      // not enough mustMixs => add minimal liquidities, then missing mustMixs
-      liquiditiesToAdd = mix.getMinLiquidityMixRemaining();
-    }
-    confirmInputs(mix, mixService, liquiditiesToAdd);
-  }
-
-  private void confirmInputs(Mix mix, MixService mixService, int liquiditiesToAdd) {
-    int liquiditiesInvited = 0, mustMixsInvited = 0;
-
-    int nbInputs = mix.getNbInputs();
-
-    // invite liquidities first (to allow concurrent liquidity remixing)
-    if (liquiditiesToAdd > 0 && mix.getPool().getLiquidityQueue().hasInputs()) {
-      liquiditiesInvited = inviteToMix(mix, true, liquiditiesToAdd, mixService);
-    }
-
-    // invite mustMixs
-    int mustMixsToAdd =
-        mix.getPool().getAnonymitySet()
-            - Math.max(mix.getMinLiquidityMixRemaining(), (nbInputs + liquiditiesInvited));
-    if (mustMixsToAdd > 0 && mix.getPool().getMustMixQueue().hasInputs()) {
-      mustMixsInvited = inviteToMix(mix, false, mustMixsToAdd, mixService);
-    }
-
-    if (liquiditiesInvited > 0 || mustMixsInvited > 0) {
-      if (log.isDebugEnabled()) {
-        log.debug(
-            "["
-                + mix.getMixId()
-                + "] ("
-                + nbInputs
-                + "/"
-                + mix.getPool().getAnonymitySet()
-                + ") anonymitySet => invited "
-                + liquiditiesInvited
-                + "/"
-                + liquiditiesToAdd
-                + " "
-                + "liquidities + "
-                + mustMixsInvited
-                + "/"
-                + mustMixsToAdd
-                + " mustMixs");
-      }
-    }
-  }
-
-  private synchronized int inviteToMix(
-      Mix mix, boolean liquidity, int maxInvites, MixService mixService) {
-    Predicate<Map.Entry<String, RegisteredInput>> filterInputMixable =
-        mixService.computeFilterInputMixable(mix);
-    InputPool queue =
-        (liquidity ? mix.getPool().getLiquidityQueue() : mix.getPool().getMustMixQueue());
-    int nbInvited = 0;
-    while (true) {
-      // stop when enough invites
-      if (nbInvited >= maxInvites) {
-        break;
-      }
-
-      // stop when no more input to invite
-      Optional<RegisteredInput> registeredInput = queue.removeRandom(filterInputMixable);
-      if (!registeredInput.isPresent()) {
-        break;
-      }
-
-      // invite one more
-      try {
-        inviteToMix(mix, registeredInput.get());
-        nbInvited++;
-      } catch (Exception e) {
-        log.error("inviteToMix failed", e);
-      }
-    }
-    if (nbInvited > 0) {
-      if (log.isTraceEnabled()) {
-        log.trace(
-            "["
-                + mix.getMixId()
-                + "] invited "
-                + nbInvited
-                + "/"
-                + maxInvites
-                + " "
-                + (liquidity ? "liquidities" : "remixs"));
-      }
-    }
-    return nbInvited;
   }
 
   public void resetLastUserHash(Mix mix) {

@@ -133,6 +133,7 @@ public class MetricService {
               false,
               outPoint,
               "127.0.0.1",
+              null,
               "");
       TxOutPoint outPoint2 =
           new TxOutPoint("hash2", RandomUtils.nextInt(0, 999999), 1, 1, null, "");
@@ -143,6 +144,7 @@ public class MetricService {
               true,
               outPoint2,
               "1.2.3.4",
+              null,
               "");
 
       Mix mix = pool.getCurrentMix();

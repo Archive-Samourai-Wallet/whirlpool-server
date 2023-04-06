@@ -48,16 +48,19 @@ public class SubscribePoolController extends AbstractWebSocketController {
 
     // validate poolId & reply poolStatusNotification
     String headerPoolId = getHeaderPoolId(headers);
-    SubscribePoolResponse subscribePoolResponse =
-        poolService.computeSubscribePoolResponse(headerPoolId);
+    if (headerPoolId != null) {
+      // reply pool info for older non-soroban clients
+      SubscribePoolResponse subscribePoolResponse =
+          poolService.computeSubscribePoolResponse(headerPoolId);
 
-    // delay to make sure client processed subscription before sending him private response
-    taskService.runOnce(
-        SUBSCRIBE_RESPONSE_DELAY,
-        () -> {
-          // send reply
-          getWSMessageService().sendPrivate(username, subscribePoolResponse);
-        });
+      // delay to make sure client processed subscription before sending him private response
+      taskService.runOnce(
+          SUBSCRIBE_RESPONSE_DELAY,
+          () -> {
+            // send reply
+            getWSMessageService().sendPrivate(username, subscribePoolResponse);
+          });
+    }
   }
 
   private String getHeaderPoolId(StompHeaderAccessor headers) {

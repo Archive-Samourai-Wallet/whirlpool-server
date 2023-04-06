@@ -1,5 +1,6 @@
 package com.samourai.whirlpool.server.integration;
 
+import com.samourai.wallet.bip47.rpc.PaymentCode;
 import com.samourai.wallet.segwit.SegwitAddress;
 import com.samourai.whirlpool.client.utils.ClientUtils;
 import com.samourai.whirlpool.server.beans.Mix;
@@ -22,7 +23,12 @@ public abstract class AbstractMixIntegrationTest extends AbstractIntegrationTest
 
   @Autowired protected RegisterOutputService registerOutputService;
 
-  protected TxOutPoint registerInput(Mix mix, String username, int confirmations, boolean liquidity)
+  protected TxOutPoint registerInput(
+      Mix mix,
+      String username,
+      int confirmations,
+      boolean liquidity,
+      PaymentCode sorobanPaymentCodeOrNull)
       throws Exception {
     String poolId = mix.getPool().getPoolId();
 
@@ -46,7 +52,10 @@ public abstract class AbstractMixIntegrationTest extends AbstractIntegrationTest
         txOutPoint.getHash(),
         txOutPoint.getIndex(),
         liquidity,
-        "127.0.0.1");
+        "127.0.0.1",
+        blockchainDataService.getBlockHeight(),
+        sorobanPaymentCodeOrNull,
+        null);
     waitMixLimitsService(mix);
     return txOutPoint;
   }
@@ -64,12 +73,14 @@ public abstract class AbstractMixIntegrationTest extends AbstractIntegrationTest
       int confirmations,
       boolean liquidity,
       RSABlindingParameters blindingParams,
-      byte[] bordereau)
+      byte[] bordereau,
+      PaymentCode sorobanPaymentCodeOrNull)
       throws Exception {
     int nbConfirming = mix.getNbConfirmingInputs();
 
     // REGISTER_INPUT
-    TxOutPoint txOutPoint = registerInput(mix, username, confirmations, liquidity);
+    TxOutPoint txOutPoint =
+        registerInput(mix, username, confirmations, liquidity, sorobanPaymentCodeOrNull);
 
     boolean queued = (mix.getNbConfirmingInputs() == nbConfirming);
     if (queued) {
@@ -79,11 +90,17 @@ public abstract class AbstractMixIntegrationTest extends AbstractIntegrationTest
       return null;
     }
 
-    return confirmInput(mix, username, blindingParams, bordereau);
+    return confirmInput(
+        mix, username, blindingParams, bordereau, txOutPoint.getHash(), txOutPoint.getIndex());
   }
 
   public byte[] confirmInput(
-      Mix mix, String username, RSABlindingParameters blindingParams, byte[] bordereau)
+      Mix mix,
+      String username,
+      RSABlindingParameters blindingParams,
+      byte[] bordereau,
+      String utxoHash,
+      long utxoIndex)
       throws Exception {
     // blind bordereau
     if (blindingParams == null) {
@@ -97,7 +114,7 @@ public abstract class AbstractMixIntegrationTest extends AbstractIntegrationTest
     // CONFIRM_INPUT
     String mixId = mix.getMixId();
     confirmInputService.confirmInputOrQueuePool(
-        mixId, username, blindedBordereau, "userHash" + username);
+        mixId, username, blindedBordereau, "userHash" + username, utxoHash, utxoIndex);
 
     // get a valid signed blinded bordereau
     byte[] signedBlindedBordereau =

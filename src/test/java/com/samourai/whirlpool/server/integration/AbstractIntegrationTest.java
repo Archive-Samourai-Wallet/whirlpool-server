@@ -4,11 +4,15 @@ import com.samourai.http.client.HttpUsage;
 import com.samourai.http.client.IHttpClient;
 import com.samourai.http.client.IWhirlpoolHttpClientService;
 import com.samourai.javaserver.utils.ServerUtils;
+import com.samourai.soroban.client.RpcWallet;
+import com.samourai.soroban.client.RpcWalletImpl;
+import com.samourai.soroban.client.rpc.RpcService;
 import com.samourai.wallet.api.backend.BackendServer;
 import com.samourai.wallet.bip47.rpc.BIP47Account;
 import com.samourai.wallet.bip47.rpc.BIP47Wallet;
 import com.samourai.wallet.bip47.rpc.java.Bip47UtilJava;
 import com.samourai.wallet.bip47.rpc.java.SecretPointFactoryJava;
+import com.samourai.wallet.crypto.CryptoUtil;
 import com.samourai.wallet.hd.HD_Wallet;
 import com.samourai.wallet.hd.HD_WalletFactoryGeneric;
 import com.samourai.wallet.segwit.SegwitAddress;
@@ -17,10 +21,14 @@ import com.samourai.wallet.util.CryptoTestUtil;
 import com.samourai.wallet.util.FormatsUtilGeneric;
 import com.samourai.wallet.util.MessageSignUtilGeneric;
 import com.samourai.wallet.util.TxUtil;
+import com.samourai.whirlpool.client.WhirlpoolClient;
 import com.samourai.whirlpool.client.utils.ClientCryptoService;
 import com.samourai.whirlpool.client.wallet.WhirlpoolWalletConfig;
+import com.samourai.whirlpool.client.wallet.beans.WhirlpoolServer;
 import com.samourai.whirlpool.client.wallet.data.dataSource.DataSourceFactory;
 import com.samourai.whirlpool.client.wallet.data.dataSource.DojoDataSourceFactory;
+import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientConfig;
+import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientImpl;
 import com.samourai.whirlpool.protocol.util.XorMask;
 import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.beans.Pool;
@@ -54,6 +62,9 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles(ServerUtils.PROFILE_TEST)
 public abstract class AbstractIntegrationTest {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
+  private static final String MOCK_SEED_WORDS = "all all all all all all all all all all all all";
+  private static final String MOCK_SEED_PASSPHRASE = "all";
 
   @LocalServerPort protected int port;
 
@@ -106,12 +117,14 @@ public abstract class AbstractIntegrationTest {
   @Autowired protected FeePayloadService feePayloadService;
   @Autowired protected PushService pushService;
   @Autowired protected XorMask xorMask;
+  @Autowired protected CryptoUtil cryptoUtil;
+  @Autowired protected JavaHttpClientService httpClientService;
 
   protected MessageSignUtilGeneric messageSignUtil = MessageSignUtilGeneric.getInstance();
 
   protected MixLimitsService mixLimitsService;
 
-  private AssertMultiClientManager multiClientManager;
+  protected AssertMultiClientManager multiClientManager;
 
   protected NetworkParameters params;
 
@@ -241,9 +254,26 @@ public abstract class AbstractIntegrationTest {
             rpcClientService,
             blockchainDataService,
             whirlpoolClientService,
-            port,
+            whirlpoolClientConfig(),
             params);
     return multiClientManager;
+  }
+
+  private WhirlpoolClientConfig whirlpoolClientConfig() {
+    String serverUrl = "http://127.0.0.1:" + port;
+    return whirlpoolClientService.createWhirlpoolClientConfig(serverUrl, params);
+  }
+
+  public WhirlpoolClient createClient() {
+    return new WhirlpoolClientImpl(whirlpoolClientConfig());
+  }
+
+  protected RpcWallet rpcWallet() throws Exception {
+    HD_Wallet hdw84 =
+        walletFactory.restoreWallet(
+            MOCK_SEED_WORDS, MOCK_SEED_PASSPHRASE, serverConfig.getNetworkParameters());
+    BIP47Wallet bip47Wallet = new BIP47Wallet(hdw84);
+    return new RpcWalletImpl(bip47Wallet);
   }
 
   public TxOutPoint createAndMockTxOutPoint(
@@ -297,17 +327,20 @@ public abstract class AbstractIntegrationTest {
           @Override
           public void stop() {}
         };
+    RpcService rpcService = new RpcService(httpClientService.getHttpClient(), cryptoUtil, false);
     WhirlpoolWalletConfig config =
         new WhirlpoolWalletConfig(
             dataSourceFactory,
             SecretPointFactoryJava.getInstance(),
             null,
             multiUsageHttpClientService,
+            rpcService,
             null,
             null,
             null,
             TestNet3Params.get(),
-            false);
+            false,
+            WhirlpoolServer.TESTNET.getSigningPaymentCode());
     return config;
   }
 
