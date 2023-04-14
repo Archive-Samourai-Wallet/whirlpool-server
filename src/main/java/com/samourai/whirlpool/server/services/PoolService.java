@@ -89,26 +89,20 @@ public class PoolService {
 
   public void __reset(WhirlpoolServerConfig.PoolConfig poolConfig, PoolMinerFee minerFee) {
     String poolId = poolConfig.getId();
-    long denomination = poolConfig.getDenomination();
-    long feeValue = poolConfig.getFeeValue();
-    Map<Long, Long> feeAccept = poolConfig.getFeeAccept();
-    int minMustMix = poolConfig.getMustMixMin();
-    int minLiquidity = poolConfig.getLiquidityMin();
-    int anonymitySet = poolConfig.getAnonymitySet();
-    int tx0MaxOutputs = poolConfig.getTx0MaxOutputs();
 
     Assert.notNull(poolId, "Pool configuration: poolId must not be NULL");
     Assert.isTrue(!pools.containsKey(poolId), "Pool configuration: poolId must not be duplicate");
-    PoolFee poolFee = new PoolFee(feeValue, feeAccept);
+    PoolFee poolFee = new PoolFee(poolConfig.getFeeValue(), poolConfig.getFeeAccept());
     Pool pool =
         new Pool(
             poolId,
-            denomination,
+            poolConfig.getDenomination(),
             poolFee,
-            minMustMix,
-            minLiquidity,
-            anonymitySet,
-            tx0MaxOutputs,
+            poolConfig.getMustMixMin(),
+            poolConfig.getLiquidityMin(),
+            poolConfig.getSurge(),
+            poolConfig.getAnonymitySet(),
+            poolConfig.getTx0MaxOutputs(),
             minerFee);
     pools.put(poolId, pool);
     metricService.manage(pool);
@@ -236,22 +230,13 @@ public class PoolService {
         });
   }
 
-  public void confirmInputs(Mix mix, MixService mixService) {
-    int liquiditiesToAdd;
-    if (mix.hasMinMustMixAndFeeReached()) {
-      // enough mustMixs => add missing liquidities
-      liquiditiesToAdd = mix.getPool().getAnonymitySet() - mix.getNbInputs();
-    } else {
-      // not enough mustMixs => add minimal liquidities, then missing mustMixs
-      liquiditiesToAdd = mix.getMinLiquidityMixRemaining();
-    }
+  public synchronized void confirmInputs(Mix mix, MixService mixService) {
+    int liquiditiesToAdd = mix.getAvailableSlotsLiquidityAndSurge();
     confirmInputs(mix, mixService, liquiditiesToAdd);
   }
 
-  private void confirmInputs(Mix mix, MixService mixService, int liquiditiesToAdd) {
+  private int confirmInputs(Mix mix, MixService mixService, int liquiditiesToAdd) {
     int liquiditiesInvited = 0, mustMixsInvited = 0;
-
-    int nbInputs = mix.getNbInputs();
 
     // invite liquidities first (to allow concurrent liquidity remixing)
     if (liquiditiesToAdd > 0 && mix.getPool().getLiquidityQueue().hasInputs()) {
@@ -259,20 +244,21 @@ public class PoolService {
     }
 
     // invite mustMixs
-    int mustMixsToAdd =
-        mix.getPool().getAnonymitySet()
-            - Math.max(mix.getMinLiquidityMixRemaining(), (nbInputs + liquiditiesInvited));
+    int mustMixsToAdd = mix.getAvailableSlotsMustMix();
     if (mustMixsToAdd > 0 && mix.getPool().getMustMixQueue().hasInputs()) {
       mustMixsInvited = inviteToMix(mix, false, mustMixsToAdd, mixService);
     }
 
-    if (liquiditiesInvited > 0 || mustMixsInvited > 0) {
+    int inputsInvited = liquiditiesInvited + mustMixsInvited;
+    if (inputsInvited > 0) {
       if (log.isDebugEnabled()) {
         log.debug(
             "["
                 + mix.getMixId()
                 + "] ("
-                + nbInputs
+                + mix.getNbInputs()
+                + " + "
+                + mix.getSurge()
                 + "/"
                 + mix.getPool().getAnonymitySet()
                 + ") anonymitySet => invited "
@@ -287,6 +273,7 @@ public class PoolService {
                 + " mustMixs");
       }
     }
+    return inputsInvited;
   }
 
   private synchronized int inviteToMix(

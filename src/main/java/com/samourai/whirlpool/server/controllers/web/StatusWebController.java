@@ -62,6 +62,7 @@ public class StatusWebController {
               poolAttributes.put("anonymitySet", pool.getAnonymitySet());
               poolAttributes.put("minMustMix", pool.getMinMustMix());
               poolAttributes.put("minLiquidity", pool.getMinLiquidity());
+              poolAttributes.put("surge", pool.getSurge());
               poolAttributes.put("minerFee", pool.getMinerFee());
               pool.getMinerFee().getMinerFeeMin(); // used in template
               pool.getMinerFee().getMinerFeeCap(); // used in template

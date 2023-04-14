@@ -425,6 +425,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
     private MinerFeeConfig minerFees;
     private int mustMixMin;
     private int liquidityMin;
+    private int surge;
     private int anonymitySet;
     private int tx0MaxOutputs;
 
@@ -484,6 +485,14 @@ public class WhirlpoolServerConfig extends ServerConfig {
       this.liquidityMin = liquidityMin;
     }
 
+    public int getSurge() {
+      return surge;
+    }
+
+    public void setSurge(int surge) {
+      this.surge = surge;
+    }
+
     public int getAnonymitySet() {
       return anonymitySet;
     }
@@ -510,7 +519,14 @@ public class WhirlpoolServerConfig extends ServerConfig {
               + ", anonymitySet="
               + anonymitySet;
       poolInfo += ", minerFees=" + (minerFees != null ? minerFees.toString() : "null");
-      poolInfo += ", mustMixMin=" + getMustMixMin() + ", liquidityMin=" + getLiquidityMin() + "]";
+      poolInfo +=
+          ", mustMixMin="
+              + getMustMixMin()
+              + ", liquidityMin="
+              + getLiquidityMin()
+              + ", surge="
+              + getSurge()
+              + "]";
       poolInfo += ", tx0MaxOutputs=" + tx0MaxOutputs;
       return poolInfo;
     }
@@ -634,6 +650,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
     private long minerFeeCap; // in satoshis
     private long minerFeeMax; // in satoshis
     private long minRelayFee; // in satoshis
+    private long surgeRelayFee; // in satoshis
 
     public void validate() throws Exception {
       if (minerFeeMin <= 0) {
@@ -646,6 +663,9 @@ public class WhirlpoolServerConfig extends ServerConfig {
         throw new Exception("Invalid minerFeeMax");
       }
       if (minRelayFee <= 0) {
+        throw new Exception("Invalid minRelayFee");
+      }
+      if (surgeRelayFee <= 0) {
         throw new Exception("Invalid minRelayFee");
       }
     }
@@ -682,6 +702,14 @@ public class WhirlpoolServerConfig extends ServerConfig {
       this.minRelayFee = minRelayFee;
     }
 
+    public long getSurgeRelayFee() {
+      return surgeRelayFee;
+    }
+
+    public void setSurgeRelayFee(long surgeRelayFee) {
+      this.surgeRelayFee = surgeRelayFee;
+    }
+
     @Override
     public String toString() {
       return "["
@@ -691,7 +719,9 @@ public class WhirlpoolServerConfig extends ServerConfig {
           + ", max="
           + minerFeeMax
           + "], minRelayFee="
-          + minRelayFee;
+          + minRelayFee
+          + ", surgeRelayFee="
+          + surgeRelayFee;
     }
   }
 

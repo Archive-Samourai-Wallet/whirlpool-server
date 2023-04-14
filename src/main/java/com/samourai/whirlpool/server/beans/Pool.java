@@ -8,6 +8,7 @@ public class Pool {
   private PoolFee poolFee;
   private int minMustMix;
   private int minLiquidity;
+  private int surge;
   private int anonymitySet;
   private int tx0MaxOutputs;
   private PoolMinerFee minerFee;
@@ -22,6 +23,7 @@ public class Pool {
       PoolFee poolFee,
       int minMustMix,
       int minLiquidity,
+      int surge,
       int anonymitySet,
       int tx0MaxOutputs,
       PoolMinerFee minerFee) {
@@ -30,6 +32,7 @@ public class Pool {
     this.poolFee = poolFee;
     this.minMustMix = minMustMix;
     this.minLiquidity = minLiquidity;
+    this.surge = surge;
     this.anonymitySet = anonymitySet;
     this.tx0MaxOutputs = tx0MaxOutputs;
     this.minerFee = minerFee;
@@ -94,6 +97,10 @@ public class Pool {
 
   public int getMinLiquidity() {
     return minLiquidity;
+  }
+
+  public int getSurge() {
+    return surge;
   }
 
   public int getAnonymitySet() {

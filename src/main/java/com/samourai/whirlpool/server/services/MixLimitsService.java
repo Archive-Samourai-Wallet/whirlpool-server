@@ -7,8 +7,6 @@ import com.samourai.whirlpool.server.utils.timeout.TimeoutWatcher;
 import java.lang.invoke.MethodHandles;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,18 +17,13 @@ public class MixLimitsService {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private MixService mixService;;
   private PoolService poolService;
-  private BlameService blameService;
   private WhirlpoolServerConfig whirlpoolServerConfig;
 
   private Map<String, TimeoutWatcher> limitsWatchers;
 
   @Autowired
-  public MixLimitsService(
-      PoolService poolService,
-      BlameService blameService,
-      WhirlpoolServerConfig whirlpoolServerConfig) {
+  public MixLimitsService(PoolService poolService, WhirlpoolServerConfig whirlpoolServerConfig) {
     this.poolService = poolService;
-    this.blameService = blameService;
     this.whirlpoolServerConfig = whirlpoolServerConfig;
 
     this.__reset();
@@ -132,7 +125,7 @@ public class MixLimitsService {
                 break;
 
               case SIGNING:
-                blameForSigningAndResetMix(mix);
+                mixService.onTimeoutSigning(mix);
                 break;
 
               default:
@@ -146,29 +139,6 @@ public class MixLimitsService {
     TimeoutWatcher mixLimitsWatcher =
         new TimeoutWatcher(listener, "limitsWatcher-" + mix.getMixId());
     return mixLimitsWatcher;
-  }
-
-  public void blameForSigningAndResetMix(Mix mix) {
-    log.info(
-        "["
-            + mix.getMixId()
-            + "] SIGNING time over (mix failed, blaming users who didn't sign...)");
-
-    // blame users who didn't sign
-    Set<ConfirmedInput> confirmedInputsToBlame =
-        mix.getInputs()
-            .parallelStream()
-            .filter(input -> !mix.getSignedByUsername(input.getRegisteredInput().getUsername()))
-            .collect(Collectors.toSet());
-    List<String> outpointKeysToBlame = new ArrayList<>();
-    for (ConfirmedInput confirmedInputToBlame : confirmedInputsToBlame) {
-      blameService.blame(confirmedInputToBlame.getRegisteredInput(), BlameReason.SIGNING, mix);
-      outpointKeysToBlame.add(confirmedInputToBlame.getRegisteredInput().getOutPoint().toKey());
-    }
-
-    // reset mix
-    String outpointKeysToBlameStr = StringUtils.join(outpointKeysToBlame, ";");
-    mixService.goFail(mix, FailReason.FAIL_SIGNING, outpointKeysToBlameStr);
   }
 
   public Long getLimitsWatcherTimeToWait(Mix mix) {

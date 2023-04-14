@@ -163,13 +163,17 @@ public class Utils {
     return txOut.bitcoinSerialize();
   }
 
+  public static HD_Wallet computeSigningWalletBip44(
+      WhirlpoolServerConfig.SecretWalletConfig secretWalletConfig, NetworkParameters params)
+      throws Exception {
+    return HD_WalletFactoryGeneric.getInstance()
+        .restoreWallet(secretWalletConfig.getWords(), secretWalletConfig.getPassphrase(), params);
+  }
+
   public static HD_Address computeSigningAddress(
       WhirlpoolServerConfig.SecretWalletConfig secretWalletConfig, NetworkParameters params)
       throws Exception {
-    HD_Wallet bip44wallet =
-        HD_WalletFactoryGeneric.getInstance()
-            .restoreWallet(
-                secretWalletConfig.getWords(), secretWalletConfig.getPassphrase(), params);
+    HD_Wallet bip44wallet = computeSigningWalletBip44(secretWalletConfig, params);
     return bip44wallet.getAddressAt(0, 0, 0);
   }
 

@@ -35,6 +35,7 @@ public class Whirlpool10ClientsIntegrationTest extends AbstractIntegrationTest {
     long minerFeeCap = 255;
     long minerFeeMax = 10000;
     long minRelayFee = 510;
+    long surgeRelayFee = 100;
     int mustMixMin = NB_CLIENTS;
     int liquidityMin = 0;
     int anonymitySet = NB_CLIENTS;
@@ -46,9 +47,11 @@ public class Whirlpool10ClientsIntegrationTest extends AbstractIntegrationTest {
             minerFeeCap,
             minerFeeMax,
             minRelayFee,
+            surgeRelayFee,
             mustMixMin,
             liquidityMin,
-            anonymitySet);
+            anonymitySet,
+            0);
 
     AssertMultiClientManager multiClientManager = multiClientManager(NB_CLIENTS, mix);
 
@@ -82,6 +85,7 @@ public class Whirlpool10ClientsIntegrationTest extends AbstractIntegrationTest {
     long minerFeeCap = 255;
     long minerFeeMax = 10000;
     long minRelayFee = 510;
+    long surgeRelayFee = 100;
     int mustMixMin = NB_CLIENTS;
     int liquidityMin = 0;
     int anonymitySet = NB_CLIENTS;
@@ -93,9 +97,11 @@ public class Whirlpool10ClientsIntegrationTest extends AbstractIntegrationTest {
             minerFeeCap,
             minerFeeMax,
             minRelayFee,
+            surgeRelayFee,
             mustMixMin,
             liquidityMin,
-            anonymitySet);
+            anonymitySet,
+            0);
 
     AssertMultiClientManager multiClientManager = multiClientManager(NB_CLIENTS, mix);
     long premixBalanceMin = mix.getPool().computePremixBalanceMin(false);
@@ -137,6 +143,7 @@ public class Whirlpool10ClientsIntegrationTest extends AbstractIntegrationTest {
     long minerFeeCap = 255;
     long minerFeeMax = 10000;
     long minRelayFee = 510;
+    long surgeRelayFee = 100;
     int mustMixMin = 3;
     int liquidityMin = 0;
     int anonymitySet = NB_CLIENTS;
@@ -148,9 +155,11 @@ public class Whirlpool10ClientsIntegrationTest extends AbstractIntegrationTest {
             minerFeeCap,
             minerFeeMax,
             minRelayFee,
+            surgeRelayFee,
             mustMixMin,
             liquidityMin,
-            anonymitySet);
+            anonymitySet,
+            0);
 
     AssertMultiClientManager multiClientManager = multiClientManager(NB_CLIENTS, mix);
 

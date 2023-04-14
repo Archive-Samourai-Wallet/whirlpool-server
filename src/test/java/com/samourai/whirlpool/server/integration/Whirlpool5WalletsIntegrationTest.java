@@ -387,6 +387,7 @@ public class Whirlpool5WalletsIntegrationTest extends AbstractIntegrationTest {
     long minerFeeCap = mixFee * 10 - 2;
     long minerFeeMax = mixFee * 10;
     long minRelayFee = 510;
+    long surgeRelayFee = 100;
     int mustMixMin = NB_CLIENTS;
     int liquidityMin = 0;
     int anonymitySet = NB_CLIENTS;
@@ -398,9 +399,11 @@ public class Whirlpool5WalletsIntegrationTest extends AbstractIntegrationTest {
             minerFeeCap,
             minerFeeMax,
             minRelayFee,
+            surgeRelayFee,
             mustMixMin,
             liquidityMin,
-            anonymitySet);
+            anonymitySet,
+            0);
 
     AssertMultiClientManager multiClientManager = multiClientManager(NB_CLIENTS, mix);
 

@@ -165,9 +165,11 @@ public abstract class AbstractIntegrationTest {
       long minerFeeCap,
       long minerFeeMax,
       long minRelayFee,
+      long surgeRelayFee,
       int mustMixMin,
       int liquidityMin,
-      int anonymitySet)
+      int anonymitySet,
+      int surge)
       throws IllegalInputException {
 
     // find pool
@@ -189,6 +191,7 @@ public abstract class AbstractIntegrationTest {
     poolConfig.setMustMixMin(mustMixMin);
     poolConfig.setLiquidityMin(liquidityMin);
     poolConfig.setAnonymitySet(anonymitySet);
+    poolConfig.setSurge(surge);
 
     WhirlpoolServerConfig.MinerFeeConfig globalMinerFeeConfig =
         new WhirlpoolServerConfig.MinerFeeConfig();
@@ -196,6 +199,7 @@ public abstract class AbstractIntegrationTest {
     globalMinerFeeConfig.setMinerFeeCap(minerFeeCap);
     globalMinerFeeConfig.setMinerFeeMax(minerFeeMax);
     globalMinerFeeConfig.setMinRelayFee(minRelayFee);
+    globalMinerFeeConfig.setSurgeRelayFee(surgeRelayFee);
 
     PoolMinerFee minerFee = new PoolMinerFee(globalMinerFeeConfig, null, mustMixMin);
 

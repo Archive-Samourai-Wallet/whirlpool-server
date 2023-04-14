@@ -41,6 +41,7 @@ public class WhirlpoolMustMixWithLiquiditiesIntegrationTest extends AbstractInte
     long minerFeeCap = 255;
     long minerFeeMax = 10000;
     long minRelayFee = 510;
+    long surgeRelayFee = 100;
     Mix mix =
         __nextMix(
             denomination,
@@ -49,9 +50,11 @@ public class WhirlpoolMustMixWithLiquiditiesIntegrationTest extends AbstractInte
             minerFeeCap,
             minerFeeMax,
             minRelayFee,
+            surgeRelayFee,
             mustMixMin,
             liquidityMin,
-            anonymitySet);
+            anonymitySet,
+            0);
 
     AssertMultiClientManager multiClientManager = multiClientManager(NB_ALL_CONNECTING, mix);
 

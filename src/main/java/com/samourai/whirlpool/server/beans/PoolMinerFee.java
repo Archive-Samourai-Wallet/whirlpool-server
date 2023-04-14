@@ -7,6 +7,7 @@ public class PoolMinerFee {
   private long minerFeeCap; // in satoshis
   private long minerFeeMax; // in satoshis
   private long minRelayFee; // in satoshis
+  private long surgeRelayFee; // in satoshis
   private long minerFeeMix; // in satoshis
 
   public PoolMinerFee(
@@ -33,6 +34,9 @@ public class PoolMinerFee {
     if (mfg.getMinRelayFee() > 0) {
       this.minRelayFee = mfg.getMinRelayFee();
     }
+    if (mfg.getSurgeRelayFee() > 0) {
+      this.surgeRelayFee = mfg.getSurgeRelayFee();
+    }
   }
 
   public long getMinerFeeMin() {
@@ -51,6 +55,10 @@ public class PoolMinerFee {
     return minRelayFee;
   }
 
+  public long getSurgeRelayFee() {
+    return surgeRelayFee;
+  }
+
   public long getMinerFeeMix() {
     return minerFeeMix;
   }
@@ -65,6 +73,8 @@ public class PoolMinerFee {
         + minerFeeMax
         + "], minRelayFee="
         + minRelayFee
+        + ", surgeRelayFee="
+        + surgeRelayFee
         + ", minerFeeMix="
         + minerFeeMix;
   }
