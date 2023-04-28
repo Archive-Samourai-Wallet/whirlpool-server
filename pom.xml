@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>io.samourai.code.whirlpool</groupId>
 	<artifactId>whirlpool-server</artifactId>
-	<version>0.23.34</version>
+	<version>0.23.35-SNAPSHOT</version>
 	<name>whirlpool-server</name>
 	<properties>
 		<spring-boot.version>2.6.2</spring-boot.version>
@@ -50,7 +50,7 @@
 		<dependency><!-- TODO zl remove when upgrading xmanager-protocol in extlibj -->
 			<groupId>io.samourai.code.wallet</groupId>
 			<artifactId>xmanager-protocol</artifactId>
-			<version>1.0.7</version>
+			<version>1.0.8</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
