@@ -6,7 +6,6 @@ import com.samourai.http.client.IWhirlpoolHttpClientService;
 import com.samourai.javaserver.utils.ServerUtils;
 import com.samourai.soroban.client.RpcWallet;
 import com.samourai.soroban.client.RpcWalletImpl;
-import com.samourai.soroban.client.rpc.RpcService;
 import com.samourai.wallet.api.backend.BackendServer;
 import com.samourai.wallet.bip47.rpc.BIP47Account;
 import com.samourai.wallet.bip47.rpc.BIP47Wallet;
@@ -22,6 +21,7 @@ import com.samourai.wallet.util.FormatsUtilGeneric;
 import com.samourai.wallet.util.MessageSignUtilGeneric;
 import com.samourai.wallet.util.TxUtil;
 import com.samourai.whirlpool.client.WhirlpoolClient;
+import com.samourai.whirlpool.client.soroban.SorobanClientApi;
 import com.samourai.whirlpool.client.utils.ClientCryptoService;
 import com.samourai.whirlpool.client.wallet.WhirlpoolWalletConfig;
 import com.samourai.whirlpool.client.wallet.beans.WhirlpoolServer;
@@ -39,6 +39,7 @@ import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import com.samourai.whirlpool.server.services.*;
 import com.samourai.whirlpool.server.services.rpc.MockRpcClientServiceImpl;
+import com.samourai.whirlpool.server.services.rpc.RpcClientServiceServer;
 import com.samourai.whirlpool.server.utils.AssertMultiClientManager;
 import com.samourai.whirlpool.server.utils.TestUtils;
 import com.samourai.whirlpool.server.utils.Utils;
@@ -119,6 +120,7 @@ public abstract class AbstractIntegrationTest {
   @Autowired protected XorMask xorMask;
   @Autowired protected CryptoUtil cryptoUtil;
   @Autowired protected JavaHttpClientService httpClientService;
+  @Autowired protected RpcClientServiceServer rpcClientServiceServer;
 
   protected MessageSignUtilGeneric messageSignUtil = MessageSignUtilGeneric.getInstance();
 
@@ -152,7 +154,7 @@ public abstract class AbstractIntegrationTest {
   }
 
   protected void configurePools(
-      WhirlpoolServerConfig.MinerFeeConfig globalMinerFeeConfig,
+      WhirlpoolServerConfig.PoolMinerFeeConfig globalMinerFeeConfig,
       WhirlpoolServerConfig.PoolConfig... poolConfigs) {
     poolService.__reset(poolConfigs, globalMinerFeeConfig);
     mixService.__reset();
@@ -203,8 +205,8 @@ public abstract class AbstractIntegrationTest {
     poolConfig.setLiquidityMin(liquidityMin);
     poolConfig.setAnonymitySet(anonymitySet);
 
-    WhirlpoolServerConfig.MinerFeeConfig globalMinerFeeConfig =
-        new WhirlpoolServerConfig.MinerFeeConfig();
+    WhirlpoolServerConfig.PoolMinerFeeConfig globalMinerFeeConfig =
+        new WhirlpoolServerConfig.PoolMinerFeeConfig();
     globalMinerFeeConfig.setMinerFeeMin(minerFeeMin);
     globalMinerFeeConfig.setMinerFeeCap(minerFeeCap);
     globalMinerFeeConfig.setMinerFeeMax(minerFeeMax);
@@ -327,17 +329,17 @@ public abstract class AbstractIntegrationTest {
           @Override
           public void stop() {}
         };
-    RpcService rpcService = new RpcService(httpClientService.getHttpClient(), cryptoUtil, false);
     WhirlpoolWalletConfig config =
         new WhirlpoolWalletConfig(
             dataSourceFactory,
             SecretPointFactoryJava.getInstance(),
             null,
             multiUsageHttpClientService,
-            rpcService,
+            rpcClientServiceServer,
             null,
             null,
             null,
+            new SorobanClientApi(),
             TestNet3Params.get(),
             false,
             WhirlpoolServer.TESTNET.getSigningPaymentCode());

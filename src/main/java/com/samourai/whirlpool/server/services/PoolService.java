@@ -12,13 +12,6 @@ import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import com.samourai.whirlpool.server.exceptions.ServerErrorCode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.TaskScheduler;
-import org.springframework.stereotype.Service;
-import org.springframework.util.Assert;
-
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.Comparator;
@@ -26,6 +19,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 
 @Service
 public class PoolService {
@@ -65,14 +64,14 @@ public class PoolService {
 
   public void __reset() {
     WhirlpoolServerConfig.PoolConfig[] poolConfigs = whirlpoolServerConfig.getPools();
-    WhirlpoolServerConfig.MinerFeeConfig globalMinerFeeConfig =
+    WhirlpoolServerConfig.PoolMinerFeeConfig globalMinerFeeConfig =
         whirlpoolServerConfig.getMinerFees();
     __reset(poolConfigs, globalMinerFeeConfig);
   }
 
   public void __reset(
       WhirlpoolServerConfig.PoolConfig[] poolConfigs,
-      WhirlpoolServerConfig.MinerFeeConfig globalMinerFeeConfig) {
+      WhirlpoolServerConfig.PoolMinerFeeConfig globalMinerFeeConfig) {
     pools = new ConcurrentHashMap<>();
     for (WhirlpoolServerConfig.PoolConfig poolConfig : poolConfigs) {
       PoolMinerFee minerFee =
@@ -154,7 +153,7 @@ public class PoolService {
                     pool.getPoolFee().getFeeValue(),
                     pool.computePremixValue(feePerB),
                     pool.computeMustMixBalanceMin(),
-                    pool.computeMustMixBalanceMax(),
+                    pool.computeMustMixBalanceCap(), // provide virtual cap as max
                     pool.getTx0MaxOutputs(),
                     pool.getAnonymitySet()))
         .collect(Collectors.toList());

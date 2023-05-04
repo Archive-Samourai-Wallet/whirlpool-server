@@ -9,6 +9,7 @@ import com.samourai.whirlpool.server.beans.export.ActivityCsv;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.services.BackendService;
 import com.samourai.whirlpool.server.services.ExportService;
+import com.samourai.whirlpool.server.services.MinerFeeService;
 import com.samourai.whirlpool.server.services.rpc.RpcClientService;
 import com.samourai.whirlpool.server.services.soroban.SorobanCoordinatorService;
 import com.samourai.whirlpool.server.utils.Utils;
@@ -40,6 +41,8 @@ public class Application extends ServerApplication {
   @Autowired private XManagerClient xManagerClient;
 
   @Autowired private BackendService backendService;
+
+  @Autowired private MinerFeeService minerFeeService;
 
   @Autowired private SorobanCoordinatorService sorobanCoordinatorService;
 
@@ -94,5 +97,6 @@ public class Application extends ServerApplication {
   @PreDestroy
   public void preDestroy() {
     sorobanCoordinatorService.stop();
+    minerFeeService.stop();
   }
 }

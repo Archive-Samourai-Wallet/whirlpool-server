@@ -28,7 +28,8 @@ import org.springframework.context.annotation.Configuration;
 public class WhirlpoolServerConfig extends ServerConfig {
 
   private SamouraiFeeConfig samouraiFees;
-  private MinerFeeConfig minerFees;
+  private PoolMinerFeeConfig minerFees; // default pools config
+  private MinerFeePerBConfig feePerB; // for MinerFeeService
   private boolean testMode;
   private FailMode failMode;
   private boolean testnet;
@@ -57,12 +58,20 @@ public class WhirlpoolServerConfig extends ServerConfig {
     this.samouraiFees = samouraiFees;
   }
 
-  public MinerFeeConfig getMinerFees() {
+  public PoolMinerFeeConfig getMinerFees() {
     return minerFees;
   }
 
-  public void setMinerFees(MinerFeeConfig minerFees) {
+  public void setMinerFees(PoolMinerFeeConfig minerFees) {
     this.minerFees = minerFees;
+  }
+
+  public MinerFeePerBConfig getFeePerB() {
+    return feePerB;
+  }
+
+  public void setFeePerB(MinerFeePerBConfig feePerB) {
+    this.feePerB = feePerB;
   }
 
   public boolean isTestMode() {
@@ -436,7 +445,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
     private long denomination;
     private long feeValue;
     private Map<Long, Long> feeAccept;
-    private MinerFeeConfig minerFees;
+    private PoolMinerFeeConfig minerFees;
     private int mustMixMin;
     private int liquidityMin;
     private int anonymitySet;
@@ -474,11 +483,11 @@ public class WhirlpoolServerConfig extends ServerConfig {
       this.feeAccept = feeAccept;
     }
 
-    public MinerFeeConfig getMinerFees() {
+    public PoolMinerFeeConfig getMinerFees() {
       return minerFees;
     }
 
-    public void setMinerFees(MinerFeeConfig minerFees) {
+    public void setMinerFees(PoolMinerFeeConfig minerFees) {
       this.minerFees = minerFees;
     }
 
@@ -643,7 +652,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
     }
   }
 
-  public static class MinerFeeConfig {
+  public static class PoolMinerFeeConfig {
     private long minerFeeMin; // in satoshis
     private long minerFeeCap; // in satoshis
     private long minerFeeMax; // in satoshis
@@ -706,6 +715,53 @@ public class WhirlpoolServerConfig extends ServerConfig {
           + minerFeeMax
           + "], minRelayFee="
           + minRelayFee;
+    }
+  }
+
+  public static class MinerFeePerBConfig {
+    private int min;
+    private int max;
+    private int fallback;
+
+    public void validate() throws Exception {
+      if (min <= 0) {
+        throw new Exception("Invalid MinerFeePerBConfig.min");
+      }
+      if (max <= 0) {
+        throw new Exception("Invalid MinerFeePerBConfig.max");
+      }
+      if (fallback <= 0) {
+        throw new Exception("Invalid MinerFeePerBConfig.fallback");
+      }
+    }
+
+    public int getMin() {
+      return min;
+    }
+
+    public void setMin(int min) {
+      this.min = min;
+    }
+
+    public int getMax() {
+      return max;
+    }
+
+    public void setMax(int max) {
+      this.max = max;
+    }
+
+    public int getFallback() {
+      return fallback;
+    }
+
+    public void setFallback(int fallback) {
+      this.fallback = fallback;
+    }
+
+    @Override
+    public String toString() {
+      return "[" + min + "-" + max + "], fallback=" + fallback;
     }
   }
 
@@ -810,6 +866,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
     super.validate();
     samouraiFees.validate();
     minerFees.validate();
+    feePerB.validate();
     for (PartnerConfig partnerConfig : partners) {
       partnerConfig.validate();
     }
@@ -831,6 +888,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
         "samouraiFees",
         "secretWalletV0=(" + nbSeedWordsV0 + " words), secretWallet=(" + nbSeedWords + " words)");
     configInfo.put("minerFees", minerFees.toString());
+    configInfo.put("feePerB", feePerB.toString());
 
     configInfo.put(
         "registerInput.maxInputsSameHash", String.valueOf(registerInput.maxInputsSameHash));

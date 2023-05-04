@@ -10,8 +10,8 @@ public class PoolMinerFee {
   private long minerFeeMix; // in satoshis
 
   public PoolMinerFee(
-      WhirlpoolServerConfig.MinerFeeConfig globalMfg,
-      WhirlpoolServerConfig.MinerFeeConfig poolMfg,
+      WhirlpoolServerConfig.PoolMinerFeeConfig globalMfg,
+      WhirlpoolServerConfig.PoolMinerFeeConfig poolMfg,
       int mustMixMin) {
     overrideFrom(globalMfg);
     if (poolMfg != null) {
@@ -20,7 +20,7 @@ public class PoolMinerFee {
     this.minerFeeMix = Math.max(minRelayFee, mustMixMin * minerFeeMin);
   }
 
-  private void overrideFrom(WhirlpoolServerConfig.MinerFeeConfig mfg) {
+  private void overrideFrom(WhirlpoolServerConfig.PoolMinerFeeConfig mfg) {
     if (mfg.getMinerFeeMin() > 0) {
       this.minerFeeMin = mfg.getMinerFeeMin();
     }

@@ -10,9 +10,10 @@ import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.orchestrators.SorobanPoolInfoOrchestrator;
 import com.samourai.whirlpool.server.orchestrators.SorobanRegisterInputOrchestrator;
+import com.samourai.whirlpool.server.services.MinerFeeService;
 import com.samourai.whirlpool.server.services.PoolService;
 import com.samourai.whirlpool.server.services.RegisterInputService;
-import com.samourai.whirlpool.server.services.rpc.RpcServiceServer;
+import com.samourai.whirlpool.server.services.rpc.RpcClientServiceServer;
 import com.samourai.whirlpool.server.utils.Utils;
 import io.reactivex.Completable;
 import java.lang.invoke.MethodHandles;
@@ -28,6 +29,7 @@ public class SorobanCoordinatorService {
 
   private SorobanCoordinatorApi sorobanCoordinatorApi;
   private WhirlpoolServerConfig whirlpoolServerConfig;
+  private MinerFeeService minerFeeService;
   private RpcWallet rpcWallet;
   private RpcClientEncrypted rpcClient;
 
@@ -38,23 +40,27 @@ public class SorobanCoordinatorService {
   public SorobanCoordinatorService(
       PoolService poolService,
       SorobanCoordinatorApi sorobanCoordinatorApi,
-      RegisterInputService registerInputService,
       WhirlpoolServerConfig whirlpoolServerConfig,
-      RpcServiceServer rpcServiceServer)
+      RegisterInputService registerInputService,
+      MinerFeeService minerFeeService,
+      RpcClientServiceServer rpcClientServiceServer)
       throws Exception {
     this.sorobanCoordinatorApi = sorobanCoordinatorApi;
     this.whirlpoolServerConfig = whirlpoolServerConfig;
+    this.minerFeeService = minerFeeService;
 
     // instanciate rpcClient
     NetworkParameters params = whirlpoolServerConfig.getNetworkParameters();
     BIP47Wallet bip47Wallet =
         Utils.computeSigningBip47Wallet(whirlpoolServerConfig.getSigningWallet(), params);
     this.rpcWallet = new RpcWalletImpl(bip47Wallet);
-    this.rpcClient = rpcServiceServer.createRpcClientEncrypted(rpcWallet, "coordinator");
+    this.rpcClient =
+        rpcClientServiceServer.getRpcClient("coordinator").createRpcClientEncrypted(rpcWallet);
 
     // start publishing pools
     poolInfoOrchestrator =
-        new SorobanPoolInfoOrchestrator(poolService, sorobanCoordinatorApi, rpcClient);
+        new SorobanPoolInfoOrchestrator(
+            poolService, minerFeeService, sorobanCoordinatorApi, rpcClient);
     poolInfoOrchestrator.start(true);
 
     // start watching for Soroban inputs

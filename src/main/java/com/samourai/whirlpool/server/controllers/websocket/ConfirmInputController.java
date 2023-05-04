@@ -40,10 +40,7 @@ public class ConfirmInputController extends AbstractWebSocketController {
 
   @MessageMapping(WhirlpoolEndpoint.WS_CONFIRM_INPUT)
   public void confirmInput(
-      @Payload ConfirmInputRequest payload,
-      Principal principal,
-      StompHeaderAccessor headers,
-      SimpMessageHeaderAccessor messageHeaderAccessor)
+      @Payload ConfirmInputRequest payload, Principal principal, StompHeaderAccessor headers)
       throws Exception {
     validateHeaders(headers);
 

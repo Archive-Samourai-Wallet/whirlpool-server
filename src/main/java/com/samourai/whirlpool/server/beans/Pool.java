@@ -66,7 +66,17 @@ public class Pool {
 
   public long computePremixValue(long feePerB) {
     long mixFeesEstimate = feeUtil.calculateFee(txSize, feePerB);
-    long premixValue = mixFeesEstimate / minMustMix;
+    long mixFeePerMustmix = mixFeesEstimate / minMustMix;
+
+    // make sure premixValue is acceptable for pool
+    long premixBalanceMin = computePremixBalanceMin(false);
+    long premixBalanceCap = computePremixBalanceCap(false);
+    long premixBalanceMax = computePremixBalanceMax(false);
+
+    long premixValue = denomination + mixFeePerMustmix;
+    premixValue = Math.min(premixValue, premixBalanceMax);
+    premixValue = Math.min(premixValue, premixBalanceCap);
+    premixValue = Math.max(premixValue, premixBalanceMin);
     return premixValue;
   }
 
