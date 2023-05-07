@@ -3,17 +3,16 @@ package com.samourai.whirlpool.server.beans;
 import com.samourai.wallet.bip47.rpc.PaymentCode;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.utils.Utils;
+import org.apache.commons.lang3.BooleanUtils;
 
 public class RegisteredInput {
-  private static final String IP_TOR = "127.0.0.1";
-
   private String poolId;
   private String username;
   private TxOutPoint outPoint;
   private boolean liquidity;
-  private String ip;
+  private Boolean tor;
   private PaymentCode sorobanPaymentCode; // null for non-Soroban clients
-  private Long sorobanHeartbeat; // last seen time on Soroban
+  private Long sorobanLastSeen; // last seen time on Soroban
   private String lastUserHash; // unknown until confirmInput attempt
 
   public RegisteredInput(
@@ -21,20 +20,28 @@ public class RegisteredInput {
       String username,
       boolean liquidity,
       TxOutPoint outPoint,
-      String ip,
+      Boolean tor,
       PaymentCode sorobanPaymentCode,
       String lastUserHash) {
     this.poolId = poolId;
     this.username = username;
     this.liquidity = liquidity;
     this.outPoint = outPoint;
-    this.ip = ip;
+    this.tor = tor;
     this.sorobanPaymentCode = sorobanPaymentCode;
+    this.sorobanLastSeen = null;
+    if (sorobanPaymentCode != null) {
+      setSorobanLastSeen();
+    }
     this.lastUserHash = lastUserHash;
   }
 
-  public void setSorobanHeartBeat() {
-    this.sorobanHeartbeat = System.currentTimeMillis();
+  public Long getSorobanLastSeen() {
+    return sorobanLastSeen;
+  }
+
+  public void setSorobanLastSeen() {
+    this.sorobanLastSeen = System.currentTimeMillis();
   }
 
   public long computeMinerFees(Pool pool) {
@@ -57,8 +64,8 @@ public class RegisteredInput {
     return outPoint;
   }
 
-  public String getIp() {
-    return ip;
+  public Boolean getTor() {
+    return tor;
   }
 
   public boolean isSoroban() {
@@ -77,10 +84,6 @@ public class RegisteredInput {
     this.lastUserHash = lastUserHash;
   }
 
-  public boolean isTor() {
-    return IP_TOR.equals(ip);
-  }
-
   @Override
   public String toString() {
     return "poolId="
@@ -91,8 +94,8 @@ public class RegisteredInput {
                 + liquidity
                 + ", username="
                 + username
-                + ", ip="
-                + ip
+                + ", tor="
+                + BooleanUtils.toStringTrueFalse(tor)
                 + ", sorobanPaymentCode="
                 + Utils.obfuscateString(sorobanPaymentCode.toString(), 3)
             != null

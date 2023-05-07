@@ -37,7 +37,7 @@ public class BlameService {
   public void blame(RegisteredInput registeredInput, BlameReason reason, Mix mix) {
     // blame
     String identifier = Utils.computeBlameIdentitifer(registeredInput);
-    dbService.saveBlame(identifier, reason, mix.getMixId(), registeredInput.getIp());
+    dbService.saveBlame(identifier, reason, mix.getMixId(), registeredInput.getTor());
 
     // notify banService
     List<BlameTO> blames = dbService.findBlames(identifier);

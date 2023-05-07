@@ -1,6 +1,5 @@
 package com.samourai.whirlpool.server.controllers.websocket;
 
-import com.samourai.javawsserver.interceptors.JWSSIpHandshakeInterceptor;
 import com.samourai.whirlpool.protocol.WhirlpoolEndpoint;
 import com.samourai.whirlpool.protocol.websocket.messages.RegisterInputRequest;
 import com.samourai.whirlpool.server.beans.FailMode;
@@ -9,6 +8,7 @@ import com.samourai.whirlpool.server.exceptions.AlreadyRegisteredInputException;
 import com.samourai.whirlpool.server.services.ExportService;
 import com.samourai.whirlpool.server.services.RegisterInputService;
 import com.samourai.whirlpool.server.services.WSMessageService;
+import com.samourai.whirlpool.server.utils.Utils;
 import java.lang.invoke.MethodHandles;
 import java.security.Principal;
 import org.slf4j.Logger;
@@ -51,7 +51,6 @@ public class RegisterInputController extends AbstractWebSocketController {
     validateHeaders(headers);
 
     String username = principal.getName();
-    String ip = JWSSIpHandshakeInterceptor.getIp(messageHeaderAccessor);
     if (log.isDebugEnabled()) {
       log.debug(
           "(<) ["
@@ -70,6 +69,7 @@ public class RegisterInputController extends AbstractWebSocketController {
     serverConfig.checkFailMode(FailMode.REGISTER_INPUT);
 
     // register input in pool
+    Boolean tor = Utils.getTor(messageHeaderAccessor);
     try {
       registerInputService.registerInput(
           payload.poolId,
@@ -78,7 +78,7 @@ public class RegisterInputController extends AbstractWebSocketController {
           payload.utxoHash,
           payload.utxoIndex,
           payload.liquidity,
-          ip,
+          tor,
           payload.blockHeight,
           null,
           computeClientDetails(messageHeaderAccessor));

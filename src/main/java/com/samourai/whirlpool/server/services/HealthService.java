@@ -67,6 +67,9 @@ public class HealthService {
 
   @Scheduled(fixedDelay = 120000)
   public void scheduleConnectCheck() {
+    if (true) {
+      return; // TODO temporarily disabled to adapt for DEX
+    }
     try {
       WhirlpoolClientConfig config = computeWhirlpoolClientConfig();
       WhirlpoolClient whirlpoolClient = new WhirlpoolClientImpl(config);

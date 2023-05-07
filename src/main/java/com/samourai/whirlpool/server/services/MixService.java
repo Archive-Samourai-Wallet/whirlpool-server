@@ -242,6 +242,7 @@ public class MixService {
     // find confirming input
     RegisteredInput registeredInput;
     if (utxoHashOrNull != null && utxoIndexOrNull != null) {
+      // soroban clients
       registeredInput =
           mix.removeConfirmingInputByUtxo(utxoHashOrNull, utxoIndexOrNull)
               .orElseThrow(
@@ -253,6 +254,7 @@ public class MixService {
                               + ":"
                               + utxoIndexOrNull));
     } else {
+      // old non-soroban clients
       registeredInput =
           mix.removeConfirmingInputByUsername(username)
               .orElseThrow(
@@ -612,7 +614,7 @@ public class MixService {
                 confirmingInput.getUsername(),
                 confirmingInput.isLiquidity(),
                 confirmingInput.getOutPoint(),
-                confirmingInput.getIp(),
+                confirmingInput.getTor(),
                 confirmingInput.getSorobanPaymentCode(),
                 confirmingInput.getLastUserHash());
           } catch (Exception e) {
@@ -990,9 +992,25 @@ public class MixService {
     if (mix.hasMinMustMixAndFeeReached()) {
       // enough mustMixs => add missing liquidities
       liquiditiesToAdd = mix.getPool().getAnonymitySet() - mix.getNbInputs();
+      if (log.isDebugEnabled()) {
+        log.debug(
+            "["
+                + mix.getPool().getPoolId()
+                + "] minMustMixAndFee reached, inviting "
+                + liquiditiesToAdd
+                + " missing liquidities");
+      }
     } else {
       // not enough mustMixs => add minimal liquidities, then missing mustMixs
       liquiditiesToAdd = mix.getMinLiquidityMixRemaining();
+      if (log.isDebugEnabled()) {
+        log.debug(
+            "["
+                + mix.getPool().getPoolId()
+                + "] minMustMixAndFee NOT reached, inviting "
+                + liquiditiesToAdd
+                + " minLiquidityMixRemaining");
+      }
     }
     confirmInputs(mix, liquiditiesToAdd);
   }

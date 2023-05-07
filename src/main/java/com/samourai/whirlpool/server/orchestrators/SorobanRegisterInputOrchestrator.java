@@ -44,17 +44,15 @@ public class SorobanRegisterInputOrchestrator extends AbstractOrchestrator {
   protected void runOrchestrator() {
     for (Pool pool : poolService.getPools()) {
       String poolId = pool.getPoolId();
+      int freshInputs = 0;
+      int existingInputs = 0;
+      int invalidInputs = 0;
 
       try {
         Collection<RegisterInputSoroban> registerInputSorobans =
             sorobanCoordinatorApi.getListRegisterInputSorobanByPoolId(rpcClient, poolId);
         if (log.isDebugEnabled()) {
-          log.debug(
-              "fetching Soroban inputs for: "
-                  + poolId
-                  + ": "
-                  + registerInputSorobans.size()
-                  + " inputs");
+          log.debug(poolId + " inputs: " + registerInputSorobans.size() + " messages...");
         }
         for (RegisterInputSoroban registerInputSoroban : registerInputSorobans) {
           String inputKey = computeInputKey(registerInputSoroban);
@@ -63,12 +61,33 @@ public class SorobanRegisterInputOrchestrator extends AbstractOrchestrator {
             if (!poolId.equals(registerInputSoroban.getSorobanMessage().poolId)) {
               throw new Exception("poolId mismatch");
             }
-            // validate & register
-            register(registerInputSoroban, inputKey);
+            if (!invalidInputKeys.contains(inputKey)) {
+              // validate & register
+              RegisteredInput registeredInput = register(registerInputSoroban, inputKey);
+              if (registeredInput != null) {
+                freshInputs++;
+              } else {
+                existingInputs++;
+              }
+            } else {
+              invalidInputs++;
+            }
           } catch (Exception e) {
-            log.warn("Soroban input skipped: " + inputKey, e);
+            log.warn("Invalid input: " + inputKey, e);
             invalidInputKeys.add(inputKey);
+            invalidInputs++;
           }
+        }
+        if (log.isDebugEnabled()) {
+          log.debug(
+              poolId
+                  + " inputs => "
+                  + freshInputs
+                  + " freshs, "
+                  + invalidInputs
+                  + " invalids, "
+                  + existingInputs
+                  + " existings");
         }
       } catch (Exception e) {
         log.error("Failed to list Soroban inputs for poolId=" + poolId, e);
@@ -79,25 +98,32 @@ public class SorobanRegisterInputOrchestrator extends AbstractOrchestrator {
   private String computeInputKey(RegisterInputSoroban registerInputSoroban) {
     RegisterInputSorobanMessage risb = registerInputSoroban.getSorobanMessage();
     // all properties necessary to input validation
-    return risb.utxoHash + ":" + risb.utxoIndex + ":" + risb.signature + ":" + risb.liquidity;
+    return risb.poolId
+        + ":"
+        + risb.utxoHash
+        + ":"
+        + risb.utxoIndex
+        + ":"
+        + risb.signature
+        + ":"
+        + risb.liquidity;
   }
 
-  private void register(RegisterInputSoroban registerInputSoroban, String inputKey)
+  private RegisteredInput register(RegisterInputSoroban registerInputSoroban, String inputKey)
       throws Exception {
     if (RegisterInputService.HEALTH_CHECK_UTXO.equals(
         registerInputSoroban.getSorobanMessage().utxoHash)) {
-      return; // ignore HEALTH_CHECK
-    }
-    if (invalidInputKeys.contains(inputKey)) {
-      return; // already marked as invalid
+      return null; // ignore HEALTH_CHECK
     }
 
-    // validate input once
-    if (!registeredInputsByKey.containsKey(inputKey)) {
+    // register input once
+    RegisteredInput registeredInput = registeredInputsByKey.get(inputKey);
+    if (registeredInput == null) {
+      // fresh input
       PaymentCode paymentCode = registerInputSoroban.getSorobanPaymentCode();
       String username = paymentCode.toString();
       RegisterInputSorobanMessage risb = registerInputSoroban.getSorobanMessage();
-      RegisteredInput registeredInput =
+      registeredInput =
           registerInputService.registerInput(
               risb.poolId,
               username,
@@ -105,15 +131,21 @@ public class SorobanRegisterInputOrchestrator extends AbstractOrchestrator {
               risb.utxoHash,
               risb.utxoIndex,
               risb.liquidity,
-              "0.0.0.0",
+              false, // TODO
               risb.blockHeight,
               paymentCode,
               null);
       registeredInputsByKey.put(inputKey, registeredInput);
+      return registeredInput;
+    } else {
+      // already registered
+      if (log.isDebugEnabled()) {
+        log.debug("Skipping Soroban input: " + inputKey + " (already registered)");
+      }
+      // update last seen
+      registeredInput.setSorobanLastSeen();
     }
-
-    // update heartbeat
-    registeredInputsByKey.get(inputKey).setSorobanHeartBeat();
+    return null;
   }
 
   @Override
@@ -130,5 +162,9 @@ public class SorobanRegisterInputOrchestrator extends AbstractOrchestrator {
 
     registeredInputsByKey = new LinkedHashMap<>();
     invalidInputKeys = new LinkedHashSet<>();
+  }
+
+  public void _runOrchestrator() { // for tests
+    runOrchestrator();
   }
 }

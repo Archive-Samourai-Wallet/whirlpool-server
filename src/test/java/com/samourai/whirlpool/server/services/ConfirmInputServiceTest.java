@@ -149,7 +149,7 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
             txOutPoint1.getHash(),
             txOutPoint1.getIndex(),
             false,
-            "127.0.0.1",
+            false,
             blockchainDataService.getBlockHeight(),
             null,
             new LinkedHashMap<>())
@@ -166,7 +166,7 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
             txOutPoint2.getHash(),
             txOutPoint2.getIndex(),
             false,
-            "127.0.0.1",
+            false,
             blockchainDataService.getBlockHeight(),
             null,
             null)
@@ -237,7 +237,7 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
         txOutPoint1.getHash(),
         txOutPoint1.getIndex(),
         false,
-        "127.0.0.1",
+        false,
         blockchainDataService.getBlockHeight(),
         null,
         null);
@@ -252,7 +252,7 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
         txOutPoint2.getHash(),
         txOutPoint2.getIndex(),
         false,
-        "127.0.0.1",
+        false,
         blockchainDataService.getBlockHeight(),
         null,
         null);

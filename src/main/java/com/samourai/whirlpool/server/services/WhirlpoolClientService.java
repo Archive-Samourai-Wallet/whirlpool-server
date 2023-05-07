@@ -75,9 +75,6 @@ public class WhirlpoolClientService {
           }
         };
 
-    IHttpClient httpClient =
-        multiUsageHttpClientService.getHttpClient(HttpUsage.COORDINATOR_WEBSOCKET);
-
     ServerApi serverApi =
         new ServerApi(
             serverUrl, httpClientService.getHttpClient(), httpClientService.getHttpClient());

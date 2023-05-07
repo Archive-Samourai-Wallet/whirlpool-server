@@ -29,7 +29,6 @@ public class SorobanCoordinatorService {
 
   private SorobanCoordinatorApi sorobanCoordinatorApi;
   private WhirlpoolServerConfig whirlpoolServerConfig;
-  private MinerFeeService minerFeeService;
   private RpcWallet rpcWallet;
   private RpcClientEncrypted rpcClient;
 
@@ -47,7 +46,6 @@ public class SorobanCoordinatorService {
       throws Exception {
     this.sorobanCoordinatorApi = sorobanCoordinatorApi;
     this.whirlpoolServerConfig = whirlpoolServerConfig;
-    this.minerFeeService = minerFeeService;
 
     // instanciate rpcClient
     NetworkParameters params = whirlpoolServerConfig.getNetworkParameters();
@@ -80,5 +78,13 @@ public class SorobanCoordinatorService {
   public void stop() {
     registerInputOrchestrator.stop();
     poolInfoOrchestrator.stop();
+  }
+
+  public SorobanPoolInfoOrchestrator _getPoolInfoOrchestrator() { // for tests
+    return poolInfoOrchestrator;
+  }
+
+  public SorobanRegisterInputOrchestrator _getRegisterInputOrchestrator() { // for tests
+    return registerInputOrchestrator;
   }
 }

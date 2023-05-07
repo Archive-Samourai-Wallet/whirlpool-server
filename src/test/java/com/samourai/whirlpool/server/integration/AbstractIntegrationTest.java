@@ -40,6 +40,8 @@ import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import com.samourai.whirlpool.server.services.*;
 import com.samourai.whirlpool.server.services.rpc.MockRpcClientServiceImpl;
 import com.samourai.whirlpool.server.services.rpc.RpcClientServiceServer;
+import com.samourai.whirlpool.server.services.soroban.SorobanCoordinatorApi;
+import com.samourai.whirlpool.server.services.soroban.SorobanCoordinatorService;
 import com.samourai.whirlpool.server.utils.AssertMultiClientManager;
 import com.samourai.whirlpool.server.utils.TestUtils;
 import com.samourai.whirlpool.server.utils.Utils;
@@ -114,6 +116,12 @@ public abstract class AbstractIntegrationTest {
   @Autowired protected HD_WalletFactoryGeneric hdWalletFactory;
 
   @Autowired protected BlameService blameService;
+
+  @Autowired protected SorobanCoordinatorService sorobanCoordinatorService;
+
+  @Autowired protected MinerFeeService minerFeeService;
+
+  @Autowired protected SorobanCoordinatorApi sorobanCoordinatorApi;
 
   @Autowired protected FeePayloadService feePayloadService;
   @Autowired protected PushService pushService;

@@ -2,7 +2,6 @@ package com.samourai.whirlpool.server.controllers.websocket;
 
 import com.google.common.collect.ImmutableMap;
 import com.samourai.javaserver.exceptions.NotifiableException;
-import com.samourai.javawsserver.interceptors.JWSSIpHandshakeInterceptor;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
@@ -10,6 +9,7 @@ import com.samourai.whirlpool.server.exceptions.ServerErrorCode;
 import com.samourai.whirlpool.server.services.ExportService;
 import com.samourai.whirlpool.server.services.RegisterInputService;
 import com.samourai.whirlpool.server.services.WSMessageService;
+import com.samourai.whirlpool.server.utils.Utils;
 import java.lang.invoke.MethodHandles;
 import java.security.Principal;
 import java.util.LinkedHashMap;
@@ -74,8 +74,8 @@ public abstract class AbstractWebSocketController {
       Map<String, String> clientDetails = computeClientDetails(messageHeaderAccessor);
       clientDetails.put("u", username);
       Map<String, String> details = ImmutableMap.of("error", message);
-      String ip = JWSSIpHandshakeInterceptor.getIp(messageHeaderAccessor);
-      ActivityCsv activityCsv = new ActivityCsv(activity, null, details, ip, clientDetails);
+      Boolean tor = Utils.getTor(messageHeaderAccessor);
+      ActivityCsv activityCsv = new ActivityCsv(activity, null, details, tor, clientDetails);
       getExportService().exportActivity(activityCsv);
     }
   }

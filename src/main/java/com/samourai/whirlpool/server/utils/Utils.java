@@ -1,6 +1,7 @@
 package com.samourai.whirlpool.server.utils;
 
 import com.samourai.javaserver.utils.ServerUtils;
+import com.samourai.javawsserver.interceptors.JWSSIpHandshakeInterceptor;
 import com.samourai.wallet.bip47.rpc.BIP47Wallet;
 import com.samourai.wallet.bip47.rpc.PaymentCode;
 import com.samourai.wallet.bip47.rpc.java.Bip47UtilJava;
@@ -24,12 +25,14 @@ import java.net.InetAddress;
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.stream.Collectors;
+import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.text.CharacterPredicates;
 import org.apache.commons.text.RandomStringGenerator;
 import org.bitcoinj.core.*;
 import org.bitcoinj.script.Script;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 
 public class Utils {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -37,6 +40,21 @@ public class Utils {
   private static final ServerUtils serverUtils = ServerUtils.getInstance();
 
   private static int BTC_TO_SATOSHIS = 100000000;
+  private static final String IP_TOR = "127.0.0.1";
+
+  public static Boolean getTor(SimpMessageHeaderAccessor messageHeaderAccessor) {
+    String ip = JWSSIpHandshakeInterceptor.getIp(messageHeaderAccessor);
+    return getTor(ip);
+  }
+
+  public static Boolean getTor(HttpServletRequest request) {
+    String ip = request != null ? request.getRemoteAddr() : null;
+    return getTor(ip);
+  }
+
+  private static Boolean getTor(String ip) {
+    return ip != null ? IP_TOR.equals(ip) : null;
+  }
 
   public static String getRandomString(int length) {
     RandomStringGenerator randomStringGenerator =

@@ -72,7 +72,7 @@ public class Tx0ValidationServiceV0Test extends AbstractIntegrationTest {
 
     whirlpoolWalletConfig = computeWhirlpoolWalletConfig();
     tx0PreviewService =
-        new Tx0PreviewService(new BasicMinerFeeSupplier(1, 9999), whirlpoolWalletConfig);
+        new Tx0PreviewService(new BasicMinerFeeSupplier(1, 9999, 1), whirlpoolWalletConfig);
 
     tx0Service = new Tx0Service(params, tx0PreviewService, feeOpReturnImplV1);
   }

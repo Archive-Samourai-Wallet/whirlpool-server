@@ -72,7 +72,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
           txOutPoint.getHash(),
           txOutPoint.getIndex(),
           liquidity,
-          "127.0.0.1",
+          false,
           blockchainDataService.getBlockHeight(),
           null,
           null);
@@ -193,7 +193,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
                   txOutPoint.getHash(),
                   txOutPoint.getIndex(),
                   false,
-                  "127.0.0.1",
+                  false,
                   blockchainDataService.getBlockHeight(),
                   null,
                   null);
@@ -240,7 +240,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
             txOutPoint.getHash(),
             txOutPoint.getIndex(),
             false,
-            "127.0.0.1",
+            false,
             blockchainDataService.getBlockHeight(),
             null,
             null);
@@ -278,7 +278,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
                   txOutPoint.getHash(),
                   txOutPoint.getIndex(),
                   false,
-                  "127.0.0.1",
+                  false,
                   blockchainDataService.getBlockHeight(),
                   null,
                   null);
@@ -316,7 +316,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
                   txOutPoint.getHash(),
                   txOutPoint.getIndex(),
                   false,
-                  "127.0.0.1",
+                  false,
                   blockchainDataService.getBlockHeight(),
                   null,
                   null);
@@ -350,7 +350,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
         txOutPoint.getHash(),
         txOutPoint.getIndex(),
         false,
-        "127.0.0.1",
+        false,
         blockchainDataService.getBlockHeight(),
         null,
         null);
@@ -365,7 +365,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
         txOutPoint.getHash(),
         txOutPoint.getIndex(),
         false,
-        "127.0.0.1",
+        false,
         blockchainDataService.getBlockHeight(),
         null,
         null); // AlreadyRegisteredInputException thrown in background
@@ -400,7 +400,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
                   txOutPoint.getHash(),
                   txOutPoint.getIndex(),
                   false,
-                  "127.0.0.1",
+                  false,
                   blockchainDataService.getBlockHeight(),
                   null,
                   null);
@@ -437,7 +437,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
         txOutPoint.getHash(),
         txOutPoint.getIndex(),
         false,
-        "127.0.0.1",
+        false,
         blockchainDataService.getBlockHeight(),
         null,
         null);
@@ -473,7 +473,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
                   txOutPoint.getHash(),
                   txOutPoint.getIndex(),
                   false,
-                  "127.0.0.1",
+                  false,
                   blockchainDataService.getBlockHeight(),
                   null,
                   null);

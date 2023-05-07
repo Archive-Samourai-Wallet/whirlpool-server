@@ -106,8 +106,8 @@ public class DbService {
 
   // blame
 
-  public BlameTO saveBlame(String identifier, BlameReason reason, String mixId, String ip) {
-    BlameTO blameTO = new BlameTO(identifier, reason, mixId, ip);
+  public BlameTO saveBlame(String identifier, BlameReason reason, String mixId, Boolean tor) {
+    BlameTO blameTO = new BlameTO(identifier, reason, mixId, tor);
     log.warn("+blame: " + blameTO);
     return blameRepository.save(blameTO);
   }

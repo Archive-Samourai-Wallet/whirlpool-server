@@ -5,6 +5,7 @@ import com.samourai.whirlpool.server.persistence.to.shared.EntityCreatedTO;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import org.apache.commons.lang3.BooleanUtils;
 
 @Entity(name = "blame")
 public class BlameTO extends EntityCreatedTO {
@@ -15,16 +16,16 @@ public class BlameTO extends EntityCreatedTO {
 
   private String mixId;
 
-  private String ip;
+  private Boolean tor;
 
   public BlameTO() {}
 
-  public BlameTO(String identifier, BlameReason reason, String mixId, String ip) {
+  public BlameTO(String identifier, BlameReason reason, String mixId, Boolean tor) {
     super();
     this.identifier = identifier;
     this.reason = reason;
     this.mixId = mixId;
-    this.ip = ip;
+    this.tor = tor;
   }
 
   public String getIdentifier() {
@@ -39,8 +40,8 @@ public class BlameTO extends EntityCreatedTO {
     return mixId;
   }
 
-  public String getIp() {
-    return ip;
+  public Boolean getTor() {
+    return tor;
   }
 
   @Override
@@ -51,8 +52,8 @@ public class BlameTO extends EntityCreatedTO {
         + reason
         + ", mixId="
         + (mixId != null ? mixId : "null")
-        + ", ip="
-        + (ip != null ? ip : "null")
+        + ", tor="
+        + BooleanUtils.toStringTrueFalse(tor)
         + ", created="
         + (getCreated() != null ? getCreated() : "");
   }

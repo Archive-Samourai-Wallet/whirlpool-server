@@ -15,6 +15,7 @@ import java.lang.invoke.MethodHandles;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import org.apache.commons.lang3.BooleanUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,7 +61,7 @@ public class RegisterInputService {
       String utxoHash,
       long utxoIndex,
       boolean liquidity,
-      String ip,
+      Boolean tor,
       int blockHeight,
       PaymentCode sorobanPaymentCodeOrNull,
       Map<String, String> clientDetails)
@@ -87,7 +88,11 @@ public class RegisterInputService {
     // verify UTXO not banned
     Optional<BanTO> banTO = banService.findActiveBan(utxoHash, utxoIndex);
     if (banTO.isPresent()) {
-      log.warn("Rejecting banned UTXO: [" + banTO.get() + "], ip=" + ip);
+      log.warn(
+          "Rejecting banned UTXO: ["
+              + banTO.get()
+              + "], tor="
+              + BooleanUtils.toStringTrueFalse(tor));
       String banMessage = banTO.get().computeBanMessage();
       throw new BannedInputException(banMessage);
     }
@@ -129,7 +134,7 @@ public class RegisterInputService {
       // register input to pool
       RegisteredInput registeredInput =
           poolService.registerInput(
-              poolId, username, liquidity, txOutPoint, ip, sorobanPaymentCodeOrNull, null);
+              poolId, username, liquidity, txOutPoint, tor, sorobanPaymentCodeOrNull, null);
 
       // log activity
       if (clientDetails == null) {

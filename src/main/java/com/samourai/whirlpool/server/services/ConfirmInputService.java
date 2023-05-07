@@ -33,8 +33,8 @@ public class ConfirmInputService {
       String username,
       byte[] blindedBordereau,
       String userHash,
-      String utxoHashOrNull,
-      Long utxoIndexOrNull)
+      String utxoHashOrNull, // null for old non-soroban clients
+      Long utxoIndexOrNull) // null for old non-soroban clients
       throws NotifiableException {
     try {
       // add input to mix & reply confirmInputResponse
@@ -67,7 +67,7 @@ public class ConfirmInputService {
           registeredInput.getUsername(),
           registeredInput.isLiquidity(),
           registeredInput.getOutPoint(),
-          registeredInput.getIp(),
+          registeredInput.getTor(),
           registeredInput.getSorobanPaymentCode(),
           userHash);
       return Optional.empty();

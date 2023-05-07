@@ -59,7 +59,7 @@ public class MixServiceTest extends AbstractIntegrationTest {
                 "mustMix1",
                 false,
                 generateOutPoint(mustMixValue),
-                "127.0.0.1",
+                false,
                 null,
                 null),
             "userHash1"));
@@ -73,7 +73,7 @@ public class MixServiceTest extends AbstractIntegrationTest {
                 "mustMix2",
                 false,
                 generateOutPoint(mustMixValue),
-                "127.0.0.1",
+                false,
                 null,
                 null),
             "userHash2"));
@@ -117,7 +117,7 @@ public class MixServiceTest extends AbstractIntegrationTest {
                 "liquidity1",
                 true,
                 generateOutPoint(mustMixValue),
-                "127.0.0.1",
+                false,
                 null,
                 null),
             "userHashL1"));
@@ -131,7 +131,7 @@ public class MixServiceTest extends AbstractIntegrationTest {
                 "liquidity2",
                 true,
                 generateOutPoint(mustMixValue),
-                "127.0.0.1",
+                false,
                 null,
                 null),
             "userHashL2"));
@@ -145,7 +145,7 @@ public class MixServiceTest extends AbstractIntegrationTest {
                 "mustMix1",
                 false,
                 generateOutPoint(mustMixValue),
-                "127.0.0.1",
+                false,
                 null,
                 null),
             "userHashM1"));
@@ -159,7 +159,7 @@ public class MixServiceTest extends AbstractIntegrationTest {
                 "mustMix2",
                 false,
                 generateOutPoint(mustMixValue),
-                "127.0.0.1",
+                false,
                 null,
                 null),
             "userHashM2"));
@@ -205,7 +205,7 @@ public class MixServiceTest extends AbstractIntegrationTest {
                 "mustMix1",
                 false,
                 generateOutPoint(mustMixValue),
-                "127.0.0.1",
+                false,
                 null,
                 null),
             "userHash1");
@@ -220,7 +220,7 @@ public class MixServiceTest extends AbstractIntegrationTest {
                 "mustMix2",
                 false,
                 generateOutPoint(mustMixValue),
-                "127.0.0.1",
+                false,
                 null,
                 null),
             "userHash2");
@@ -249,7 +249,7 @@ public class MixServiceTest extends AbstractIntegrationTest {
                 "mustMix3",
                 false,
                 generateOutPoint(mustMixValue),
-                "127.0.0.1",
+                false,
                 null,
                 null),
             "userHash3");

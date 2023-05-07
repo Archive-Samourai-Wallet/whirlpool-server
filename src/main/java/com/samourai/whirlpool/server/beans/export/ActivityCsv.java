@@ -3,6 +3,7 @@ package com.samourai.whirlpool.server.beans.export;
 import com.opencsv.bean.CsvBindByPosition;
 import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
+import com.samourai.whirlpool.server.utils.Utils;
 import java.lang.invoke.MethodHandles;
 import java.sql.Timestamp;
 import java.util.Enumeration;
@@ -34,7 +35,7 @@ public class ActivityCsv {
   private String details;
 
   @CsvBindByPosition(position = 5)
-  private String ip;
+  private Boolean tor;
 
   @CsvBindByPosition(position = 6)
   private String clientDetails;
@@ -44,10 +45,10 @@ public class ActivityCsv {
       String poolId,
       String arg,
       Map<String, String> details,
-      String ip,
+      Boolean tor,
       Map<String, String> clientDetails) {
     try {
-      init(activity, poolId, arg, details, ip, clientDetails);
+      init(activity, poolId, arg, details, tor, clientDetails);
     } catch (Exception e) {
       log.error("", e);
     }
@@ -61,7 +62,8 @@ public class ActivityCsv {
       HttpServletRequest request) {
     try {
       this.clientDetails = computeClientDetails(request).toString();
-      init(activity, poolId, arg, details, request != null ? request.getRemoteAddr() : null, null);
+      Boolean tor = Utils.getTor(request);
+      init(activity, poolId, arg, details, tor, null);
     } catch (Exception e) {
       log.error("", e);
     }
@@ -71,10 +73,10 @@ public class ActivityCsv {
       String activity,
       String poolId,
       Map<String, String> details,
-      String ip,
+      Boolean tor,
       Map<String, String> clientDetails) {
     try {
-      init(activity, poolId, null, details, ip, clientDetails);
+      init(activity, poolId, null, details, tor, clientDetails);
     } catch (Exception e) {
       log.error("", e);
     }
@@ -109,7 +111,7 @@ public class ActivityCsv {
         clientDetails.putAll(clientDetailsParam);
       }
 
-      init(activity, poolId, arg, details, registeredInput.getIp(), clientDetails);
+      init(activity, poolId, arg, details, registeredInput.getTor(), clientDetails);
     } catch (Exception e) {
       log.error("", e);
     }
@@ -120,14 +122,14 @@ public class ActivityCsv {
       String poolId,
       String arg,
       Map<String, String> details,
-      String ip,
+      Boolean tor,
       Map<String, String> clientDetails) {
     this.date = new Timestamp(System.currentTimeMillis());
     this.activity = activity;
     this.poolId = poolId;
     this.arg = arg;
     this.details = details != null ? details.toString() : null;
-    this.ip = ip;
+    this.tor = tor;
     this.clientDetails = clientDetails != null ? clientDetails.toString() : null;
   }
 
@@ -165,8 +167,8 @@ public class ActivityCsv {
     return poolId;
   }
 
-  public String getIp() {
-    return ip;
+  public Boolean getTor() {
+    return tor;
   }
 
   public String getClientDetails() {

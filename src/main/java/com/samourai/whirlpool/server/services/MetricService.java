@@ -10,6 +10,7 @@ import io.micrometer.core.instrument.Tag;
 import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.Collection;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +55,7 @@ public class MetricService {
               "poolId",
               mix.getPoolId(),
               "tor",
-              Boolean.toString(input.isTor()))
+              BooleanUtils.toStringTrueFalse(input.getTor()))
           .increment();
     }
   }
@@ -132,7 +133,7 @@ public class MetricService {
               "username" + RandomUtils.nextInt(0, 999999),
               false,
               outPoint,
-              "127.0.0.1",
+              false,
               null,
               "");
       TxOutPoint outPoint2 =
@@ -143,7 +144,7 @@ public class MetricService {
               "username" + RandomUtils.nextInt(0, 999999),
               true,
               outPoint2,
-              "1.2.3.4",
+              false,
               null,
               "");
 

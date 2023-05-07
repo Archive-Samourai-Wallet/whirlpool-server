@@ -50,4 +50,8 @@ public class SorobanPoolInfoOrchestrator extends AbstractOrchestrator {
       log.error("Failed to register Soroban pools", e);
     }
   }
+
+  public void _runOrchestrator() { // for tests
+    runOrchestrator();
+  }
 }

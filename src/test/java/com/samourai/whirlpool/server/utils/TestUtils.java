@@ -131,7 +131,7 @@ public class TestUtils {
       String poolId, String utxoHash, long utxoIndex, boolean liquidity) {
     TxOutPoint outPoint = new TxOutPoint(utxoHash, utxoIndex, 1234, 99, null, "fakeReceiveAddress");
     RegisteredInput registeredInput =
-        new RegisteredInput(poolId, "foo", liquidity, outPoint, "127.0.0.1", null, null);
+        new RegisteredInput(poolId, "foo", liquidity, outPoint, false, null, null);
     ConfirmedInput confirmedInput =
         new ConfirmedInput(registeredInput, "userHash" + utxoHash + utxoIndex);
     return confirmedInput;
