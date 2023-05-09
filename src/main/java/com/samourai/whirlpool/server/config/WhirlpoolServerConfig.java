@@ -526,8 +526,8 @@ public class WhirlpoolServerConfig extends ServerConfig {
               + getLiquidityMin()
               + ", surge="
               + getSurge()
-              + "]";
-      poolInfo += ", tx0MaxOutputs=" + tx0MaxOutputs;
+              + ", tx0MaxOutputs="
+              + tx0MaxOutputs;
       return poolInfo;
     }
   }
@@ -752,12 +752,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
       // check expiration
       if (expiration != null) {
         if (tx0Time > expiration) {
-          log.warn("SCode expired: expiration=" + expiration + ", tx0Time=" + tx0Time);
           return false;
-        } else {
-          if (log.isDebugEnabled()) {
-            log.debug("SCode still valid: expiration=" + expiration + ", tx0Time=" + tx0Time);
-          }
         }
       }
       return true;

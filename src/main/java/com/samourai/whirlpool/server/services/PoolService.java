@@ -2,9 +2,7 @@ package com.samourai.whirlpool.server.services;
 
 import com.google.common.collect.ImmutableMap;
 import com.samourai.javaserver.exceptions.NotifiableException;
-import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.protocol.websocket.messages.SubscribePoolResponse;
-import com.samourai.whirlpool.protocol.websocket.notifications.ConfirmInputMixStatusNotification;
 import com.samourai.whirlpool.server.beans.*;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
@@ -17,7 +15,6 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +25,6 @@ import org.springframework.util.Assert;
 @Service
 public class PoolService {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-  private static final int INVITE_INPUT_DELAY = 2000;
 
   private WhirlpoolServerConfig whirlpoolServerConfig;
   private CryptoService cryptoService;
@@ -194,129 +190,14 @@ public class PoolService {
           "["
               + pool.getPoolId()
               + "] "
-              + registeredInput.getUsername()
               + " queueing "
-              + (registeredInput.isLiquidity() ? "liquidity" : "mustMix"));
+              + (registeredInput.isLiquidity() ? "liquidity" : "mustMix")
+              + ", username="
+              + registeredInput.getUsername());
     }
 
     // queue input
     queue.register(registeredInput);
-  }
-
-  private void inviteToMix(Mix mix, RegisteredInput registeredInput) throws NotifiableException {
-    log.info(
-        "["
-            + mix.getMixId()
-            + "] "
-            + registeredInput.getUsername()
-            + " inviting "
-            + (registeredInput.isLiquidity() ? "liquidity" : "mustMix")
-            + " to mix: "
-            + registeredInput.getOutPoint());
-
-    // register confirming input
-    String publicKey64 = WhirlpoolProtocol.encodeBytes(mix.getPublicKey());
-    ConfirmInputMixStatusNotification confirmInputMixStatusNotification =
-        new ConfirmInputMixStatusNotification(mix.getMixId(), publicKey64);
-    mix.registerConfirmingInput(registeredInput);
-
-    // add delay as we are called from LimitsWatcher which may run just after an input registered
-    taskService.runOnce(
-        INVITE_INPUT_DELAY,
-        () -> {
-          // send invite to mix
-          WSMessageService.sendPrivate(
-              registeredInput.getUsername(), confirmInputMixStatusNotification);
-        });
-  }
-
-  public synchronized void confirmInputs(Mix mix, MixService mixService) {
-    int liquiditiesToAdd = mix.getAvailableSlotsLiquidityAndSurge();
-    confirmInputs(mix, mixService, liquiditiesToAdd);
-  }
-
-  private int confirmInputs(Mix mix, MixService mixService, int liquiditiesToAdd) {
-    int liquiditiesInvited = 0, mustMixsInvited = 0;
-
-    // invite liquidities first (to allow concurrent liquidity remixing)
-    if (liquiditiesToAdd > 0 && mix.getPool().getLiquidityQueue().hasInputs()) {
-      liquiditiesInvited = inviteToMix(mix, true, liquiditiesToAdd, mixService);
-    }
-
-    // invite mustMixs
-    int mustMixsToAdd = mix.getAvailableSlotsMustMix();
-    if (mustMixsToAdd > 0 && mix.getPool().getMustMixQueue().hasInputs()) {
-      mustMixsInvited = inviteToMix(mix, false, mustMixsToAdd, mixService);
-    }
-
-    int inputsInvited = liquiditiesInvited + mustMixsInvited;
-    if (inputsInvited > 0) {
-      if (log.isDebugEnabled()) {
-        log.debug(
-            "["
-                + mix.getMixId()
-                + "] ("
-                + mix.getNbInputs()
-                + " + "
-                + mix.getSurge()
-                + "/"
-                + mix.getPool().getAnonymitySet()
-                + ") anonymitySet => invited "
-                + liquiditiesInvited
-                + "/"
-                + liquiditiesToAdd
-                + " "
-                + "liquidities + "
-                + mustMixsInvited
-                + "/"
-                + mustMixsToAdd
-                + " mustMixs");
-      }
-    }
-    return inputsInvited;
-  }
-
-  private synchronized int inviteToMix(
-      Mix mix, boolean liquidity, int maxInvites, MixService mixService) {
-    Predicate<Map.Entry<String, RegisteredInput>> filterInputMixable =
-        mixService.computeFilterInputMixable(mix);
-    InputPool queue =
-        (liquidity ? mix.getPool().getLiquidityQueue() : mix.getPool().getMustMixQueue());
-    int nbInvited = 0;
-    while (true) {
-      // stop when enough invites
-      if (nbInvited >= maxInvites) {
-        break;
-      }
-
-      // stop when no more input to invite
-      Optional<RegisteredInput> registeredInput = queue.removeRandom(filterInputMixable);
-      if (!registeredInput.isPresent()) {
-        break;
-      }
-
-      // invite one more
-      try {
-        inviteToMix(mix, registeredInput.get());
-        nbInvited++;
-      } catch (Exception e) {
-        log.error("inviteToMix failed", e);
-      }
-    }
-    if (nbInvited > 0) {
-      if (log.isTraceEnabled()) {
-        log.trace(
-            "["
-                + mix.getMixId()
-                + "] invited "
-                + nbInvited
-                + "/"
-                + maxInvites
-                + " "
-                + (liquidity ? "liquidities" : "remixs"));
-      }
-    }
-    return nbInvited;
   }
 
   public void resetLastUserHash(Mix mix) {

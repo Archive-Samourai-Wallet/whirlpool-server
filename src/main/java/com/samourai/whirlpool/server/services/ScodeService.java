@@ -48,6 +48,15 @@ public class ScodeService {
 
     // check expiry
     if (!scodeConfig.isValidAt(tx0Time)) {
+      if (log.isDebugEnabled()) {
+        log.warn(
+            "SCode expired: expiration="
+                + scodeConfig.getExpiration()
+                + ", tx0Time="
+                + tx0Time
+                + ", payload="
+                + scodePayload);
+      }
       return null;
     }
     return scodeConfig;
@@ -64,6 +73,15 @@ public class ScodeService {
 
     // check expiry
     if (!scodeConfig.isValidAt(tx0Time)) {
+      if (log.isDebugEnabled()) {
+        log.warn(
+            "SCode expired: expiration="
+                + scodeConfig.getExpiration()
+                + ", tx0Time="
+                + tx0Time
+                + ", scode="
+                + scodeUpperCase);
+      }
       return null;
     }
     return scodeConfig;

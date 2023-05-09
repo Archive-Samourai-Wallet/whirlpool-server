@@ -60,9 +60,11 @@ public class StatusWebController {
               poolAttributes.put("feeAccept", pool.getPoolFee().getFeeAccept());
               poolAttributes.put("mixStatus", mix.getMixStatus());
               poolAttributes.put("anonymitySet", pool.getAnonymitySet());
+              poolAttributes.put("anonymitySetWithSurge", mix.getAnonymitySetWithSurge());
               poolAttributes.put("minMustMix", pool.getMinMustMix());
               poolAttributes.put("minLiquidity", pool.getMinLiquidity());
-              poolAttributes.put("surge", pool.getSurge());
+              poolAttributes.put("poolSurge", pool.getSurge());
+              poolAttributes.put("mixSurge", mix.getSurge());
               poolAttributes.put("minerFee", pool.getMinerFee());
               pool.getMinerFee().getMinerFeeMin(); // used in template
               pool.getMinerFee().getMinerFeeCap(); // used in template
@@ -71,6 +73,8 @@ public class StatusWebController {
               poolAttributes.put("tx0MaxOutputs", pool.getTx0MaxOutputs());
               poolAttributes.put("minerFeeAccumulated", mix.computeMinerFeeAccumulated());
               poolAttributes.put("nbInputs", mix.getNbInputs());
+              poolAttributes.put("nbInputsNonSurge", mix.getNbInputsNonSurge());
+              poolAttributes.put("nbInputsSurge", mix.getNbInputsSurge());
               poolAttributes.put("nbInputsMustMix", mix.getNbInputsMustMix());
               poolAttributes.put("nbInputsLiquidities", mix.getNbInputsLiquidities());
               poolAttributes.put("elapsedTime", mix.getElapsedTime());

@@ -96,8 +96,8 @@ public class MixLimitsService {
 
               default:
                 // no timer
-                if (log.isDebugEnabled()) {
-                  log.debug(
+                if (log.isTraceEnabled()) {
+                  log.trace(
                       "limitsWatcher.computeTimeToWait => no timer: mixStatus="
                           + mix.getMixStatus());
                 }
@@ -113,7 +113,7 @@ public class MixLimitsService {
             }
             switch (mix.getMixStatus()) {
               case CONFIRM_INPUT:
-                poolService.confirmInputs(mix, mixService);
+                mixService.onTimeoutConfirmInput(mix);
                 break;
 
               case REGISTER_OUTPUT:

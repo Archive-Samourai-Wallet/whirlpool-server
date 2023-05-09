@@ -128,8 +128,6 @@ public abstract class AbstractIntegrationTest {
 
     messageSignUtil = MessageSignUtilGeneric.getInstance();
 
-    mixService.__setCONFIRM_INPUT_CHECK_DELAY(0);
-
     dbService.__reset();
     mixLimitsService = mixService.__getMixLimitsService();
     rpcClientService.resetMock();

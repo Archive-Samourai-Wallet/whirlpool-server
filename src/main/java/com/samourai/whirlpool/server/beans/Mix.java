@@ -35,6 +35,7 @@ public class Mix {
 
   private Pool pool;
   private int surge;
+  private boolean confirmingSurge;
 
   private MixStatus mixStatus;
   private InputPool confirmingInputs;
@@ -213,7 +214,7 @@ public class Mix {
     if (log.isDebugEnabled()) {
       log.debug(
           "["
-              + mixId
+              + getLogId()
               + "] computeSurges() = "
               + surges
               + ": minerFeeForSurges="
@@ -231,9 +232,23 @@ public class Mix {
     int newSurge = computeSurge();
     if (surge != newSurge) {
       if (log.isDebugEnabled()) {
-        log.debug("[" + mixId + "] setSurge: " + surge + "->" + newSurge);
+        log.debug("[" + getLogId() + "] setSurge: " + surge + "->" + newSurge);
       }
       this.surge = newSurge;
+      if (surge == 0) {
+        confirmingSurge = false;
+      }
+    }
+  }
+
+  public boolean isConfirmingSurge() {
+    return confirmingSurge;
+  }
+
+  public void setConfirmingSurge(boolean confirmingSurge) {
+    this.confirmingSurge = confirmingSurge;
+    if (log.isDebugEnabled()) {
+      log.debug("[" + getLogId() + "] confirmingSurge=" + confirmingSurge);
     }
   }
 
@@ -241,12 +256,16 @@ public class Mix {
     return (getNbInputs() >= pool.getAnonymitySet());
   }
 
-  private boolean isFullWithSurge() {
+  public boolean isFullWithSurge() {
     return (getNbInputs() >= (pool.getAnonymitySet() + surge));
   }
 
   public String getMixId() {
     return mixId;
+  }
+
+  public String getLogId() {
+    return pool.getPoolId() + "/" + mixId;
   }
 
   public AsymmetricCipherKeyPair getKeyPair() {
@@ -271,6 +290,10 @@ public class Mix {
 
   public int getSurge() {
     return surge;
+  }
+
+  public int getAnonymitySetWithSurge() {
+    return pool.getAnonymitySet() + surge;
   }
 
   public MixStatus getMixStatus() {
@@ -298,7 +321,9 @@ public class Mix {
   public synchronized Optional<RegisteredInput> removeConfirmingInputByUsername(String username) {
     Optional<RegisteredInput> confirmingInput = confirmingInputs.removeByUsername(username);
     if (confirmingInput.isPresent()) {
-      log.info("[" + mixId + "] " + username + " unregistered from confirming inputs");
+      if (log.isTraceEnabled()) {
+        log.trace("[" + getLogId() + "] " + username + " unregistered from confirming inputs");
+      }
     }
     return confirmingInput;
   }
@@ -337,6 +362,14 @@ public class Mix {
 
   public int getNbInputs() {
     return inputsById.size();
+  }
+
+  public int getNbInputsNonSurge() {
+    return Math.min(getNbInputs(), pool.getAnonymitySet());
+  }
+
+  public int getNbInputsSurge() {
+    return Math.max(getNbInputs() - pool.getAnonymitySet(), 0);
   }
 
   public int getNbInputsMustMix() {
@@ -387,10 +420,10 @@ public class Mix {
   public synchronized void unregisterInput(ConfirmedInput confirmedInput) {
     log.info(
         "["
-            + mixId
+            + getLogId()
             + "] "
-            + confirmedInput.getRegisteredInput().getUsername()
-            + " unregistering a CONFIRMED input");
+            + " unregistering a CONFIRMED input, username="
+            + confirmedInput.getRegisteredInput().getUsername());
     String inputId = Utils.computeInputId(confirmedInput.getRegisteredInput().getOutPoint());
     inputsById.remove(inputId);
   }
@@ -526,9 +559,11 @@ public class Mix {
     return mixDuration;
   }
 
-  public boolean isAlreadyStarted() {
-    return !MixStatus.CONFIRM_INPUT.equals(getMixStatus())
-        && !MixStatus.FAIL.equals(getMixStatus())
-        && !MixStatus.SUCCESS.equals(getMixStatus());
+  public boolean isDone() {
+    return MixStatus.FAIL.equals(getMixStatus()) || MixStatus.SUCCESS.equals(getMixStatus());
+  }
+
+  public boolean isBlamableStatus() {
+    return !isDone() && !MixStatus.CONFIRM_INPUT.equals(getMixStatus());
   }
 }
