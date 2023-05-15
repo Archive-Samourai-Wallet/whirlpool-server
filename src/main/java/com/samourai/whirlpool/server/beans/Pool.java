@@ -9,6 +9,7 @@ public class Pool {
   private int minMustMix;
   private int minLiquidity;
   private int surge;
+  private int minLiquidityPoolForSurge;
   private int anonymitySet;
   private int tx0MaxOutputs;
   private PoolMinerFee minerFee;
@@ -25,6 +26,7 @@ public class Pool {
       int minMustMix,
       int minLiquidity,
       int surge,
+      int minLiquidityPoolForSurge,
       int anonymitySet,
       int tx0MaxOutputs,
       PoolMinerFee minerFee) {
@@ -34,6 +36,7 @@ public class Pool {
     this.minMustMix = minMustMix;
     this.minLiquidity = minLiquidity;
     this.surge = surge;
+    this.minLiquidityPoolForSurge = minLiquidityPoolForSurge;
     this.anonymitySet = anonymitySet;
     this.tx0MaxOutputs = tx0MaxOutputs;
     this.minerFee = minerFee;
@@ -66,6 +69,10 @@ public class Pool {
   public long computePremixBalanceMax(boolean liquidity) {
     return WhirlpoolProtocol.computePremixBalanceMax(
         denomination, computeMustMixBalanceMax(), liquidity);
+  }
+
+  public boolean isSurgeDisabledForLowLiquidityPool() {
+    return surge > 0 && liquidityQueue.getSize() < minLiquidityPoolForSurge;
   }
 
   // tests only
@@ -107,6 +114,10 @@ public class Pool {
 
   public int getSurge() {
     return surge;
+  }
+
+  public int getMinLiquidityPoolForSurge() {
+    return minLiquidityPoolForSurge;
   }
 
   public int getAnonymitySet() {

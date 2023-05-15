@@ -60,9 +60,12 @@ public class StatusWebController {
               poolAttributes.put("minMustMix", pool.getMinMustMix());
               poolAttributes.put("minLiquidity", pool.getMinLiquidity());
               poolAttributes.put("poolSurge", pool.getSurge());
+              poolAttributes.put(
+                  "surgeDisabledForLowLiquidityPool", pool.isSurgeDisabledForLowLiquidityPool());
               poolAttributes.put("mixSurge", mix.getSurge());
               poolAttributes.put("minerFee", pool.getMinerFee());
               poolAttributes.put("minerFeeMix", pool.getMinerFeeMix());
+              poolAttributes.put("minLiquidityPoolForSurge", pool.getMinLiquidityPoolForSurge());
               pool.getMinerFee().getMinerFeeMin(); // used in template
               pool.getMinerFee().getMinerFeeCap(); // used in template
               pool.getMinerFee().getMinerFeeMax(); // used in template

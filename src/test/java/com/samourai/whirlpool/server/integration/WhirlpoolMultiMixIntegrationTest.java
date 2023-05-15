@@ -46,7 +46,7 @@ public class WhirlpoolMultiMixIntegrationTest extends AbstractIntegrationTest {
             minerFeeMin,
             minerFeeCap,
             minerFeeMax,
-                minRelaySatPerB,
+            minRelaySatPerB,
             mustMixMin,
             liquidityMin,
             anonymitySet,

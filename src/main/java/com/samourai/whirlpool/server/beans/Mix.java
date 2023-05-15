@@ -183,7 +183,11 @@ public class Mix {
           log.warn(
               "["
                   + pool.getPoolId()
-                  + "] Queueing last mustMix: insufficient minerFees: minerFeeAccumulated="+computeMinerFeeAccumulated()+", minerFeeMix="+pool.getMinerFeeMix()+", mustMix="
+                  + "] Queueing last mustMix: insufficient minerFees: minerFeeAccumulated="
+                  + computeMinerFeeAccumulated()
+                  + ", minerFeeMix="
+                  + pool.getMinerFeeMix()
+                  + ", mustMix="
                   + registeredInput);
           throw new QueueInputException(
               "Not enough minerFee for last mustMix slot", registeredInput, pool.getPoolId());
@@ -200,6 +204,13 @@ public class Mix {
       // no surge allowed yet
       return 0;
     }
+    if (pool.isSurgeDisabledForLowLiquidityPool()) {
+      log.warn("[" + getLogId() + "] surge temporarily disabled because of low liquidity pool");
+      return 0;
+    }
+    if (pool.getSurge() < 1) {
+      return 0;
+    }
 
     // compute possible surges for minerFeeAccumulated
     long minerFeeAccumulated = computeMinerFeeAccumulated();
@@ -207,16 +218,19 @@ public class Mix {
     int surges = 0;
     for (int i = 1; i <= pool.getSurge(); i++) {
       long txSize = pool.computeTxSize(i);
-      float satPerB = ((float)minerFeeAccumulated) / txSize;
+      float satPerB = ((float) minerFeeAccumulated) / txSize;
       if (log.isDebugEnabled()) {
         log.debug(
             "["
                 + getLogId()
-                + "] computeSurge("+i+"): "
-                    + "minerFeeAccumulated="+minerFeeAccumulated
+                + "] computeSurge("
+                + i
+                + "): "
+                + "minerFeeAccumulated="
+                + minerFeeAccumulated
                 + ", txSize="
                 + txSize
-                    +", satPerB="
+                + ", satPerB="
                 + satPerB
                 + " vs minRelaySatPerB="
                 + minRelaySatPerB);

@@ -426,6 +426,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
     private int mustMixMin;
     private int liquidityMin;
     private int surge;
+    private int minLiquidityPoolForSurge;
     private int anonymitySet;
     private int tx0MaxOutputs;
 
@@ -493,6 +494,14 @@ public class WhirlpoolServerConfig extends ServerConfig {
       this.surge = surge;
     }
 
+    public int getMinLiquidityPoolForSurge() {
+      return minLiquidityPoolForSurge;
+    }
+
+    public void setMinLiquidityPoolForSurge(int minLiquidityPoolForSurge) {
+      this.minLiquidityPoolForSurge = minLiquidityPoolForSurge;
+    }
+
     public int getAnonymitySet() {
       return anonymitySet;
     }
@@ -526,6 +535,8 @@ public class WhirlpoolServerConfig extends ServerConfig {
               + getLiquidityMin()
               + ", surge="
               + getSurge()
+              + ", minLiquidityPoolForSurge="
+              + getMinLiquidityPoolForSurge()
               + ", tx0MaxOutputs="
               + tx0MaxOutputs;
       return poolInfo;

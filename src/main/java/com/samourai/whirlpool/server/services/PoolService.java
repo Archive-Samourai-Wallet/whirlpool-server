@@ -89,6 +89,7 @@ public class PoolService {
             poolConfig.getMustMixMin(),
             poolConfig.getLiquidityMin(),
             poolConfig.getSurge(),
+            poolConfig.getMinLiquidityPoolForSurge(),
             poolConfig.getAnonymitySet(),
             poolConfig.getTx0MaxOutputs(),
             minerFee);
