@@ -649,8 +649,9 @@ public class WhirlpoolServerConfig extends ServerConfig {
     private long minerFeeMin; // in satoshis
     private long minerFeeCap; // in satoshis
     private long minerFeeMax; // in satoshis
-    private long minRelayFee; // in satoshis
-    private long surgeRelayFee; // in satoshis
+    private long minRelaySatPerB;
+    private long weightTx; // in satoshis
+    private long weightPerSurge; // in satoshis
 
     public void validate() throws Exception {
       if (minerFeeMin <= 0) {
@@ -662,11 +663,14 @@ public class WhirlpoolServerConfig extends ServerConfig {
       if (minerFeeMax <= 0) {
         throw new Exception("Invalid minerFeeMax");
       }
-      if (minRelayFee <= 0) {
-        throw new Exception("Invalid minRelayFee");
+      if (minRelaySatPerB <= 0) {
+        throw new Exception("Invalid minRelaySatPerB");
       }
-      if (surgeRelayFee <= 0) {
-        throw new Exception("Invalid minRelayFee");
+      if (weightTx <= 0) {
+        throw new Exception("Invalid weightTx");
+      }
+      if (weightPerSurge <= 0) {
+        throw new Exception("Invalid weightPerSurge");
       }
     }
 
@@ -694,20 +698,28 @@ public class WhirlpoolServerConfig extends ServerConfig {
       this.minerFeeMax = minerFeeMax;
     }
 
-    public long getMinRelayFee() {
-      return minRelayFee;
+    public long getMinRelaySatPerB() {
+      return minRelaySatPerB;
     }
 
-    public void setMinRelayFee(long minRelayFee) {
-      this.minRelayFee = minRelayFee;
+    public void setMinRelaySatPerB(long minRelaySatPerB) {
+      this.minRelaySatPerB = minRelaySatPerB;
     }
 
-    public long getSurgeRelayFee() {
-      return surgeRelayFee;
+    public long getWeightTx() {
+      return weightTx;
     }
 
-    public void setSurgeRelayFee(long surgeRelayFee) {
-      this.surgeRelayFee = surgeRelayFee;
+    public void setWeightTx(long weightTx) {
+      this.weightTx = weightTx;
+    }
+
+    public long getWeightPerSurge() {
+      return weightPerSurge;
+    }
+
+    public void setWeightPerSurge(long weightPerSurge) {
+      this.weightPerSurge = weightPerSurge;
     }
 
     @Override
@@ -718,10 +730,12 @@ public class WhirlpoolServerConfig extends ServerConfig {
           + minerFeeCap
           + ", max="
           + minerFeeMax
-          + "], minRelayFee="
-          + minRelayFee
-          + ", surgeRelayFee="
-          + surgeRelayFee;
+          + "], minRelaySatPerB="
+          + minRelaySatPerB
+          + ", weightTx="
+          + weightTx
+          + ", weightPerSurge="
+          + weightPerSurge;
     }
   }
 

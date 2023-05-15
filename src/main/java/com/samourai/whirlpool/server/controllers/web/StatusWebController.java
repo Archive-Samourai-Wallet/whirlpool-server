@@ -5,7 +5,6 @@ import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.controllers.web.beans.WhirlpoolDashboardTemplateModel;
 import com.samourai.whirlpool.server.services.MixLimitsService;
-import com.samourai.whirlpool.server.services.MixService;
 import com.samourai.whirlpool.server.services.PoolService;
 import java.lang.invoke.MethodHandles;
 import java.sql.Timestamp;
@@ -28,18 +27,15 @@ public class StatusWebController {
 
   private WhirlpoolServerConfig serverConfig;
   private PoolService poolService;
-  private MixService mixService;
   private MixLimitsService mixLimitsService;
 
   @Autowired
   public StatusWebController(
       WhirlpoolServerConfig serverConfig,
       PoolService poolService,
-      MixService mixService,
       MixLimitsService mixLimitsService) {
     this.serverConfig = serverConfig;
     this.poolService = poolService;
-    this.mixService = mixService;
     this.mixLimitsService = mixLimitsService;
   }
 
@@ -66,10 +62,12 @@ public class StatusWebController {
               poolAttributes.put("poolSurge", pool.getSurge());
               poolAttributes.put("mixSurge", mix.getSurge());
               poolAttributes.put("minerFee", pool.getMinerFee());
+              poolAttributes.put("minerFeeMix", pool.getMinerFeeMix());
               pool.getMinerFee().getMinerFeeMin(); // used in template
               pool.getMinerFee().getMinerFeeCap(); // used in template
               pool.getMinerFee().getMinerFeeMax(); // used in template
-              pool.getMinerFee().getMinerFeeMix(); // used in template
+              pool.getMinerFee().getMinRelaySatPerB(); // used in template
+              pool.getMinerFeeMix(); // used in template
               poolAttributes.put("tx0MaxOutputs", pool.getTx0MaxOutputs());
               poolAttributes.put("minerFeeAccumulated", mix.computeMinerFeeAccumulated());
               poolAttributes.put("nbInputs", mix.getNbInputs());

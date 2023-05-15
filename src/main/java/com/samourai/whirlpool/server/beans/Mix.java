@@ -183,7 +183,7 @@ public class Mix {
           log.warn(
               "["
                   + pool.getPoolId()
-                  + "] Queueing last mustMix: insufficient minerFees: "
+                  + "] Queueing last mustMix: insufficient minerFees: minerFeeAccumulated="+computeMinerFeeAccumulated()+", minerFeeMix="+pool.getMinerFeeMix()+", mustMix="
                   + registeredInput);
           throw new QueueInputException(
               "Not enough minerFee for last mustMix slot", registeredInput, pool.getPoolId());
@@ -202,27 +202,29 @@ public class Mix {
     }
 
     // compute possible surges for minerFeeAccumulated
-    long minerFeeForSurges = computeMinerFeeAccumulated() - pool.getMinerFeeMix();
-    if (minerFeeForSurges <= 0) {
-      return 0;
-    }
-    int surges = (int) Math.floor(minerFeeForSurges / pool.getMinerFee().getSurgeRelayFee());
-
-    // apply pool surge limit
-    int poolSurgeLimit = pool.getSurge();
-    surges = Math.min(surges, poolSurgeLimit);
-    if (log.isDebugEnabled()) {
-      log.debug(
-          "["
-              + getLogId()
-              + "] computeSurges() = "
-              + surges
-              + ": minerFeeForSurges="
-              + minerFeeForSurges
-              + ", surgeRelayFee="
-              + pool.getMinerFee().getSurgeRelayFee()
-              + ", poolSurgeLimit="
-              + poolSurgeLimit);
+    long minerFeeAccumulated = computeMinerFeeAccumulated();
+    long minRelaySatPerB = pool.getMinerFee().getMinRelaySatPerB();
+    int surges = 0;
+    for (int i = 1; i <= pool.getSurge(); i++) {
+      long txSize = pool.computeTxSize(i);
+      float satPerB = ((float)minerFeeAccumulated) / txSize;
+      if (log.isDebugEnabled()) {
+        log.debug(
+            "["
+                + getLogId()
+                + "] computeSurge("+i+"): "
+                    + "minerFeeAccumulated="+minerFeeAccumulated
+                + ", txSize="
+                + txSize
+                    +", satPerB="
+                + satPerB
+                + " vs minRelaySatPerB="
+                + minRelaySatPerB);
+      }
+      if (satPerB < pool.getMinerFee().getMinRelaySatPerB()) {
+        break;
+      }
+      surges = i;
     }
     return surges;
   }

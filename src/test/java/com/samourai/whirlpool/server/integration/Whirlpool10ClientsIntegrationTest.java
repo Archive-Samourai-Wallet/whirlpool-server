@@ -34,8 +34,7 @@ public class Whirlpool10ClientsIntegrationTest extends AbstractIntegrationTest {
     long minerFeeMin = 100;
     long minerFeeCap = 255;
     long minerFeeMax = 10000;
-    long minRelayFee = 510;
-    long surgeRelayFee = 100;
+    long minRelaySatPerB = 1;
     int mustMixMin = NB_CLIENTS;
     int liquidityMin = 0;
     int anonymitySet = NB_CLIENTS;
@@ -46,8 +45,7 @@ public class Whirlpool10ClientsIntegrationTest extends AbstractIntegrationTest {
             minerFeeMin,
             minerFeeCap,
             minerFeeMax,
-            minRelayFee,
-            surgeRelayFee,
+                minRelaySatPerB,
             mustMixMin,
             liquidityMin,
             anonymitySet,
@@ -84,8 +82,7 @@ public class Whirlpool10ClientsIntegrationTest extends AbstractIntegrationTest {
     long minerFeeMin = 100;
     long minerFeeCap = 255;
     long minerFeeMax = 10000;
-    long minRelayFee = 510;
-    long surgeRelayFee = 100;
+    long minRelaySatPerB = 1;
     int mustMixMin = NB_CLIENTS;
     int liquidityMin = 0;
     int anonymitySet = NB_CLIENTS;
@@ -96,8 +93,7 @@ public class Whirlpool10ClientsIntegrationTest extends AbstractIntegrationTest {
             minerFeeMin,
             minerFeeCap,
             minerFeeMax,
-            minRelayFee,
-            surgeRelayFee,
+                minRelaySatPerB,
             mustMixMin,
             liquidityMin,
             anonymitySet,
@@ -142,8 +138,7 @@ public class Whirlpool10ClientsIntegrationTest extends AbstractIntegrationTest {
     long minerFeeMin = 100;
     long minerFeeCap = 255;
     long minerFeeMax = 10000;
-    long minRelayFee = 510;
-    long surgeRelayFee = 100;
+    long minRelaySatPerB = 1;
     int mustMixMin = 3;
     int liquidityMin = 0;
     int anonymitySet = NB_CLIENTS;
@@ -154,8 +149,7 @@ public class Whirlpool10ClientsIntegrationTest extends AbstractIntegrationTest {
             minerFeeMin,
             minerFeeCap,
             minerFeeMax,
-            minRelayFee,
-            surgeRelayFee,
+                minRelaySatPerB,
             mustMixMin,
             liquidityMin,
             anonymitySet,

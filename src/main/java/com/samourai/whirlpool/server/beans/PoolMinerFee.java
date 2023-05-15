@@ -6,19 +6,17 @@ public class PoolMinerFee {
   private long minerFeeMin; // in satoshis
   private long minerFeeCap; // in satoshis
   private long minerFeeMax; // in satoshis
-  private long minRelayFee; // in satoshis
-  private long surgeRelayFee; // in satoshis
-  private long minerFeeMix; // in satoshis
+  private long minRelaySatPerB; // in satoshis
+  private long weightTx; // in satoshis
+  private long weightPerSurge; // in satoshis
 
   public PoolMinerFee(
       WhirlpoolServerConfig.MinerFeeConfig globalMfg,
-      WhirlpoolServerConfig.MinerFeeConfig poolMfg,
-      int mustMixMin) {
+      WhirlpoolServerConfig.MinerFeeConfig poolMfg) {
     overrideFrom(globalMfg);
     if (poolMfg != null) {
       overrideFrom(poolMfg);
     }
-    this.minerFeeMix = Math.max(minRelayFee, mustMixMin * minerFeeMin);
   }
 
   private void overrideFrom(WhirlpoolServerConfig.MinerFeeConfig mfg) {
@@ -31,11 +29,14 @@ public class PoolMinerFee {
     if (mfg.getMinerFeeMax() > 0) {
       this.minerFeeMax = mfg.getMinerFeeMax();
     }
-    if (mfg.getMinRelayFee() > 0) {
-      this.minRelayFee = mfg.getMinRelayFee();
+    if (mfg.getMinRelaySatPerB() > 0) {
+      this.minRelaySatPerB = mfg.getMinRelaySatPerB();
     }
-    if (mfg.getSurgeRelayFee() > 0) {
-      this.surgeRelayFee = mfg.getSurgeRelayFee();
+    if (mfg.getWeightTx() > 0) {
+      this.weightTx = mfg.getWeightTx();
+    }
+    if (mfg.getWeightPerSurge() > 0) {
+      this.weightPerSurge = mfg.getWeightPerSurge();
     }
   }
 
@@ -51,16 +52,16 @@ public class PoolMinerFee {
     return minerFeeMax;
   }
 
-  public long getMinRelayFee() {
-    return minRelayFee;
+  public long getMinRelaySatPerB() {
+    return minRelaySatPerB;
   }
 
-  public long getSurgeRelayFee() {
-    return surgeRelayFee;
+  public long getWeightTx() {
+    return weightTx;
   }
 
-  public long getMinerFeeMix() {
-    return minerFeeMix;
+  public long getWeightPerSurge() {
+    return weightPerSurge;
   }
 
   @Override
@@ -71,11 +72,11 @@ public class PoolMinerFee {
         + minerFeeCap
         + ", max="
         + minerFeeMax
-        + "], minRelayFee="
-        + minRelayFee
-        + ", surgeRelayFee="
-        + surgeRelayFee
-        + ", minerFeeMix="
-        + minerFeeMix;
+        + "], minRelaySatPerB="
+        + minRelaySatPerB
+        + ", weightTx"
+        + weightTx
+        + ", weightPerSurge"
+        + weightPerSurge;
   }
 }

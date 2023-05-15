@@ -35,8 +35,7 @@ public class WhirlpoolMultiMixIntegrationTest extends AbstractIntegrationTest {
     long minerFeeMin = 100;
     long minerFeeCap = 255;
     long minerFeeMax = 10000;
-    long minRelayFee = 510;
-    long surgeRelayFee = 100;
+    long minRelaySatPerB = 1;
     int mustMixMin = 1;
     int liquidityMin = 0;
     int anonymitySet = NB_CLIENTS_FIRST_MIX;
@@ -47,8 +46,7 @@ public class WhirlpoolMultiMixIntegrationTest extends AbstractIntegrationTest {
             minerFeeMin,
             minerFeeCap,
             minerFeeMax,
-            minRelayFee,
-            surgeRelayFee,
+                minRelaySatPerB,
             mustMixMin,
             liquidityMin,
             anonymitySet,

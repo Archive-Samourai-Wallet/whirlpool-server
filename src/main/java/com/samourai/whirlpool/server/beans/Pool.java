@@ -12,6 +12,7 @@ public class Pool {
   private int anonymitySet;
   private int tx0MaxOutputs;
   private PoolMinerFee minerFee;
+  private long minerFeeMix; // minerFee min required per mix
 
   private Mix currentMix;
   private InputPool mustMixQueue;
@@ -36,9 +37,14 @@ public class Pool {
     this.anonymitySet = anonymitySet;
     this.tx0MaxOutputs = tx0MaxOutputs;
     this.minerFee = minerFee;
+    this.minerFeeMix = computeTxSize(0) * minerFee.getMinRelaySatPerB();
 
     this.mustMixQueue = new InputPool();
     this.liquidityQueue = new InputPool();
+  }
+
+  public long computeTxSize(int surges) {
+    return minerFee.getWeightTx() + (surges * minerFee.getWeightPerSurge());
   }
 
   public boolean checkInputBalance(long inputBalance, boolean liquidity) {
@@ -111,10 +117,6 @@ public class Pool {
     return tx0MaxOutputs;
   }
 
-  public long getMinerFeeMix() {
-    return minerFee.getMinerFeeMix();
-  }
-
   public Mix getCurrentMix() {
     return currentMix;
   }
@@ -133,5 +135,9 @@ public class Pool {
 
   public PoolMinerFee getMinerFee() {
     return minerFee;
+  }
+
+  public long getMinerFeeMix() {
+    return minerFeeMix;
   }
 }

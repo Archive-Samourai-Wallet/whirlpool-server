@@ -162,8 +162,7 @@ public abstract class AbstractIntegrationTest {
       long minerFeeMin,
       long minerFeeCap,
       long minerFeeMax,
-      long minRelayFee,
-      long surgeRelayFee,
+      long minRelaySatPerB,
       int mustMixMin,
       int liquidityMin,
       int anonymitySet,
@@ -196,10 +195,11 @@ public abstract class AbstractIntegrationTest {
     globalMinerFeeConfig.setMinerFeeMin(minerFeeMin);
     globalMinerFeeConfig.setMinerFeeCap(minerFeeCap);
     globalMinerFeeConfig.setMinerFeeMax(minerFeeMax);
-    globalMinerFeeConfig.setMinRelayFee(minRelayFee);
-    globalMinerFeeConfig.setSurgeRelayFee(surgeRelayFee);
+    globalMinerFeeConfig.setMinRelaySatPerB(minRelaySatPerB);
+    globalMinerFeeConfig.setWeightTx(510);
+    globalMinerFeeConfig.setWeightPerSurge(102);
 
-    PoolMinerFee minerFee = new PoolMinerFee(globalMinerFeeConfig, null, mustMixMin);
+    PoolMinerFee minerFee = new PoolMinerFee(globalMinerFeeConfig, null);
 
     // run new mix for the pool
     return __nextMix(minerFee, poolConfig);

@@ -28,28 +28,22 @@ public class PoolService {
 
   private WhirlpoolServerConfig whirlpoolServerConfig;
   private CryptoService cryptoService;
-  private WSMessageService WSMessageService;
   private ExportService exportService;
   private MetricService metricService;
-  private TaskService taskService;
   private Map<String, Pool> pools;
 
   @Autowired
   public PoolService(
       WhirlpoolServerConfig whirlpoolServerConfig,
       CryptoService cryptoService,
-      WSMessageService WSMessageService,
       ExportService exportService,
       MetricService metricService,
       WSSessionService wsSessionService,
-      TaskService taskService,
       TaskScheduler taskScheduler) {
     this.whirlpoolServerConfig = whirlpoolServerConfig;
     this.cryptoService = cryptoService;
-    this.WSMessageService = WSMessageService;
     this.exportService = exportService;
     this.metricService = metricService;
-    this.taskService = taskService;
     __reset();
 
     // listen websocket onDisconnect
@@ -76,9 +70,7 @@ public class PoolService {
       WhirlpoolServerConfig.MinerFeeConfig globalMinerFeeConfig) {
     pools = new ConcurrentHashMap<>();
     for (WhirlpoolServerConfig.PoolConfig poolConfig : poolConfigs) {
-      PoolMinerFee minerFee =
-          new PoolMinerFee(
-              globalMinerFeeConfig, poolConfig.getMinerFees(), poolConfig.getMustMixMin());
+      PoolMinerFee minerFee = new PoolMinerFee(globalMinerFeeConfig, poolConfig.getMinerFees());
       __reset(poolConfig, minerFee);
     }
   }

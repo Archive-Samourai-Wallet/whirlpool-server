@@ -38,7 +38,6 @@ Optional pool override:
 server.pools[x].miner-fees.miner-fee-min
 server.pools[x].miner-fees.miner-fee-max
 server.pools[x].miner-fees.miner-fee-cap
-server.pools[x].miner-fees.min-relay-fee
 ```
 
 UTXO should be founded with:<br/>
