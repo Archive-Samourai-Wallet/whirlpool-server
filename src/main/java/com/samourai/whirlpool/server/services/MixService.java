@@ -882,16 +882,12 @@ public class MixService {
     changeMixStatus(mix.getMixId(), MixStatus.SUCCESS);
   }
 
-  private Optional<ConfirmedInput> unregister(Mix mix, String username) {
-    if (MixStatus.FAIL.equals(mix.getMixStatus())) {
-      return Optional.empty();
-    }
-
+  private Optional<ConfirmedInput> unregister(
+      Mix mix, String username, Optional<ConfirmedInput> confirmedInputOpt) {
     // remove from confirming inputs
     mix.removeConfirmingInputByUsername(username);
 
     // remove from confirmed input
-    Optional<ConfirmedInput> confirmedInputOpt = mix.getInputByUsername(username);
     if (confirmedInputOpt.isPresent()) {
       ConfirmedInput confirmedInput = confirmedInputOpt.get();
       mix.unregisterInput(confirmedInput);
@@ -903,11 +899,15 @@ public class MixService {
     for (Mix mix : getCurrentMixs()) {
       if (!mix.isDone()) {
         String lastReceiveAddressRejected = mix.getLastReceiveAddressesRejected();
-        Optional<ConfirmedInput> unregisteredInputOpt = unregister(mix, username);
-        if (unregisteredInputOpt.isPresent()) {
-          ConfirmedInput confirmedInput = unregisteredInputOpt.get();
+
+        // was input already confirmed?
+        Optional<ConfirmedInput> unregisterInputOpt = mix.getInputByUsername(username);
+        if (unregisterInputOpt.isPresent()) {
+          ConfirmedInput confirmedInput = unregisterInputOpt.get();
 
           if (mix.isBlamableStatus()) {
+            // don't unregister input to preserve original mix metrics
+
             // blame
             BlameReason blameReason = BlameReason.DISCONNECT;
             blameService.blame(
@@ -921,6 +921,9 @@ public class MixService {
             }
             goFail(mix, failReason, failInfo);
           } else {
+            // unregister
+            unregister(mix, username, unregisterInputOpt);
+
             // mix can continue
             if (mix.getSurge() > 0) {
               // adjust surge limit on mustmix disconnect
