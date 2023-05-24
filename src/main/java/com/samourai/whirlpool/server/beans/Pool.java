@@ -11,9 +11,12 @@ public class Pool {
   private PoolFee poolFee;
   private int minMustMix;
   private int minLiquidity;
+  private int surge;
+  private int minLiquidityPoolForSurge;
   private int anonymitySet;
   private int tx0MaxOutputs;
   private PoolMinerFee minerFee;
+  private long minerFeeMix; // minerFee min required per mix
   private int txSize;
 
   private Mix currentMix;
@@ -26,6 +29,8 @@ public class Pool {
       PoolFee poolFee,
       int minMustMix,
       int minLiquidity,
+      int surge,
+      int minLiquidityPoolForSurge,
       int anonymitySet,
       int tx0MaxOutputs,
       PoolMinerFee minerFee) {
@@ -34,13 +39,20 @@ public class Pool {
     this.poolFee = poolFee;
     this.minMustMix = minMustMix;
     this.minLiquidity = minLiquidity;
+    this.surge = surge;
+    this.minLiquidityPoolForSurge = minLiquidityPoolForSurge;
     this.anonymitySet = anonymitySet;
     this.tx0MaxOutputs = tx0MaxOutputs;
     this.minerFee = minerFee;
+    this.minerFeeMix = computeTxSize(0) * minerFee.getMinRelaySatPerB();
     this.txSize = feeUtil.estimatedSizeSegwit(0, 0, anonymitySet, anonymitySet, 0);
 
     this.mustMixQueue = new InputPool();
     this.liquidityQueue = new InputPool();
+  }
+
+  public long computeTxSize(int surges) {
+    return minerFee.getWeightTx() + (surges * minerFee.getWeightPerSurge());
   }
 
   public boolean checkInputBalance(long inputBalance, boolean liquidity) {
@@ -62,6 +74,10 @@ public class Pool {
   public long computePremixBalanceMax(boolean liquidity) {
     return WhirlpoolProtocol.computePremixBalanceMax(
         denomination, computeMustMixBalanceMax(), liquidity);
+  }
+
+  public boolean isSurgeDisabledForLowLiquidityPool() {
+    return surge > 0 && liquidityQueue.getSize() < minLiquidityPoolForSurge;
   }
 
   public long computePremixValue(long feePerB) {
@@ -117,16 +133,20 @@ public class Pool {
     return minLiquidity;
   }
 
+  public int getSurge() {
+    return surge;
+  }
+
+  public int getMinLiquidityPoolForSurge() {
+    return minLiquidityPoolForSurge;
+  }
+
   public int getAnonymitySet() {
     return anonymitySet;
   }
 
   public int getTx0MaxOutputs() {
     return tx0MaxOutputs;
-  }
-
-  public long getMinerFeeMix() {
-    return minerFee.getMinerFeeMix();
   }
 
   public Mix getCurrentMix() {
@@ -147,5 +167,9 @@ public class Pool {
 
   public PoolMinerFee getMinerFee() {
     return minerFee;
+  }
+
+  public long getMinerFeeMix() {
+    return minerFeeMix;
   }
 }

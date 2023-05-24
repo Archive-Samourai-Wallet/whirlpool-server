@@ -8,6 +8,7 @@ import com.samourai.whirlpool.server.beans.FailReason;
 import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
+import com.samourai.whirlpool.server.exceptions.QueueInputException;
 import com.samourai.whirlpool.server.integration.AbstractIntegrationTest;
 import com.samourai.whirlpool.server.utils.Utils;
 import java.lang.invoke.MethodHandles;
@@ -23,61 +24,87 @@ public class MixServiceTest extends AbstractIntegrationTest {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   @Test
-  public void isConfirmInputReady_noLiquidity() throws Exception {
+  public void isConfirmInputReady_noLiquidityMin() throws Exception {
     MixService spyMixService = Mockito.spy(mixService);
     long denomination = 200000000;
     long feeValue = 10000000;
     long minerFeeMin = 100;
     long minerFeeCap = 9500;
     long minerFeeMax = 10000;
-    long minRelayFee = 510;
+    long minRelaySatPerB = 1;
     int mustMixMin = 1;
     int liquidityMin = 0;
     int anonymitySet = 2;
     Mix mix =
-        __nextMix(
-            denomination,
-            feeValue,
-            minerFeeMin,
-            minerFeeCap,
-            minerFeeMax,
-            minRelayFee,
-            mustMixMin,
-            liquidityMin,
-            anonymitySet);
+            __nextMix(
+                    denomination,
+                    feeValue,
+                    minerFeeMin,
+                    minerFeeCap,
+                    minerFeeMax,
+                    minRelaySatPerB,
+                    mustMixMin,
+                    liquidityMin,
+                    anonymitySet,
+                    0);
+    String mixId = mix.getMixId();
 
     long mustMixValue = 200000400;
 
-    // 0 mustMix => false
+    // initial: accept mustMix
+    Assertions.assertFalse(mix.hasMinMustMixAndFeeReached());
     Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
+    Assertions.assertEquals(0, mix.getNbInputsMustMix());
+    Assertions.assertEquals(0, mix.getNbInputsLiquidities());
+    Assertions.assertEquals(0, mix.getSurge());
+    Assertions.assertEquals(2, mix.getAvailableSlotsMustMix());
+    Assertions.assertEquals(0, mix.getAvailableSlotsLiquidityAndSurge());
+    Assertions.assertFalse(mix.isAnonymitySetReached());
+    checkAccepts(true, false, mix);
 
-    // 1 mustMix => false
+    // 1 mustMix, minerFee not reached => accept mustMix
     mix.registerInput(
-        new ConfirmedInput(
-            new RegisteredInput(
-                mix.getPool().getPoolId(),
-                "mustMix1",
-                false,
-                generateOutPoint(mustMixValue),
-                false,
-                null,
-                null),
-            "userHash1"));
+            new ConfirmedInput(
+                    new RegisteredInput(
+                            mix.getPool().getPoolId(),
+                            "mustMix1",
+                            false,
+                            generateOutPoint(mustMixValue),
+                            false,
+                            null,
+                            null),
+                    "userHash1"));
+    Assertions.assertFalse(mix.hasMinMustMixAndFeeReached());
     Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
+    Assertions.assertEquals(1, mix.getNbInputsMustMix());
+    Assertions.assertEquals(0, mix.getNbInputsLiquidities());
+    Assertions.assertEquals(0, mix.getSurge());
+    Assertions.assertEquals(1, mix.getAvailableSlotsMustMix());
+    Assertions.assertEquals(0, mix.getAvailableSlotsLiquidityAndSurge());
+    Assertions.assertFalse(mix.isAnonymitySetReached());
+    checkAccepts(true, false, mix);
 
-    // 2 mustMix => true
+    // 2 mustMix, minerFee reached => ready
     mix.registerInput(
-        new ConfirmedInput(
-            new RegisteredInput(
-                mix.getPool().getPoolId(),
-                "mustMix2",
-                false,
-                generateOutPoint(mustMixValue),
-                false,
-                null,
-                null),
-            "userHash2"));
+            new ConfirmedInput(
+                    new RegisteredInput(
+                            mix.getPool().getPoolId(),
+                            "mustMix2",
+                            false,
+                            generateOutPoint(mustMixValue),
+                            false,
+                            null,
+                            null),
+                    "userHash2"));
+    Assertions.assertTrue(mix.hasMinMustMixAndFeeReached());
     Assertions.assertTrue(spyMixService.isConfirmInputReady(mix));
+    Assertions.assertEquals(2, mix.getNbInputsMustMix());
+    Assertions.assertEquals(0, mix.getNbInputsLiquidities());
+    Assertions.assertEquals(0, mix.getSurge());
+    Assertions.assertEquals(0, mix.getAvailableSlotsMustMix());
+    Assertions.assertEquals(0, mix.getAvailableSlotsLiquidityAndSurge());
+    Assertions.assertTrue(mix.isAnonymitySetReached());
+    checkAccepts(false, false, mix);
   }
 
   @Test
@@ -88,82 +115,748 @@ public class MixServiceTest extends AbstractIntegrationTest {
     long minerFeeMin = 100;
     long minerFeeCap = 9500;
     long minerFeeMax = 10000;
-    long minRelayFee = 510;
+    long minRelaySatPerB = 1;
     int mustMixMin = 1;
-    int liquidityMin = 0;
-    int anonymitySet = 2;
+    int liquidityMin = 1;
+    int anonymitySet = 4;
     Mix mix =
-        __nextMix(
-            denomination,
-            feeValue,
-            minerFeeMin,
-            minerFeeCap,
-            minerFeeMax,
-            minRelayFee,
-            mustMixMin,
-            liquidityMin,
-            anonymitySet);
+            __nextMix(
+                    denomination,
+                    feeValue,
+                    minerFeeMin,
+                    minerFeeCap,
+                    minerFeeMax,
+                    minRelaySatPerB,
+                    mustMixMin,
+                    liquidityMin,
+                    anonymitySet,
+                    0);
+    String mixId = mix.getMixId();
 
     long mustMixValue = 200000255;
 
-    // 0 liquidity => false
+    // initial => accept mustMix & liquidity
+    checkAccepts(true, true, mix);
+    Assertions.assertFalse(mix.hasMinMustMixAndFeeReached());
     Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
+    Assertions.assertEquals(0, mix.getNbInputsMustMix());
+    Assertions.assertEquals(0, mix.getNbInputsLiquidities());
+    Assertions.assertEquals(0, mix.getSurge());
+    Assertions.assertEquals(3, mix.getAvailableSlotsMustMix());
+    Assertions.assertEquals(1, mix.getAvailableSlotsLiquidityAndSurge());
+    Assertions.assertFalse(mix.isAnonymitySetReached());
+    checkAccepts(true, true, mix);
 
-    // 1 liquidity => false
+    // 1 liquidity, minMustMix not reached => accept mustMix
     mix.registerInput(
-        new ConfirmedInput(
-            new RegisteredInput(
-                mix.getPool().getPoolId(),
-                "liquidity1",
-                true,
-                generateOutPoint(mustMixValue),
-                false,
-                null,
-                null),
-            "userHashL1"));
+            new ConfirmedInput(
+                    new RegisteredInput(
+                            mix.getPool().getPoolId(),
+                            "liquidity1",
+                            true,
+                            generateOutPoint(mustMixValue),
+                            false,
+                            null,
+                            null),
+                    "userHashL1"));
+    Assertions.assertFalse(mix.hasMinMustMixAndFeeReached());
     Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
+    Assertions.assertEquals(0, mix.getNbInputsMustMix());
+    Assertions.assertEquals(1, mix.getNbInputsLiquidities());
+    Assertions.assertEquals(0, mix.getSurge());
+    Assertions.assertEquals(3, mix.getAvailableSlotsMustMix());
+    Assertions.assertEquals(0, mix.getAvailableSlotsLiquidityAndSurge());
+    Assertions.assertFalse(mix.isAnonymitySetReached());
+    checkAccepts(true, false, mix);
 
-    // 2 liquidity => false : minMustMix not reached
+    // 1 liquidity + 1 mustMix, minMustMix reached but minerFeeMix not reached => accept mustMix
     mix.registerInput(
-        new ConfirmedInput(
-            new RegisteredInput(
-                mix.getPool().getPoolId(),
-                "liquidity2",
-                true,
-                generateOutPoint(mustMixValue),
-                false,
-                null,
-                null),
-            "userHashL2"));
+            new ConfirmedInput(
+                    new RegisteredInput(
+                            mix.getPool().getPoolId(),
+                            "mustMix1",
+                            false,
+                            generateOutPoint(mustMixValue),
+                            false,
+                            null,
+                            null),
+                    "userHashM1"));
+    Assertions.assertFalse(mix.hasMinMustMixAndFeeReached());
     Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
+    Assertions.assertEquals(1, mix.getNbInputsMustMix());
+    Assertions.assertEquals(1, mix.getNbInputsLiquidities());
+    Assertions.assertEquals(0, mix.getSurge());
+    Assertions.assertEquals(2, mix.getAvailableSlotsMustMix());
+    Assertions.assertEquals(0, mix.getAvailableSlotsLiquidityAndSurge());
+    Assertions.assertFalse(mix.isAnonymitySetReached());
+    checkAccepts(true, false, mix);
 
-    // 1 mustMix => false : minMustMix reached but minerFeeMix not reached
+    // 1 liquidity + 2 mustMix, minMustMix reached + minerFeeMix reached => accept mustMix and
+    // liquidity
     mix.registerInput(
-        new ConfirmedInput(
-            new RegisteredInput(
-                mix.getPool().getPoolId(),
-                "mustMix1",
-                false,
-                generateOutPoint(mustMixValue),
-                false,
-                null,
-                null),
-            "userHashM1"));
+            new ConfirmedInput(
+                    new RegisteredInput(
+                            mix.getPool().getPoolId(),
+                            "liquidity1",
+                            true,
+                            generateOutPoint(mustMixValue),
+                            false,
+                            null,
+                            null),
+                    "userHashL1"));
+    Assertions.assertTrue(mix.hasMinMustMixAndFeeReached());
     Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
+    Assertions.assertEquals(2, mix.getNbInputsMustMix());
+    Assertions.assertEquals(1, mix.getNbInputsLiquidities());
+    Assertions.assertEquals(0, mix.getSurge());
+    Assertions.assertEquals(1, mix.getAvailableSlotsMustMix());
+    Assertions.assertEquals(1, mix.getAvailableSlotsLiquidityAndSurge());
+    Assertions.assertFalse(mix.isAnonymitySetReached());
+    checkAccepts(true, true, mix);
 
-    // 2 mustMix => true : minerFeeMix reached
+    // 2 liquidity + 2 mustMix => ready
     mix.registerInput(
-        new ConfirmedInput(
-            new RegisteredInput(
-                mix.getPool().getPoolId(),
-                "mustMix2",
-                false,
-                generateOutPoint(mustMixValue),
-                false,
-                null,
-                null),
-            "userHashM2"));
+            new ConfirmedInput(
+                    new RegisteredInput(
+                            mix.getPool().getPoolId(),
+                            "liquidity2",
+                            true,
+                            generateOutPoint(mustMixValue),
+                            false,
+                            null,
+                            null),
+                    "userHashL2"));
+    Assertions.assertTrue(mix.hasMinMustMixAndFeeReached());
     Assertions.assertTrue(spyMixService.isConfirmInputReady(mix));
+    Assertions.assertEquals(2, mix.getNbInputsMustMix());
+    Assertions.assertEquals(2, mix.getNbInputsLiquidities());
+    Assertions.assertEquals(0, mix.getSurge());
+    Assertions.assertEquals(0, mix.getAvailableSlotsMustMix());
+    Assertions.assertEquals(0, mix.getAvailableSlotsLiquidityAndSurge());
+    Assertions.assertTrue(mix.isAnonymitySetReached());
+  }
+
+  @Test
+  public void isConfirmInputReady_withSurge() throws Exception {
+    MixService spyMixService = Mockito.spy(mixService);
+    long denomination = 200000000;
+    long feeValue = 10000000;
+    long minerFeeMin = 100;
+    long minerFeeCap = 9500;
+    long minerFeeMax = 10000;
+    long minRelaySatPerB = 1;
+    int mustMixMin = 2;
+    int liquidityMin = 1;
+    int anonymitySet = 5;
+    int surge = 2;
+    Mix mix =
+            __nextMix(
+                    denomination,
+                    feeValue,
+                    minerFeeMin,
+                    minerFeeCap,
+                    minerFeeMax,
+                    minRelaySatPerB,
+                    mustMixMin,
+                    liquidityMin,
+                    anonymitySet,
+                    surge);
+    String mixId = mix.getMixId();
+
+    long mustMixValue = 200000555; // high minerFee to pay surges
+
+    // 1 mustMix, minMustMix reached but minerFeeMix not reached => accept mustMix & liquidities
+    mix.registerInput(
+            new ConfirmedInput(
+                    new RegisteredInput(
+                            mix.getPool().getPoolId(),
+                            "mustMix1",
+                            false,
+                            generateOutPoint(mustMixValue),
+                            false,
+                            null,
+                            null),
+                    "userHashM1"));
+    Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
+    Assertions.assertEquals(1, mix.getNbInputsMustMix());
+    Assertions.assertEquals(0, mix.getNbInputsLiquidities());
+    Assertions.assertEquals(0, mix.getSurge());
+    Assertions.assertEquals(3, mix.getAvailableSlotsMustMix());
+    Assertions.assertEquals(1, mix.getAvailableSlotsLiquidityAndSurge());
+    Assertions.assertFalse(mix.isAnonymitySetReached());
+    checkAccepts(true, true, mix);
+
+    // 2 mustMix, minerFeeMix reached => accept liquidity & surges
+    mix.registerInput(
+            new ConfirmedInput(
+                    new RegisteredInput(
+                            mix.getPool().getPoolId(),
+                            "mustMix2",
+                            false,
+                            generateOutPoint(mustMixValue),
+                            false,
+                            null,
+                            null),
+                    "userHashM2"));
+    Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
+    Assertions.assertEquals(2, mix.getNbInputsMustMix());
+    Assertions.assertEquals(0, mix.getNbInputsLiquidities());
+    Assertions.assertEquals(2, mix.getSurge());
+    Assertions.assertEquals(0, mix.getAvailableSlotsMustMix());
+    Assertions.assertEquals(5, mix.getAvailableSlotsLiquidityAndSurge());
+    Assertions.assertFalse(mix.isAnonymitySetReached());
+    checkAccepts(false, true, mix);
+
+    // 2 mustMix + 1 liquidity => accept liquidity & surges
+    mix.registerInput(
+            new ConfirmedInput(
+                    new RegisteredInput(
+                            mix.getPool().getPoolId(),
+                            "liquidity1",
+                            true,
+                            generateOutPoint(mustMixValue),
+                            false,
+                            null,
+                            null),
+                    "userHashL1"));
+    Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
+    Assertions.assertEquals(2, mix.getNbInputsMustMix());
+    Assertions.assertEquals(1, mix.getNbInputsLiquidities());
+    Assertions.assertEquals(2, mix.getSurge());
+    Assertions.assertEquals(0, mix.getAvailableSlotsMustMix());
+    Assertions.assertEquals(4, mix.getAvailableSlotsLiquidityAndSurge());
+    Assertions.assertFalse(mix.isAnonymitySetReached());
+    checkAccepts(false, true, mix);
+
+    // 2 mustMix + 2 liquidities => accept liquidity & surges
+    mix.registerInput(
+            new ConfirmedInput(
+                    new RegisteredInput(
+                            mix.getPool().getPoolId(),
+                            "liquidity2",
+                            true,
+                            generateOutPoint(mustMixValue),
+                            false,
+                            null,
+                            null),
+                    "userHashL2"));
+    Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
+    Assertions.assertEquals(2, mix.getNbInputsMustMix());
+    Assertions.assertEquals(2, mix.getNbInputsLiquidities());
+    Assertions.assertEquals(2, mix.getSurge());
+    Assertions.assertEquals(0, mix.getAvailableSlotsMustMix());
+    Assertions.assertEquals(3, mix.getAvailableSlotsLiquidityAndSurge());
+    Assertions.assertFalse(mix.isAnonymitySetReached());
+    checkAccepts(false, true, mix);
+
+    // 2 mustMix + 3 liquidities => accept surges & ready
+    mix.registerInput(
+            new ConfirmedInput(
+                    new RegisteredInput(
+                            mix.getPool().getPoolId(),
+                            "liquidity3",
+                            true,
+                            generateOutPoint(mustMixValue),
+                            false,
+                            null,
+                            null),
+                    "userHashL3"));
+    Assertions.assertTrue(spyMixService.isConfirmInputReady(mix));
+    Assertions.assertEquals(2, mix.getNbInputsMustMix());
+    Assertions.assertEquals(3, mix.getNbInputsLiquidities());
+    Assertions.assertEquals(2, mix.getSurge());
+    Assertions.assertEquals(0, mix.getAvailableSlotsMustMix());
+    Assertions.assertEquals(2, mix.getAvailableSlotsLiquidityAndSurge());
+    Assertions.assertTrue(mix.isAnonymitySetReached());
+    checkAccepts(false, true, mix);
+
+    // 2 mustMix + 4 liquidities => accept surges & ready
+    mix.registerInput(
+            new ConfirmedInput(
+                    new RegisteredInput(
+                            mix.getPool().getPoolId(),
+                            "liquidity4",
+                            true,
+                            generateOutPoint(mustMixValue),
+                            false,
+                            null,
+                            null),
+                    "userHashL4"));
+    Assertions.assertTrue(spyMixService.isConfirmInputReady(mix));
+    Assertions.assertEquals(2, mix.getNbInputsMustMix());
+    Assertions.assertEquals(4, mix.getNbInputsLiquidities());
+    Assertions.assertEquals(2, mix.getSurge());
+    Assertions.assertEquals(0, mix.getAvailableSlotsMustMix());
+    Assertions.assertEquals(1, mix.getAvailableSlotsLiquidityAndSurge());
+    Assertions.assertTrue(mix.isAnonymitySetReached());
+    checkAccepts(false, true, mix);
+
+    // 2 mustMix + 5 liquidities => full
+    mix.registerInput(
+            new ConfirmedInput(
+                    new RegisteredInput(
+                            mix.getPool().getPoolId(),
+                            "liquidity5",
+                            true,
+                            generateOutPoint(mustMixValue),
+                            false,
+                            null,
+                            null),
+                    "userHashL5"));
+    Assertions.assertTrue(spyMixService.isConfirmInputReady(mix));
+    Assertions.assertEquals(2, mix.getNbInputsMustMix());
+    Assertions.assertEquals(5, mix.getNbInputsLiquidities());
+    Assertions.assertEquals(2, mix.getSurge());
+    Assertions.assertEquals(0, mix.getAvailableSlotsMustMix());
+    Assertions.assertEquals(0, mix.getAvailableSlotsLiquidityAndSurge());
+    Assertions.assertTrue(mix.isAnonymitySetReached());
+    checkAccepts(false, false, mix);
+  }
+
+  @Test
+  public void isConfirmInputReady_withSurgeLiquidityMinNotReached() throws Exception {
+    MixService spyMixService = Mockito.spy(mixService);
+    long denomination = 200000000;
+    long feeValue = 10000000;
+    long minerFeeMin = 100;
+    long minerFeeCap = 9500;
+    long minerFeeMax = 10000;
+    long minRelaySatPerB = 1;
+    int mustMixMin = 2;
+    int liquidityMin = 1;
+    int anonymitySet = 5;
+    int surge = 2;
+    int liquidityMinForSurge = 10;
+    Mix mix =
+            __nextMix(
+                    denomination,
+                    feeValue,
+                    minerFeeMin,
+                    minerFeeCap,
+                    minerFeeMax,
+                    minRelaySatPerB,
+                    mustMixMin,
+                    liquidityMin,
+                    anonymitySet,
+                    surge);
+    String mixId = mix.getMixId();
+
+    long mustMixValue = 200000555; // high minerFee to pay surges
+
+    // 1 mustMix, minMustMix reached but minerFeeMix not reached => accept mustMix & liquidities
+    mix.registerInput(
+            new ConfirmedInput(
+                    new RegisteredInput(
+                            mix.getPool().getPoolId(),
+                            "mustMix1",
+                            false,
+                            generateOutPoint(mustMixValue),
+                            false,
+                            null,
+                            null),
+                    "userHashM1"));
+    Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
+    Assertions.assertEquals(1, mix.getNbInputsMustMix());
+    Assertions.assertEquals(0, mix.getNbInputsLiquidities());
+    Assertions.assertEquals(0, mix.getSurge());
+    Assertions.assertEquals(3, mix.getAvailableSlotsMustMix());
+    Assertions.assertEquals(1, mix.getAvailableSlotsLiquidityAndSurge());
+    Assertions.assertFalse(mix.isAnonymitySetReached());
+    checkAccepts(true, true, mix);
+
+    // 2 mustMix, minerFeeMix reached => accept liquidity & surges
+    mix.registerInput(
+            new ConfirmedInput(
+                    new RegisteredInput(
+                            mix.getPool().getPoolId(),
+                            "mustMix2",
+                            false,
+                            generateOutPoint(mustMixValue),
+                            false,
+                            null,
+                            null),
+                    "userHashM2"));
+    Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
+    Assertions.assertEquals(2, mix.getNbInputsMustMix());
+    Assertions.assertEquals(0, mix.getNbInputsLiquidities());
+    Assertions.assertEquals(2, mix.getSurge());
+    Assertions.assertEquals(0, mix.getAvailableSlotsMustMix());
+    Assertions.assertEquals(5, mix.getAvailableSlotsLiquidityAndSurge());
+    Assertions.assertFalse(mix.isAnonymitySetReached());
+    checkAccepts(false, true, mix);
+
+    // 2 mustMix + 1 liquidity => accept liquidity & surges
+    mix.registerInput(
+            new ConfirmedInput(
+                    new RegisteredInput(
+                            mix.getPool().getPoolId(),
+                            "liquidity1",
+                            true,
+                            generateOutPoint(mustMixValue),
+                            false,
+                            null,
+                            null),
+                    "userHashL1"));
+    Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
+    Assertions.assertEquals(2, mix.getNbInputsMustMix());
+    Assertions.assertEquals(1, mix.getNbInputsLiquidities());
+    Assertions.assertEquals(2, mix.getSurge());
+    Assertions.assertEquals(0, mix.getAvailableSlotsMustMix());
+    Assertions.assertEquals(4, mix.getAvailableSlotsLiquidityAndSurge());
+    Assertions.assertFalse(mix.isAnonymitySetReached());
+    checkAccepts(false, true, mix);
+
+    // 2 mustMix + 2 liquidities => accept liquidity & surges
+    mix.registerInput(
+            new ConfirmedInput(
+                    new RegisteredInput(
+                            mix.getPool().getPoolId(),
+                            "liquidity2",
+                            true,
+                            generateOutPoint(mustMixValue),
+                            false,
+                            null,
+                            null),
+                    "userHashL2"));
+    Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
+    Assertions.assertEquals(2, mix.getNbInputsMustMix());
+    Assertions.assertEquals(2, mix.getNbInputsLiquidities());
+    Assertions.assertEquals(2, mix.getSurge());
+    Assertions.assertEquals(0, mix.getAvailableSlotsMustMix());
+    Assertions.assertEquals(3, mix.getAvailableSlotsLiquidityAndSurge());
+    Assertions.assertFalse(mix.isAnonymitySetReached());
+    checkAccepts(false, true, mix);
+
+    // 2 mustMix + 3 liquidities => accept surges & ready
+    mix.registerInput(
+            new ConfirmedInput(
+                    new RegisteredInput(
+                            mix.getPool().getPoolId(),
+                            "liquidity3",
+                            true,
+                            generateOutPoint(mustMixValue),
+                            false,
+                            null,
+                            null),
+                    "userHashL3"));
+    Assertions.assertTrue(spyMixService.isConfirmInputReady(mix));
+    Assertions.assertEquals(2, mix.getNbInputsMustMix());
+    Assertions.assertEquals(3, mix.getNbInputsLiquidities());
+    Assertions.assertEquals(2, mix.getSurge());
+    Assertions.assertEquals(0, mix.getAvailableSlotsMustMix());
+    Assertions.assertEquals(2, mix.getAvailableSlotsLiquidityAndSurge());
+    Assertions.assertTrue(mix.isAnonymitySetReached());
+    checkAccepts(false, true, mix);
+
+    // 2 mustMix + 4 liquidities => accept surges & ready
+    mix.registerInput(
+            new ConfirmedInput(
+                    new RegisteredInput(
+                            mix.getPool().getPoolId(),
+                            "liquidity4",
+                            true,
+                            generateOutPoint(mustMixValue),
+                            false,
+                            null,
+                            null),
+                    "userHashL4"));
+    Assertions.assertTrue(spyMixService.isConfirmInputReady(mix));
+    Assertions.assertEquals(2, mix.getNbInputsMustMix());
+    Assertions.assertEquals(4, mix.getNbInputsLiquidities());
+    Assertions.assertEquals(2, mix.getSurge());
+    Assertions.assertEquals(0, mix.getAvailableSlotsMustMix());
+    Assertions.assertEquals(1, mix.getAvailableSlotsLiquidityAndSurge());
+    Assertions.assertTrue(mix.isAnonymitySetReached());
+    checkAccepts(false, true, mix);
+
+    // 2 mustMix + 5 liquidities => full
+    mix.registerInput(
+            new ConfirmedInput(
+                    new RegisteredInput(
+                            mix.getPool().getPoolId(),
+                            "liquidity5",
+                            true,
+                            generateOutPoint(mustMixValue),
+                            false,
+                            null,
+                            null),
+                    "userHashL5"));
+    Assertions.assertTrue(spyMixService.isConfirmInputReady(mix));
+    Assertions.assertEquals(2, mix.getNbInputsMustMix());
+    Assertions.assertEquals(5, mix.getNbInputsLiquidities());
+    Assertions.assertEquals(2, mix.getSurge());
+    Assertions.assertEquals(0, mix.getAvailableSlotsMustMix());
+    Assertions.assertEquals(0, mix.getAvailableSlotsLiquidityAndSurge());
+    Assertions.assertTrue(mix.isAnonymitySetReached());
+    checkAccepts(false, false, mix);
+  }
+
+  @Test
+  public void isConfirmInputReady_downSurgeOnMustMixDisconnect() throws Exception {
+    MixService spyMixService = Mockito.spy(mixService);
+    long denomination = 200000000;
+    long feeValue = 10000000;
+    long minerFeeMin = 100;
+    long minerFeeCap = 9500;
+    long minerFeeMax = 10000;
+    long minRelaySatPerB = 1;
+    int mustMixMin = 2;
+    int liquidityMin = 1;
+    int anonymitySet = 5;
+    int surge = 2;
+    Mix mix =
+            __nextMix(
+                    denomination,
+                    feeValue,
+                    minerFeeMin,
+                    minerFeeCap,
+                    minerFeeMax,
+                    minRelaySatPerB,
+                    mustMixMin,
+                    liquidityMin,
+                    anonymitySet,
+                    surge);
+    String mixId = mix.getMixId();
+
+    long mustMixValue = 200000555; // high minerFee to pay surges
+
+    // 1 mustMix, minMustMix reached but minerFeeMix not reached => accept mustMix & liquidities
+    mix.registerInput(new ConfirmedInput(
+                    new RegisteredInput(
+                            mix.getPool().getPoolId(),
+                            "mustMix1",
+                            false,
+                            generateOutPoint(mustMixValue),
+                            false,
+                            null,
+                            null),
+                    "mustMix1"));
+    Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
+    Assertions.assertEquals(1, mix.getNbInputsMustMix());
+    Assertions.assertEquals(0, mix.getNbInputsLiquidities());
+    Assertions.assertEquals(0, mix.getSurge());
+    Assertions.assertEquals(3, mix.getAvailableSlotsMustMix());
+    Assertions.assertEquals(1, mix.getAvailableSlotsLiquidityAndSurge());
+    Assertions.assertFalse(mix.isAnonymitySetReached());
+    checkAccepts(true, true, mix);
+
+    //////////////////////////////////////// >
+
+    // 2 mustMix, minerFeeMix reached => accept liquidity & surges
+    mix.registerInput(new ConfirmedInput(
+            new RegisteredInput(
+                    mix.getPool().getPoolId(),
+                    "mustMix2",
+                    false,
+                    generateOutPoint(mustMixValue),
+                    false,
+                    null,
+                    null),
+            "mustMix2"));
+    Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
+    Assertions.assertEquals(2, mix.getNbInputsMustMix());
+    Assertions.assertEquals(0, mix.getNbInputsLiquidities());
+    Assertions.assertEquals(2, mix.getSurge());
+    Assertions.assertEquals(0, mix.getAvailableSlotsMustMix());
+    Assertions.assertEquals(5, mix.getAvailableSlotsLiquidityAndSurge());
+    Assertions.assertFalse(mix.isAnonymitySetReached());
+    checkAccepts(false, true, mix);
+
+    // 2 mustMix + 1 liquidity => accept liquidity & surges
+    mix.registerInput(new ConfirmedInput(
+            new RegisteredInput(
+                    mix.getPool().getPoolId(),
+                    "liquidity1",
+                    true,
+                    generateOutPoint(mustMixValue),
+                    false,
+                    null,
+                    null),
+            "liquidity1"));
+    Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
+    Assertions.assertEquals(2, mix.getNbInputsMustMix());
+    Assertions.assertEquals(1, mix.getNbInputsLiquidities());
+    Assertions.assertEquals(2, mix.getSurge());
+    Assertions.assertEquals(0, mix.getAvailableSlotsMustMix());
+    Assertions.assertEquals(4, mix.getAvailableSlotsLiquidityAndSurge());
+    Assertions.assertFalse(mix.isAnonymitySetReached());
+    checkAccepts(false, true, mix);
+
+    // 2 mustMix + 2 liquidities => accept liquidity & surges
+    mix.registerInput(new ConfirmedInput(
+            new RegisteredInput(
+                    mix.getPool().getPoolId(),
+                    "liquidity2",
+                    true,
+                    generateOutPoint(mustMixValue),
+                    false,
+                    null,
+                    null),
+            "liquidity2"));
+    Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
+    Assertions.assertEquals(2, mix.getNbInputsMustMix());
+    Assertions.assertEquals(2, mix.getNbInputsLiquidities());
+    Assertions.assertEquals(2, mix.getSurge());
+    Assertions.assertEquals(0, mix.getAvailableSlotsMustMix());
+    Assertions.assertEquals(3, mix.getAvailableSlotsLiquidityAndSurge());
+    Assertions.assertFalse(mix.isAnonymitySetReached());
+    checkAccepts(false, true, mix);
+
+    // 2 mustMix + 3 liquidities => accept surges & ready
+    mix.registerInput(new ConfirmedInput(
+            new RegisteredInput(
+                    mix.getPool().getPoolId(),
+                    "liquidity3",
+                    true,
+                    generateOutPoint(mustMixValue),
+                    false,
+                    null,
+                    null),
+            "liquidity3"));
+    Assertions.assertTrue(spyMixService.isConfirmInputReady(mix));
+    Assertions.assertEquals(2, mix.getNbInputsMustMix());
+    Assertions.assertEquals(3, mix.getNbInputsLiquidities());
+    Assertions.assertEquals(2, mix.getSurge());
+    Assertions.assertEquals(0, mix.getAvailableSlotsMustMix());
+    Assertions.assertEquals(2, mix.getAvailableSlotsLiquidityAndSurge());
+    Assertions.assertTrue(mix.isAnonymitySetReached());
+    checkAccepts(false, true, mix);
+
+    // 2 mustMix + 4 liquidities => accept surges & ready
+    mix.registerInput(new ConfirmedInput(
+            new RegisteredInput(
+                    mix.getPool().getPoolId(),
+                    "liquidity4",
+                    true,
+                    generateOutPoint(mustMixValue),
+                    false,
+                    null,
+                    null),
+            "liquidity4"));
+    Assertions.assertTrue(spyMixService.isConfirmInputReady(mix));
+    Assertions.assertEquals(2, mix.getNbInputsMustMix());
+    Assertions.assertEquals(4, mix.getNbInputsLiquidities());
+    Assertions.assertEquals(2, mix.getSurge());
+    Assertions.assertEquals(0, mix.getAvailableSlotsMustMix());
+    Assertions.assertEquals(1, mix.getAvailableSlotsLiquidityAndSurge());
+    Assertions.assertTrue(mix.isAnonymitySetReached());
+    checkAccepts(false, true, mix);
+
+    //////////////////////////////////////// <
+
+    // disconnect mustMix: 1 mustMix + 4 liquidities => disconnect surges & reset surge & accept
+    // mustMix
+    mixService.onClientDisconnect("mustMix2");
+    Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
+    Assertions.assertEquals(1, mix.getNbInputsMustMix());
+    Assertions.assertEquals(1, mix.getNbInputsLiquidities());
+    Assertions.assertEquals(0, mix.getSurge());
+    Assertions.assertEquals(3, mix.getAvailableSlotsMustMix());
+    Assertions.assertEquals(0, mix.getAvailableSlotsLiquidityAndSurge());
+    Assertions.assertFalse(mix.isAnonymitySetReached());
+    checkAccepts(true, false, mix);
+
+    //////////////////////////////////////// >
+
+    // 2 mustMix + 1 liquidity, minerFeeMix reached => accept liquidity & surges
+    mix.registerInput(new ConfirmedInput(
+            new RegisteredInput(
+                    mix.getPool().getPoolId(),
+                    "mustMix2",
+                    false,
+                    generateOutPoint(mustMixValue),
+                    false,
+                    null,
+                    null),
+            "mustMix2"));
+    Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
+    Assertions.assertEquals(2, mix.getNbInputsMustMix());
+    Assertions.assertEquals(1, mix.getNbInputsLiquidities());
+    Assertions.assertEquals(2, mix.getSurge());
+    Assertions.assertEquals(0, mix.getAvailableSlotsMustMix());
+    Assertions.assertEquals(4, mix.getAvailableSlotsLiquidityAndSurge());
+    Assertions.assertFalse(mix.isAnonymitySetReached());
+    checkAccepts(false, true, mix);
+
+    // 2 mustMix + 2 liquidities => accept liquidity & surges
+    mix.registerInput(new ConfirmedInput(
+            new RegisteredInput(
+                    mix.getPool().getPoolId(),
+                    "liquidity11",
+                    true,
+                    generateOutPoint(mustMixValue),
+                    false,
+                    null,
+                    null),
+            "liquidity11"));
+    Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
+    Assertions.assertEquals(2, mix.getNbInputsMustMix());
+    Assertions.assertEquals(2, mix.getNbInputsLiquidities());
+    Assertions.assertEquals(2, mix.getSurge());
+    Assertions.assertEquals(0, mix.getAvailableSlotsMustMix());
+    Assertions.assertEquals(3, mix.getAvailableSlotsLiquidityAndSurge());
+    Assertions.assertFalse(mix.isAnonymitySetReached());
+    checkAccepts(false, true, mix);
+
+    // 2 mustMix + 3 liquidities => accept & surges & ready
+    mix.registerInput(new ConfirmedInput(
+            new RegisteredInput(
+                    mix.getPool().getPoolId(),
+                    "liquidity22",
+                    true,
+                    generateOutPoint(mustMixValue),
+                    false,
+                    null,
+                    null),
+            "liquidity22"));
+    Assertions.assertTrue(spyMixService.isConfirmInputReady(mix));
+    Assertions.assertEquals(2, mix.getNbInputsMustMix());
+    Assertions.assertEquals(3, mix.getNbInputsLiquidities());
+    Assertions.assertEquals(2, mix.getSurge());
+    Assertions.assertEquals(0, mix.getAvailableSlotsMustMix());
+    Assertions.assertEquals(2, mix.getAvailableSlotsLiquidityAndSurge());
+    Assertions.assertTrue(mix.isAnonymitySetReached());
+    checkAccepts(false, true, mix);
+
+    // 2 mustMix + 4 liquidities => accept surges & ready
+    mix.registerInput(new ConfirmedInput(
+            new RegisteredInput(
+                    mix.getPool().getPoolId(),
+                    "liquidity33",
+                    true,
+                    generateOutPoint(mustMixValue),
+                    false,
+                    null,
+                    null),
+            "liquidity33"));
+    Assertions.assertTrue(spyMixService.isConfirmInputReady(mix));
+    Assertions.assertEquals(2, mix.getNbInputsMustMix());
+    Assertions.assertEquals(4, mix.getNbInputsLiquidities());
+    Assertions.assertEquals(2, mix.getSurge());
+    Assertions.assertEquals(0, mix.getAvailableSlotsMustMix());
+    Assertions.assertEquals(1, mix.getAvailableSlotsLiquidityAndSurge());
+    Assertions.assertTrue(mix.isAnonymitySetReached());
+    checkAccepts(false, true, mix);
+
+    // 2 mustMix + 5 liquidities => full
+    mix.registerInput(new ConfirmedInput(
+            new RegisteredInput(
+                    mix.getPool().getPoolId(),
+                    "liquidity44",
+                    true,
+                    generateOutPoint(mustMixValue),
+                    false,
+                    null,
+                    null),
+            "liquidity44"));
+    Assertions.assertTrue(spyMixService.isConfirmInputReady(mix));
+    Assertions.assertEquals(2, mix.getNbInputsMustMix());
+    Assertions.assertEquals(5, mix.getNbInputsLiquidities());
+    Assertions.assertEquals(2, mix.getSurge());
+    Assertions.assertEquals(0, mix.getAvailableSlotsMustMix());
+    Assertions.assertEquals(0, mix.getAvailableSlotsLiquidityAndSurge());
+    Assertions.assertTrue(mix.isAnonymitySetReached());
+    checkAccepts(false, false, mix);
   }
 
   @Test
@@ -176,57 +869,61 @@ public class MixServiceTest extends AbstractIntegrationTest {
     long minerFeeMin = 100;
     long minerFeeCap = 9500;
     long minerFeeMax = 10000;
-    long minRelayFee = 510;
+    long minRelaySatPerB = 1;
     int mustMixMin = 1;
     int liquidityMin = 0;
     int anonymitySet = 2;
     Mix mix =
-        __nextMix(
-            denomination,
-            feeValue,
-            minerFeeMin,
-            minerFeeCap,
-            minerFeeMax,
-            minRelayFee,
-            mustMixMin,
-            liquidityMin,
-            anonymitySet);
+            __nextMix(
+                    denomination,
+                    feeValue,
+                    minerFeeMin,
+                    minerFeeCap,
+                    minerFeeMax,
+                    minRelaySatPerB,
+                    mustMixMin,
+                    liquidityMin,
+                    anonymitySet,
+                    0);
 
-    long mustMixValue = 200000400;
+    long mustMixValue = 200000555; // high minerFee to pay surges
 
-    // 0 mustMix => false
+    // 0 mustMix => accept mustMix
     Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
+    checkAccepts(true, false, mix);
 
-    // 1 mustMix => false
+    // 1 mustMix => accept mustMix + liquidity
     ConfirmedInput mustMix1 =
-        new ConfirmedInput(
-            new RegisteredInput(
-                mix.getPool().getPoolId(),
-                "mustMix1",
-                false,
-                generateOutPoint(mustMixValue),
-                false,
-                null,
-                null),
-            "userHash1");
+            new ConfirmedInput(
+                    new RegisteredInput(
+                            mix.getPool().getPoolId(),
+                            "mustMix1",
+                            false,
+                            generateOutPoint(mustMixValue),
+                            false,
+                            null,
+                            null),
+                    "userHash1");
     mix.registerInput(mustMix1);
     Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
+    checkAccepts(true, true, mix);
 
-    // 2 mustMix => true
+    // 2 mustMix => ready
     ConfirmedInput mustMix2 =
-        new ConfirmedInput(
-            new RegisteredInput(
-                mix.getPool().getPoolId(),
-                "mustMix2",
-                false,
-                generateOutPoint(mustMixValue),
-                false,
-                null,
-                null),
-            "userHash2");
+            new ConfirmedInput(
+                    new RegisteredInput(
+                            mix.getPool().getPoolId(),
+                            "mustMix2",
+                            false,
+                            generateOutPoint(mustMixValue),
+                            false,
+                            null,
+                            null),
+                    "userHash2");
     mix.registerInput(mustMix2);
     Assertions.assertTrue(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(2, mix.getNbInputs());
+    checkAccepts(false, false, mix);
 
     String blameIdentifierMustMix1 = Utils.computeBlameIdentitifer(mustMix1.getRegisteredInput());
     Assertions.assertTrue(dbService.findBlames(blameIdentifierMustMix1).isEmpty()); // no blame
@@ -243,16 +940,16 @@ public class MixServiceTest extends AbstractIntegrationTest {
 
     // 2 mustMix => true
     ConfirmedInput mustMix3 =
-        new ConfirmedInput(
-            new RegisteredInput(
-                mix.getPool().getPoolId(),
-                "mustMix3",
-                false,
-                generateOutPoint(mustMixValue),
-                false,
-                null,
-                null),
-            "userHash3");
+            new ConfirmedInput(
+                    new RegisteredInput(
+                            mix.getPool().getPoolId(),
+                            "mustMix3",
+                            false,
+                            generateOutPoint(mustMixValue),
+                            false,
+                            null,
+                            null),
+                    "userHash3");
     mix.registerInput(mustMix3);
     Assertions.assertTrue(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(2, mix.getNbInputs());
@@ -278,13 +975,65 @@ public class MixServiceTest extends AbstractIntegrationTest {
 
   private TxOutPoint generateOutPoint(long value) {
     TxOutPoint txOutPoint =
-        new TxOutPoint(
-            Utils.getRandomString(65),
-            0,
-            value,
-            99,
-            null,
-            testUtils.generateSegwitAddress().getBech32AsString());
+            new TxOutPoint(
+                    Utils.getRandomString(65),
+                    0,
+                    value,
+                    99,
+                    null,
+                    testUtils.generateSegwitAddress().getBech32AsString());
     return txOutPoint;
+  }
+
+  private void checkAccepts(boolean mustMix, boolean liquidity, Mix mix) {
+    // try mustMix
+    try {
+      RegisteredInput input =
+              new RegisteredInput(
+                      mix.getPool().getPoolId(),
+                      "username" + Utils.getRandomString(10),
+                      false,
+                      generateOutPoint(mix.getPool().computePremixBalanceMax(false)),
+                      false,
+                      null,
+                      null);
+      mix.hasAvailableSlotFor(input);
+      if (!mustMix) {
+        Assertions.fail("should not accept mustMix");
+      }
+    } catch (QueueInputException e) {
+      if (!mustMix && !liquidity) {
+        Assertions.assertEquals("Current mix is full", e.getMessage());
+        return;
+      }
+      if (!mustMix) {
+        Assertions.assertEquals("Current mix is full for mustMix", e.getMessage());
+      } else {
+        Assertions.fail("should accept mustMix");
+      }
+    }
+
+    // try liquidity
+    try {
+      RegisteredInput input =
+              new RegisteredInput(
+                      mix.getPool().getPoolId(),
+                      "username" + Utils.getRandomString(10),
+                      true,
+                      generateOutPoint(mix.getPool().computePremixBalanceMin(true)),
+                      false,
+                      null,
+                      null);
+      mix.hasAvailableSlotFor(input);
+      if (!liquidity) {
+        Assertions.fail("should not accept liquidity");
+      }
+    } catch (QueueInputException e) {
+      if (!liquidity) {
+        Assertions.assertEquals("Current mix is full for liquidity", e.getMessage());
+      } else {
+        Assertions.fail("should accept liquidity");
+      }
+    }
   }
 }

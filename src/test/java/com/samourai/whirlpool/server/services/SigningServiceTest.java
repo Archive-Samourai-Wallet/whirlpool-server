@@ -52,8 +52,7 @@ public class SigningServiceTest extends AbstractIntegrationTest {
     // prepare input
     ECKey ecKey = new ECKey();
     boolean liquidity = false;
-    long inputBalance =
-        mix.getPool().computePremixBalanceMin(liquidity) + mix.getPool().getMinerFeeMix();
+    long inputBalance = mix.getPool().computePremixBalanceMax(liquidity);
     TxOutPoint txOutPoint =
         createAndMockTxOutPoint(new SegwitAddress(ecKey.getPubKey(), params), inputBalance, 10);
 
@@ -78,8 +77,7 @@ public class SigningServiceTest extends AbstractIntegrationTest {
     // prepare input
     ECKey ecKey = new ECKey();
     boolean liquidity = false;
-    long inputBalance =
-        mix.getPool().computePremixBalanceMin(liquidity) + mix.getPool().getMinerFeeMix();
+    long inputBalance = mix.getPool().computePremixBalanceMin(liquidity);
     TxOutPoint txOutPoint =
         createAndMockTxOutPoint(new SegwitAddress(ecKey.getPubKey(), params), inputBalance, 10);
 
@@ -107,8 +105,7 @@ public class SigningServiceTest extends AbstractIntegrationTest {
     // mix config
     Mix mix = __nextMix(2, 0, 2, __getCurrentMix().getPool()); // 2 users
     boolean liquidity = false;
-    long inputBalance =
-        mix.getPool().computePremixBalanceMin(liquidity) + mix.getPool().getMinerFeeMix();
+    long inputBalance = mix.getPool().computePremixBalanceMin(liquidity);
 
     // trick to simulate one first user registered
     byte[] bordereau = ClientUtils.generateBordereau();
@@ -161,8 +158,7 @@ public class SigningServiceTest extends AbstractIntegrationTest {
     // prepare input
     ECKey ecKey = new ECKey();
     boolean liquidity = false;
-    long inputBalance =
-        mix.getPool().computePremixBalanceMin(liquidity) + mix.getPool().getMinerFeeMix();
+    long inputBalance = mix.getPool().computePremixBalanceMin(liquidity);
     TxOutPoint txOutPoint =
         createAndMockTxOutPoint(new SegwitAddress(ecKey.getPubKey(), params), inputBalance, 10);
 

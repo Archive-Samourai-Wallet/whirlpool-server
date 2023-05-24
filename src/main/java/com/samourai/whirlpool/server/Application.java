@@ -74,6 +74,13 @@ public class Application extends ServerApplication {
     ActivityCsv activityCsv = new ActivityCsv("STARTUP", null, null, null, null, null);
     exportService.exportActivity(activityCsv);
 
+    // log signing address
+    String signingAddress =
+        Utils.computeSigningAddress(
+                serverConfig.getSigningWallet(), serverConfig.getNetworkParameters())
+            .getAddressString();
+    log.info("Signing address: " + signingAddress);
+
     // server starting...
   }
 

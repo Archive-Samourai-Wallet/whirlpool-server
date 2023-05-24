@@ -9,6 +9,8 @@ import com.samourai.whirlpool.server.persistence.to.BlameTO;
 import com.samourai.whirlpool.server.utils.Utils;
 import java.lang.invoke.MethodHandles;
 import java.util.List;
+import java.util.Map;
+import org.apache.groovy.util.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +37,11 @@ public class BlameService {
   }
 
   public void blame(RegisteredInput registeredInput, BlameReason reason, Mix mix) {
+    blame(registeredInput, reason, mix, null);
+  }
+
+  public void blame(
+      RegisteredInput registeredInput, BlameReason reason, Mix mix, String receiveAddress) {
     // blame
     String identifier = Utils.computeBlameIdentitifer(registeredInput);
     dbService.saveBlame(identifier, reason, mix.getMixId(), registeredInput.getTor());
@@ -43,14 +50,18 @@ public class BlameService {
     List<BlameTO> blames = dbService.findBlames(identifier);
     banService.onBlame(registeredInput, identifier, blames);
 
+    Map<String, String> detailsParam = Maps.of("reason", reason.name());
+    if (receiveAddress != null) {
+      // we can't be sure that rejected output is related to disconnected input
+      // blameReason = BlameReason.REJECTED_OUTPUT;
+      detailsParam.put("receiveAddress", receiveAddress);
+    }
+
     // log activity
+    Map<String, String> clientDetails = ImmutableMap.of("u", registeredInput.getUsername());
     ActivityCsv activityCsv =
         new ActivityCsv(
-            "BLAME",
-            mix.getPool().getPoolId(),
-            registeredInput,
-            ImmutableMap.of("reason", reason.name()),
-            null);
+            "BLAME", mix.getPool().getPoolId(), registeredInput, detailsParam, clientDetails);
     exportService.exportActivity(activityCsv);
     metricService.onBlame(registeredInput);
   }

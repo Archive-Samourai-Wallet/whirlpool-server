@@ -151,8 +151,6 @@ public abstract class AbstractIntegrationTest {
 
     messageSignUtil = MessageSignUtilGeneric.getInstance();
 
-    mixService.__setCONFIRM_INPUT_CHECK_DELAY(0);
-
     dbService.__reset();
     mixLimitsService = mixService.__getMixLimitsService();
     rpcClientService.resetMock();
@@ -187,10 +185,11 @@ public abstract class AbstractIntegrationTest {
       long minerFeeMin,
       long minerFeeCap,
       long minerFeeMax,
-      long minRelayFee,
+      long minRelaySatPerB,
       int mustMixMin,
       int liquidityMin,
-      int anonymitySet)
+      int anonymitySet,
+      int surge)
       throws IllegalInputException {
 
     // find pool
@@ -212,15 +211,18 @@ public abstract class AbstractIntegrationTest {
     poolConfig.setMustMixMin(mustMixMin);
     poolConfig.setLiquidityMin(liquidityMin);
     poolConfig.setAnonymitySet(anonymitySet);
+    poolConfig.setSurge(surge);
 
     WhirlpoolServerConfig.PoolMinerFeeConfig globalMinerFeeConfig =
         new WhirlpoolServerConfig.PoolMinerFeeConfig();
     globalMinerFeeConfig.setMinerFeeMin(minerFeeMin);
     globalMinerFeeConfig.setMinerFeeCap(minerFeeCap);
     globalMinerFeeConfig.setMinerFeeMax(minerFeeMax);
-    globalMinerFeeConfig.setMinRelayFee(minRelayFee);
+    globalMinerFeeConfig.setMinRelaySatPerB(minRelaySatPerB);
+    globalMinerFeeConfig.setWeightTx(510);
+    globalMinerFeeConfig.setWeightPerSurge(102);
 
-    PoolMinerFee minerFee = new PoolMinerFee(globalMinerFeeConfig, null, mustMixMin);
+    PoolMinerFee minerFee = new PoolMinerFee(globalMinerFeeConfig, null);
 
     // run new mix for the pool
     return __nextMix(minerFee, poolConfig);

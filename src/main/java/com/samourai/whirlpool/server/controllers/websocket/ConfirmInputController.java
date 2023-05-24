@@ -46,7 +46,8 @@ public class ConfirmInputController extends AbstractWebSocketController {
 
     String username = principal.getName();
     if (log.isDebugEnabled()) {
-      log.debug("(<) [" + payload.mixId + "] " + username + " " + headers.getDestination());
+      log.debug(
+          "(<) [" + payload.mixId + "] " + headers.getDestination() + ", username=" + username);
     }
 
     // failMode

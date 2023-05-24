@@ -6,6 +6,7 @@ import com.samourai.whirlpool.protocol.beans.Utxo;
 import com.samourai.whirlpool.protocol.websocket.notifications.MixStatus;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
+import com.samourai.whirlpool.server.exceptions.QueueInputException;
 import com.samourai.whirlpool.server.exceptions.ServerErrorCode;
 import com.samourai.whirlpool.server.persistence.to.MixTO;
 import com.samourai.whirlpool.server.services.CryptoService;
@@ -33,6 +34,8 @@ public class Mix {
   private Map<MixStatus, Timestamp> timeStatus;
 
   private Pool pool;
+  private int surge;
+  private boolean confirmingSurge;
 
   private MixStatus mixStatus;
   private InputPool confirmingInputs;
@@ -62,6 +65,7 @@ public class Mix {
     this.timeStatus = new ConcurrentHashMap<>();
 
     this.pool = pool;
+    this.surge = 0; // will be set when enought mustmix confirmed
 
     this.mixStatus = MixStatus.CONFIRM_INPUT;
     this.confirmingInputs = new InputPool();
@@ -96,33 +100,188 @@ public class Mix {
     return Optional.ofNullable(mixTO);
   }
 
+  private boolean hasMinMustMixAndFeeReachedWithAdditionalMustMix(
+      RegisteredInput additionalMustMix) {
+    long additionalMinerFee = additionalMustMix.computeMinerFees(pool);
+    return hasMinMustMixAndFeeReached(
+        getNbInputsMustMix() + 1, computeMinerFeeAccumulated() + additionalMinerFee);
+  }
+
   public boolean hasMinMustMixAndFeeReached() {
+    return hasMinMustMixAndFeeReached(getNbInputsMustMix(), computeMinerFeeAccumulated());
+  }
+
+  private boolean hasMinMustMixAndFeeReached(int nbMustMix, long minerFeeAccumulated) {
     // verify minMustMix
-    if (getNbInputsMustMix() < pool.getMinMustMix()) {
+    if (nbMustMix < pool.getMinMustMix()) {
       return false;
     }
 
     // verify minerFeeMix
-    if (computeMinerFeeAccumulated() < pool.getMinerFeeMix()) {
+    if (minerFeeAccumulated < pool.getMinerFeeMix()) {
       return false;
     }
     return true;
   }
 
   public boolean hasMinLiquidityMixReached() {
-    return getMinLiquidityMixRemaining() == 0;
+    return getAvailableSlotsLiquidityMin() < 1;
   }
 
-  public int getMinLiquidityMixRemaining() {
-    return Math.max(0, pool.getMinLiquidity() - getNbInputsLiquidities());
+  // may be negative
+  private int getAvailableSlotsLiquidityMin() {
+    return pool.getMinLiquidity() - getNbInputsLiquidities();
   }
 
-  public boolean isFull() {
+  // may be negative
+  public int getAvailableSlotsLiquidityAndSurge() {
+    if (!hasMinMustMixAndFeeReached()) {
+      // not enough mustMixs => add minimal liquidities, and wait for more mustMixs
+      return getAvailableSlotsLiquidityMin();
+    }
+    // enough mustMixs => add missing liquidities & surges
+    int mustMixSlots = Math.max(getNbInputsMustMix(), pool.getMinMustMix());
+    return pool.getAnonymitySet() + surge - mustMixSlots - getNbInputsLiquidities();
+  }
+
+  // may be negative
+  public int getExessLiquidityAndSurge() {
+    return getAvailableSlotsLiquidityAndSurge() * -1;
+  }
+
+  public int getAvailableSlotsMustMix() {
+    if (surge > 0) {
+      return 0; // no more mustMix while accepting surges
+    }
+    int liquiditySlots = Math.max(getNbInputsLiquidities(), pool.getMinLiquidity());
+    return pool.getAnonymitySet() - liquiditySlots - getNbInputsMustMix();
+  }
+
+  public synchronized void hasAvailableSlotFor(RegisteredInput registeredInput)
+      throws QueueInputException {
+    if (isFullWithSurge()) {
+      throw new QueueInputException("Current mix is full", registeredInput, pool.getPoolId());
+    }
+
+    if (registeredInput.isLiquidity()) {
+      // verify minMustMix
+      if (getAvailableSlotsLiquidityAndSurge() < 1) {
+        throw new QueueInputException(
+            "Current mix is full for liquidity", registeredInput, pool.getPoolId());
+      }
+    } else {
+      // verify mustMix
+      int mustMixRemaining = getAvailableSlotsMustMix();
+      if (mustMixRemaining < 1) {
+        throw new QueueInputException(
+            "Current mix is full for mustMix", registeredInput, pool.getPoolId());
+      }
+
+      // last mustMix: verify enough miner-fees to pay the mix
+      if (mustMixRemaining == 1) {
+        if (!hasMinMustMixAndFeeReachedWithAdditionalMustMix(registeredInput)) {
+          log.warn(
+              "["
+                  + pool.getPoolId()
+                  + "] Queueing last mustMix: insufficient minerFees: minerFeeAccumulated="
+                  + computeMinerFeeAccumulated()
+                  + ", minerFeeMix="
+                  + pool.getMinerFeeMix()
+                  + ", mustMix="
+                  + registeredInput);
+          throw new QueueInputException(
+              "Not enough minerFee for last mustMix slot", registeredInput, pool.getPoolId());
+        }
+        if (log.isTraceEnabled()) {
+          log.trace("[" + pool.getPoolId() + "] Accepting last mustMix: " + registeredInput);
+        }
+      }
+    }
+  }
+
+  private int computeSurge() {
+    if (!hasMinMustMixAndFeeReached()) {
+      // no surge allowed yet
+      return 0;
+    }
+    if (pool.isSurgeDisabledForLowLiquidityPool()) {
+      log.warn("[" + getLogId() + "] surge temporarily disabled because of low liquidity pool");
+      return 0;
+    }
+    if (pool.getSurge() < 1) {
+      return 0;
+    }
+
+    // compute possible surges for minerFeeAccumulated
+    long minerFeeAccumulated = computeMinerFeeAccumulated();
+    long minRelaySatPerB = pool.getMinerFee().getMinRelaySatPerB();
+    int surges = 0;
+    for (int i = 1; i <= pool.getSurge(); i++) {
+      long txSize = pool.computeTxSize(i);
+      float satPerB = ((float) minerFeeAccumulated) / txSize;
+      if (log.isDebugEnabled()) {
+        log.debug(
+            "["
+                + getLogId()
+                + "] computeSurge("
+                + i
+                + "): "
+                + "minerFeeAccumulated="
+                + minerFeeAccumulated
+                + ", txSize="
+                + txSize
+                + ", satPerB="
+                + satPerB
+                + " vs minRelaySatPerB="
+                + minRelaySatPerB);
+      }
+      if (satPerB < pool.getMinerFee().getMinRelaySatPerB()) {
+        break;
+      }
+      surges = i;
+    }
+    return surges;
+  }
+
+  public synchronized void setSurge() {
+    // update surge limit for mix
+    int newSurge = computeSurge();
+    if (surge != newSurge) {
+      if (log.isDebugEnabled()) {
+        log.debug("[" + getLogId() + "] setSurge: " + surge + "->" + newSurge);
+      }
+      this.surge = newSurge;
+      if (surge == 0) {
+        confirmingSurge = false;
+      }
+    }
+  }
+
+  public boolean isConfirmingSurge() {
+    return confirmingSurge;
+  }
+
+  public void setConfirmingSurge(boolean confirmingSurge) {
+    this.confirmingSurge = confirmingSurge;
+    if (log.isDebugEnabled()) {
+      log.debug("[" + getLogId() + "] confirmingSurge=" + confirmingSurge);
+    }
+  }
+
+  public boolean isAnonymitySetReached() {
     return (getNbInputs() >= pool.getAnonymitySet());
+  }
+
+  public boolean isFullWithSurge() {
+    return (getNbInputs() >= (pool.getAnonymitySet() + surge));
   }
 
   public String getMixId() {
     return mixId;
+  }
+
+  public String getLogId() {
+    return pool.getPoolId() + "/" + mixId;
   }
 
   public AsymmetricCipherKeyPair getKeyPair() {
@@ -143,6 +302,14 @@ public class Mix {
 
   public Pool getPool() {
     return pool;
+  }
+
+  public int getSurge() {
+    return surge;
+  }
+
+  public int getAnonymitySetWithSurge() {
+    return pool.getAnonymitySet() + surge;
   }
 
   public MixStatus getMixStatus() {
@@ -170,7 +337,9 @@ public class Mix {
   public synchronized Optional<RegisteredInput> removeConfirmingInputByUsername(String username) {
     Optional<RegisteredInput> confirmingInput = confirmingInputs.removeByUsername(username);
     if (confirmingInput.isPresent()) {
-      log.info("[" + mixId + "] " + username + " unregistered from confirming inputs");
+      if (log.isTraceEnabled()) {
+        log.trace("[" + getLogId() + "] " + username + " unregistered from confirming inputs");
+      }
     }
     return confirmingInput;
   }
@@ -221,6 +390,14 @@ public class Mix {
     return inputsById.size();
   }
 
+  public int getNbInputsNonSurge() {
+    return Math.min(getNbInputs(), pool.getAnonymitySet());
+  }
+
+  public int getNbInputsSurge() {
+    return Math.max(getNbInputs() - pool.getAnonymitySet(), 0);
+  }
+
   public int getNbInputsMustMix() {
     return (int)
         getInputs()
@@ -255,13 +432,24 @@ public class Mix {
     inputsById.put(inputId, confirmedInput);
   }
 
+  public synchronized void unregisterInputLiquidities(int limit) {
+    List<ConfirmedInput> liquidities =
+        getInputs().stream()
+            .filter(i -> i.getRegisteredInput().isLiquidity())
+            .limit(limit)
+            .collect(Collectors.toList());
+    for (ConfirmedInput liquidity : liquidities) {
+      unregisterInput(liquidity);
+    }
+  }
+
   public synchronized void unregisterInput(ConfirmedInput confirmedInput) {
     log.info(
         "["
-            + mixId
+            + getLogId()
             + "] "
-            + confirmedInput.getRegisteredInput().getUsername()
-            + " unregistering a CONFIRMED input");
+            + " unregistering a CONFIRMED input, username="
+            + confirmedInput.getRegisteredInput().getUsername());
     String inputId = Utils.computeInputId(confirmedInput.getRegisteredInput().getOutPoint());
     inputsById.remove(inputId);
   }
@@ -325,6 +513,13 @@ public class Mix {
     revealedReceiveAddressesByUsername.put(username, receiveAddress);
   }
 
+  public List<ConfirmedInput> getInputsNotRevealedOutput() {
+    return getInputs()
+        .parallelStream()
+        .filter(input -> !hasRevealedOutputUsername(input.getRegisteredInput().getUsername()))
+        .collect(Collectors.toList());
+  }
+
   public int getNbRevealedOutputs() {
     return revealedReceiveAddressesByUsername.size();
   }
@@ -339,6 +534,13 @@ public class Mix {
 
   public void setSignedByUsername(String username) {
     signed.put(username, true);
+  }
+
+  public List<ConfirmedInput> getInputsNotSigned() {
+    return getInputs()
+        .parallelStream()
+        .filter(input -> !getSignedByUsername(input.getRegisteredInput().getUsername()))
+        .collect(Collectors.toList());
   }
 
   public void setTx(Transaction tx) {
@@ -383,34 +585,11 @@ public class Mix {
     return mixDuration;
   }
 
-  public boolean isAlreadyStarted() {
-    return !MixStatus.CONFIRM_INPUT.equals(getMixStatus())
-        && !MixStatus.FAIL.equals(getMixStatus())
-        && !MixStatus.SUCCESS.equals(getMixStatus());
+  public boolean isDone() {
+    return MixStatus.FAIL.equals(getMixStatus()) || MixStatus.SUCCESS.equals(getMixStatus());
   }
 
-  public Collection<ConfirmedInput> onDisconnect(String username) {
-    // remove from confirming inputs
-    removeConfirmingInputByUsername(username);
-
-    // remove from confirmed inputs
-    List<ConfirmedInput> confirmedInputs =
-        getInputs()
-            .parallelStream()
-            .filter(
-                confirmedInput ->
-                    confirmedInput.getRegisteredInput().getUsername().equals(username))
-            .collect(Collectors.toList());
-    if (!confirmedInputs.isEmpty()) {
-      boolean mixAlreadyStarted = this.isAlreadyStarted();
-      for (ConfirmedInput confirmedInput : confirmedInputs) {
-        unregisterInput(confirmedInput);
-      }
-      if (mixAlreadyStarted) {
-        // blame confirmed inputs & restart mix
-        return confirmedInputs;
-      }
-    }
-    return new LinkedList<>();
+  public boolean isBlamableStatus() {
+    return !isDone() && !MixStatus.CONFIRM_INPUT.equals(getMixStatus());
   }
 }

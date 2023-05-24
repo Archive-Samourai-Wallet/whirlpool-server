@@ -56,13 +56,13 @@ public class RegisterInputController extends AbstractWebSocketController {
           "(<) ["
               + payload.poolId
               + "] "
-              + username
-              + " "
               + headers.getDestination()
               + " "
               + payload.utxoHash
               + ":"
-              + payload.utxoIndex);
+              + payload.utxoIndex
+              + ", username="
+              + username);
     }
 
     // failMode

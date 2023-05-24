@@ -74,35 +74,28 @@ public class PoolService {
       WhirlpoolServerConfig.PoolMinerFeeConfig globalMinerFeeConfig) {
     pools = new ConcurrentHashMap<>();
     for (WhirlpoolServerConfig.PoolConfig poolConfig : poolConfigs) {
-      PoolMinerFee minerFee =
-          new PoolMinerFee(
-              globalMinerFeeConfig, poolConfig.getMinerFees(), poolConfig.getMustMixMin());
+      PoolMinerFee minerFee = new PoolMinerFee(globalMinerFeeConfig, poolConfig.getMinerFees());
       __reset(poolConfig, minerFee);
     }
   }
 
   public void __reset(WhirlpoolServerConfig.PoolConfig poolConfig, PoolMinerFee minerFee) {
     String poolId = poolConfig.getId();
-    long denomination = poolConfig.getDenomination();
-    long feeValue = poolConfig.getFeeValue();
-    Map<Long, Long> feeAccept = poolConfig.getFeeAccept();
-    int minMustMix = poolConfig.getMustMixMin();
-    int minLiquidity = poolConfig.getLiquidityMin();
-    int anonymitySet = poolConfig.getAnonymitySet();
-    int tx0MaxOutputs = poolConfig.getTx0MaxOutputs();
 
     Assert.notNull(poolId, "Pool configuration: poolId must not be NULL");
     Assert.isTrue(!pools.containsKey(poolId), "Pool configuration: poolId must not be duplicate");
-    PoolFee poolFee = new PoolFee(feeValue, feeAccept);
+    PoolFee poolFee = new PoolFee(poolConfig.getFeeValue(), poolConfig.getFeeAccept());
     Pool pool =
         new Pool(
             poolId,
-            denomination,
+            poolConfig.getDenomination(),
             poolFee,
-            minMustMix,
-            minLiquidity,
-            anonymitySet,
-            tx0MaxOutputs,
+            poolConfig.getMustMixMin(),
+            poolConfig.getLiquidityMin(),
+            poolConfig.getSurge(),
+            poolConfig.getMinLiquidityPoolForSurge(),
+            poolConfig.getAnonymitySet(),
+            poolConfig.getTx0MaxOutputs(),
             minerFee);
     pools.put(poolId, pool);
     metricService.manage(pool);
@@ -243,9 +236,10 @@ public class PoolService {
           "["
               + pool.getPoolId()
               + "] "
-              + registeredInput.getUsername()
               + " queueing "
-              + (registeredInput.isLiquidity() ? "liquidity" : "mustMix"));
+              + (registeredInput.isLiquidity() ? "liquidity" : "mustMix")
+              + ", username="
+              + registeredInput.getUsername());
     }
 
     // queue input

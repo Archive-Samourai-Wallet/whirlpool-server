@@ -38,7 +38,8 @@ public class RevealOutputController extends AbstractWebSocketController {
 
     String username = principal.getName();
     if (log.isDebugEnabled()) {
-      log.debug("(<) [" + payload.mixId + "] " + username + " " + headers.getDestination());
+      log.debug(
+          "(<) [" + payload.mixId + "] " + headers.getDestination() + ", username=" + username);
     }
 
     // register output

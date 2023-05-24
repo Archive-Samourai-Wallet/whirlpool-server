@@ -28,7 +28,6 @@
                 <th scope="col">Duration</th>
                 <th scope="col">Volume</th>
                 <th scope="col">Txid</th>
-                <th scope="col">Raw</th>
             </tr>
             </thead>
             <tbody>
@@ -36,7 +35,10 @@
                 <td class="updated"><span th:text="${#dates.format(mix.updated, 'dd-MMM-yyyy HH:mm:ss')}"/></td>
                 <td class="poolId"><span th:text="${mix.poolId}"/></td>
                 <td class="mixId"><small th:text="${mix.mixId}"/></td>
-                <td class="anonymitySet"><span th:text="${mix.anonymitySet}" title="mustMix + liquidities"/> (<span th:text="${mix.nbMustMix}" title="mustMix"/> + <span th:text="${mix.nbLiquidities}" title="liquidities"/>)</td>
+                <td class="anonymitySet">
+                    <span th:if="${mix.anonymitySet<=5}" th:text="${mix.anonymitySet}" title="mustMix + liquidities"/>
+                    <strong th:if="${mix.anonymitySet>5}" th:text="${mix.anonymitySet}" title="mustMix + liquidities"/>
+                     (<span th:text="${mix.nbMustMix}" title="mustMix"/> + <span th:text="${mix.nbLiquidities}" title="liquidities"/>)</td>
                 <td class="status">
                     <span th:text="${mix.mixStatus}"/> <span th:text="${mix.failReason != null} ? ${'(' + mix.failReason + ')'} : ''"/>
                     <div th:if="${mix.failInfo != null}" title="Mix failed" style="overflow:auto" class="">
@@ -54,10 +56,6 @@
                 <td class="txid">
                     <a th:if="${mix.mixLog != null && mix.mixLog.txid != null}" th:href="${urlExplorer + mix.mixLog.txid}" target="_blank"><small th:text="${mix.mixLog.txid}"/></a>
                     <span th:if="${mix.mixLog == null || mix.mixLog.txid == null}">...</span>
-                </td>
-                <td class="rawTx">
-                    <a th:if="${mix.mixLog != null && mix.mixLog.rawTx != null}" href="#" data-toggle="popover" title="Raw" th:data-content="${mix.mixLog.rawTx}"><span data-feather="code" /></a>
-                    <span th:if="${mix.mixLog == null || mix.mixLog.rawTx == null}">...</span>
                 </td>
             </tr>
             </tbody>

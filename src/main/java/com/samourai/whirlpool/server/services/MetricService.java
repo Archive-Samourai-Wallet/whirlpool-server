@@ -8,6 +8,8 @@ import com.samourai.whirlpool.server.persistence.to.MixTO;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Tag;
 import java.lang.invoke.MethodHandles;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collection;
 import org.apache.commons.lang3.BooleanUtils;
@@ -30,6 +32,16 @@ public class MetricService {
 
   private static final String GAUGE_MIX_START_TIME_SECONDS = "whirlpool_mix_start_time_seconds";
 
+  private static final String SUMMARY_MIX_SUCCESS_MINER_FEE_AMOUNT =
+      "whirlpool_mix_success_miner_fee_amount";
+  private static final String SUMMARY_MIX_SUCCESS_MINER_FEE_PRICE =
+      "whirlpool_mix_success_miner_fee_price";
+  private static final String SUMMARY_MIX_SUCCESS_ANONYMITY_SET =
+      "whirlpool_mix_success_anonymity_set";
+  private static final String TIMER_MIX_SUCCESS_DURATION = "whirlpool_mix_success_duration";
+  private static final String SUMMARY_MIX_SUCCESS_VOLUME =
+          "whirlpool_mix_success_volume";
+
   private static final String GAUGE_POOL_QUEUE_MUSTMIX = "whirlpool_pool_queue_mustmix";
   private static final String GAUGE_POOL_QUEUE_LIQUIDITY = "whirlpool_pool_queue_liquidity";
 
@@ -42,6 +54,17 @@ public class MetricService {
     if (MixStatus.SUCCESS.equals(mix.getMixStatus())) {
       // mix success
       Metrics.counter(COUNTER_MIX_SUCCESS_TOTAL, "poolId", mix.getPoolId()).increment();
+
+      Metrics.summary(SUMMARY_MIX_SUCCESS_MINER_FEE_AMOUNT, "poolId", mix.getPoolId())
+          .record(mix.getFeesAmount());
+      Metrics.summary(SUMMARY_MIX_SUCCESS_MINER_FEE_PRICE, "poolId", mix.getPoolId())
+          .record(mix.getFeesPrice());
+      Metrics.summary(SUMMARY_MIX_SUCCESS_ANONYMITY_SET, "poolId", mix.getPoolId())
+          .record(mix.getAnonymitySet());
+      Metrics.timer(TIMER_MIX_SUCCESS_DURATION, "poolId", mix.getPoolId())
+          .record(Duration.of(mix.getMixDuration(), ChronoUnit.SECONDS));
+      Metrics.summary(SUMMARY_MIX_SUCCESS_VOLUME, "poolId", mix.getPoolId())
+              .record(mix.getAmountOut());
     } else {
       // mix fail
       Metrics.counter(COUNTER_MIX_FAIL_TOTAL, "poolId", mix.getPoolId()).increment();

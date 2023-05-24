@@ -448,6 +448,8 @@ public class WhirlpoolServerConfig extends ServerConfig {
     private PoolMinerFeeConfig minerFees;
     private int mustMixMin;
     private int liquidityMin;
+    private int surge;
+    private int minLiquidityPoolForSurge;
     private int anonymitySet;
     private int tx0MaxOutputs;
 
@@ -507,6 +509,22 @@ public class WhirlpoolServerConfig extends ServerConfig {
       this.liquidityMin = liquidityMin;
     }
 
+    public int getSurge() {
+      return surge;
+    }
+
+    public void setSurge(int surge) {
+      this.surge = surge;
+    }
+
+    public int getMinLiquidityPoolForSurge() {
+      return minLiquidityPoolForSurge;
+    }
+
+    public void setMinLiquidityPoolForSurge(int minLiquidityPoolForSurge) {
+      this.minLiquidityPoolForSurge = minLiquidityPoolForSurge;
+    }
+
     public int getAnonymitySet() {
       return anonymitySet;
     }
@@ -533,8 +551,17 @@ public class WhirlpoolServerConfig extends ServerConfig {
               + ", anonymitySet="
               + anonymitySet;
       poolInfo += ", minerFees=" + (minerFees != null ? minerFees.toString() : "null");
-      poolInfo += ", mustMixMin=" + getMustMixMin() + ", liquidityMin=" + getLiquidityMin() + "]";
-      poolInfo += ", tx0MaxOutputs=" + tx0MaxOutputs;
+      poolInfo +=
+          ", mustMixMin="
+              + getMustMixMin()
+              + ", liquidityMin="
+              + getLiquidityMin()
+              + ", surge="
+              + getSurge()
+              + ", minLiquidityPoolForSurge="
+              + getMinLiquidityPoolForSurge()
+              + ", tx0MaxOutputs="
+              + tx0MaxOutputs;
       return poolInfo;
     }
   }
@@ -656,7 +683,9 @@ public class WhirlpoolServerConfig extends ServerConfig {
     private long minerFeeMin; // in satoshis
     private long minerFeeCap; // in satoshis
     private long minerFeeMax; // in satoshis
-    private long minRelayFee; // in satoshis
+    private long minRelaySatPerB;
+    private long weightTx; // in satoshis
+    private long weightPerSurge; // in satoshis
 
     public void validate() throws Exception {
       if (minerFeeMin <= 0) {
@@ -668,8 +697,14 @@ public class WhirlpoolServerConfig extends ServerConfig {
       if (minerFeeMax <= 0) {
         throw new Exception("Invalid minerFeeMax");
       }
-      if (minRelayFee <= 0) {
-        throw new Exception("Invalid minRelayFee");
+      if (minRelaySatPerB <= 0) {
+        throw new Exception("Invalid minRelaySatPerB");
+      }
+      if (weightTx <= 0) {
+        throw new Exception("Invalid weightTx");
+      }
+      if (weightPerSurge <= 0) {
+        throw new Exception("Invalid weightPerSurge");
       }
     }
 
@@ -697,12 +732,28 @@ public class WhirlpoolServerConfig extends ServerConfig {
       this.minerFeeMax = minerFeeMax;
     }
 
-    public long getMinRelayFee() {
-      return minRelayFee;
+    public long getMinRelaySatPerB() {
+      return minRelaySatPerB;
     }
 
-    public void setMinRelayFee(long minRelayFee) {
-      this.minRelayFee = minRelayFee;
+    public void setMinRelaySatPerB(long minRelaySatPerB) {
+      this.minRelaySatPerB = minRelaySatPerB;
+    }
+
+    public long getWeightTx() {
+      return weightTx;
+    }
+
+    public void setWeightTx(long weightTx) {
+      this.weightTx = weightTx;
+    }
+
+    public long getWeightPerSurge() {
+      return weightPerSurge;
+    }
+
+    public void setWeightPerSurge(long weightPerSurge) {
+      this.weightPerSurge = weightPerSurge;
     }
 
     @Override
@@ -713,8 +764,12 @@ public class WhirlpoolServerConfig extends ServerConfig {
           + minerFeeCap
           + ", max="
           + minerFeeMax
-          + "], minRelayFee="
-          + minRelayFee;
+          + "], minRelaySatPerB="
+          + minRelaySatPerB
+          + ", weightTx="
+          + weightTx
+          + ", weightPerSurge="
+          + weightPerSurge;
     }
   }
 
@@ -792,12 +847,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
       // check expiration
       if (expiration != null) {
         if (tx0Time > expiration) {
-          log.warn("SCode expired: expiration=" + expiration + ", tx0Time=" + tx0Time);
           return false;
-        } else {
-          if (log.isDebugEnabled()) {
-            log.debug("SCode still valid: expiration=" + expiration + ", tx0Time=" + tx0Time);
-          }
         }
       }
       return true;
