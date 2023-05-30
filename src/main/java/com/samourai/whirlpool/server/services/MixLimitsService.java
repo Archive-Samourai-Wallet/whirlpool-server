@@ -96,9 +96,11 @@ public class MixLimitsService {
 
               default:
                 // no timer
-                if (log.isTraceEnabled()) {
-                  log.trace(
-                      "limitsWatcher.computeTimeToWait => no timer: mixStatus="
+                if (log.isDebugEnabled()) {
+                  log.debug(
+                      "["
+                          + mix.getLogId()
+                          + "] limitsWatcher.computeTimeToWait => no timer: mixStatus="
                           + mix.getMixStatus());
                 }
                 break;
@@ -108,8 +110,9 @@ public class MixLimitsService {
 
           @Override
           public void onTimeout(TimeoutWatcher timeoutWatcher) {
-            if (log.isTraceEnabled()) {
-              log.trace("limitsWatcher.onTimeout: " + mix.getMixId() + " " + mix.getMixStatus());
+            if (log.isDebugEnabled()) {
+              log.debug(
+                  "[" + mix.getLogId() + "] limitsWatcher.onTimeout: " + " " + mix.getMixStatus());
             }
             switch (mix.getMixStatus()) {
               case CONFIRM_INPUT:
@@ -130,7 +133,11 @@ public class MixLimitsService {
 
               default:
                 if (log.isDebugEnabled()) {
-                  log.debug("limitsWatcher.onTimeout => ignored: mixStatus=" + mix.getMixStatus());
+                  log.debug(
+                      "["
+                          + mix.getLogId()
+                          + "] limitsWatcher.onTimeout => ignored: mixStatus="
+                          + mix.getMixStatus());
                 }
             }
           }

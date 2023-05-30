@@ -284,6 +284,41 @@ public class Mix {
     return pool.getPoolId() + "/" + mixId;
   }
 
+  public String getLogStatus() {
+    int liquiditiesQueued = pool.getLiquidityQueue().getSize();
+    int mustMixQueued = pool.getMustMixQueue().getSize();
+    return "anonymitySet "
+        + getNbInputs()
+        + "/"
+        + getAnonymitySetWithSurge()
+        + ": "
+        + getNbInputsMustMix()
+        + "/"
+        + getPool().getMinMustMix()
+        + " mustMix, "
+        + getNbInputsLiquidities()
+        + "/"
+        + getPool().getMinLiquidity()
+        + " liquidity, "
+        + getNbInputsSurge()
+        + "/"
+        + getSurge()
+        + " surge, "
+        + computeMinerFeeAccumulated()
+        + "/"
+        + getPool().getMinerFeeMix()
+        + "sat"
+        + ", "
+        + getNbConfirmingInputs()
+        + " confirming, mixStatus="
+        + getMixStatus()
+        + " (pool: "
+        + liquiditiesQueued
+        + " liquidities + "
+        + mustMixQueued
+        + " mustMixs)";
+  }
+
   public AsymmetricCipherKeyPair getKeyPair() {
     return keyPair;
   }

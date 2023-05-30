@@ -51,6 +51,7 @@ public class StatusWebController {
               Mix mix = pool.getCurrentMix();
               Map<String, Object> poolAttributes = new HashMap<>();
               poolAttributes.put("poolId", pool.getPoolId());
+              poolAttributes.put("mixId", mix.getMixId());
               poolAttributes.put("denomination", pool.getDenomination());
               poolAttributes.put("feeValue", pool.getPoolFee().getFeeValue());
               poolAttributes.put("feeAccept", pool.getPoolFee().getFeeAccept());

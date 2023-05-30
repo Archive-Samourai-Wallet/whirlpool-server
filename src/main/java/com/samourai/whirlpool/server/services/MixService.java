@@ -227,7 +227,7 @@ public class MixService {
     return signedBordereau;
   }
 
-  public void onTimeoutConfirmInput(Mix mix) {
+  public synchronized void onTimeoutConfirmInput(Mix mix) {
     if (MixStatus.CONFIRM_INPUT.equals(mix.getMixStatus()) && isConfirmInputReady(mix)) {
       // all inputs confirmed
       if (mix.getSurge() > 0 && !mix.isFullWithSurge() && !mix.isConfirmingSurge()) {
@@ -243,7 +243,7 @@ public class MixService {
     inviteToMix(mix);
   }
 
-  private int inviteToMix(Mix mix) {
+  private synchronized int inviteToMix(Mix mix) {
     int liquiditiesInvited = 0, mustMixsInvited = 0;
 
     // invite liquidities first (to allow concurrent liquidity remixing)
@@ -414,41 +414,7 @@ public class MixService {
   }
 
   private void logMixStatus(Mix mix) {
-    int liquiditiesQueued = mix.getPool().getLiquidityQueue().getSize();
-    int mustMixQueued = mix.getPool().getMustMixQueue().getSize();
-    log.info(
-        "["
-            + mix.getLogId()
-            + "] anonymitySet "
-            + mix.getNbInputs()
-            + "/"
-            + mix.getAnonymitySetWithSurge()
-            + ": "
-            + mix.getNbInputsMustMix()
-            + "/"
-            + mix.getPool().getMinMustMix()
-            + " mustMix, "
-            + mix.getNbInputsLiquidities()
-            + "/"
-            + mix.getPool().getMinLiquidity()
-            + " liquidity, "
-            + mix.getNbInputsSurge()
-            + "/"
-            + mix.getSurge()
-            + " surge, "
-            + mix.computeMinerFeeAccumulated()
-            + "/"
-            + mix.getPool().getMinerFeeMix()
-            + "sat"
-            + ", "
-            + mix.getNbConfirmingInputs()
-            + " confirming, mixStatus="
-            + mix.getMixStatus()
-            + " (pool: "
-            + liquiditiesQueued
-            + " liquidities + "
-            + mustMixQueued
-            + " mustMixs)");
+    log.info("[" + mix.getLogId() + "] " + mix.getLogStatus());
   }
 
   protected synchronized boolean isRegisterOutputReady(Mix mix) {

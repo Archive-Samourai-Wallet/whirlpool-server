@@ -38,8 +38,7 @@ public class MetricService {
   private static final String SUMMARY_MIX_SUCCESS_ANONYMITY_SET =
       "whirlpool_mix_success_anonymity_set";
   private static final String TIMER_MIX_SUCCESS_DURATION = "whirlpool_mix_success_duration";
-  private static final String SUMMARY_MIX_SUCCESS_VOLUME =
-          "whirlpool_mix_success_volume";
+  private static final String SUMMARY_MIX_SUCCESS_VOLUME = "whirlpool_mix_success_volume";
 
   private static final String GAUGE_POOL_QUEUE_MUSTMIX = "whirlpool_pool_queue_mustmix";
   private static final String GAUGE_POOL_QUEUE_LIQUIDITY = "whirlpool_pool_queue_liquidity";
@@ -63,7 +62,7 @@ public class MetricService {
       Metrics.timer(TIMER_MIX_SUCCESS_DURATION, "poolId", mix.getPoolId())
           .record(Duration.of(mix.getMixDuration(), ChronoUnit.SECONDS));
       Metrics.summary(SUMMARY_MIX_SUCCESS_VOLUME, "poolId", mix.getPoolId())
-              .record(mix.getAmountOut());
+          .record(mix.getAmountOut());
     } else {
       // mix fail
       Metrics.counter(COUNTER_MIX_FAIL_TOTAL, "poolId", mix.getPoolId()).increment();

@@ -52,6 +52,13 @@ public class HealthService {
   @Scheduled(fixedDelay = 120000)
   public void scheduleConnectCheck() {
     try {
+      // thread check
+      int nbThreads = ServerUtils.getInstance().getThreads().size();
+      if (nbThreads > 10) {
+        log.warn("WARNING: TOO MANY THREADS! " + nbThreads + " threads running!");
+        logThreads();
+      }
+
       WhirlpoolClientConfig config = computeWhirlpoolClientConfig();
       WhirlpoolClient whirlpoolClient = new WhirlpoolClientImpl(config);
       MixParams mixParams = computeMixParams();
