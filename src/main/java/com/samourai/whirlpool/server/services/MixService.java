@@ -861,7 +861,7 @@ public class MixService {
     return confirmedInputOpt;
   }
 
-  protected void onClientDisconnect(String username) {
+  protected synchronized void onClientDisconnect(String username) {
     for (Mix mix : getCurrentMixs()) {
       if (!mix.isDone()) {
         String lastReceiveAddressRejected = mix.getLastReceiveAddressesRejected();

@@ -54,7 +54,7 @@ public class HealthService {
     try {
       // thread check
       int nbThreads = ServerUtils.getInstance().getThreads().size();
-      if (nbThreads > 10) {
+      if (nbThreads > 150) {
         log.warn("WARNING: TOO MANY THREADS! " + nbThreads + " threads running!");
         logThreads();
       }
