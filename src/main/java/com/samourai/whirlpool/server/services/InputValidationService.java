@@ -11,14 +11,15 @@ import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import com.samourai.whirlpool.server.exceptions.ServerErrorCode;
 import com.samourai.whirlpool.server.services.fee.WhirlpoolFeeData;
-import java.lang.invoke.MethodHandles;
-import java.util.List;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+
+import java.lang.invoke.MethodHandles;
+import java.util.Collection;
+import java.util.stream.Collectors;
 
 @Service
 public class InputValidationService {
@@ -124,7 +125,7 @@ public class InputValidationService {
     if (scodeConfig != null && scodeConfig.isCascading()) {
       // check tx0 cascading
       try {
-        validateTx0Cascading(tx, txTime);
+        validateTx0Cascading(tx);
       } catch (Exception e) {
         log.error("Input rejected (invalid cascading for tx0=" + tx.getHashAsString() + ")", e);
         throw new IllegalInputException(
@@ -135,15 +136,15 @@ public class InputValidationService {
     return false; // mustMix
   }
 
-  protected void validateTx0Cascading(Transaction tx, long txTime) throws Exception {
-    // cascading tx0 should only have 1 input (previous tx0 change)
-    List<TransactionInput> txInputs = tx.getInputs();
-    if (txInputs.size() != 1) {
-      throw new Exception("Invalid inputs.size for cascading tx0=" + tx.getHashAsString() + ")");
+  protected void validateTx0Cascading(Transaction tx) throws Exception {
+    // cascading tx0 should only have 1 txid predecessor for previous tx0 change(s)
+    Collection<String> prevTxIds = tx.getInputs().stream().map(txInput -> txInput.getOutpoint().getHash().toString()).distinct().collect(Collectors.toList());
+    if (prevTxIds.size() != 1) {
+      throw new Exception("Invalid prevTxIds.size for cascading tx0=" + tx.getHashAsString() + "): "+prevTxIds);
     }
 
     // check if parent tx is valid tx0
-    String parentTxId = tx.getInput(0).getOutpoint().getHash().toString();
+    String parentTxId = prevTxIds.iterator().next();
 
     // get rpc tx of parent tx
     RpcTransaction parentRpcTx = blockchainDataService.getRpcTransaction(parentTxId).get();
