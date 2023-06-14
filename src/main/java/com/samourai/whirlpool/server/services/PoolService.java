@@ -182,7 +182,7 @@ public class PoolService {
     return poolStatusNotification;
   }
 
-  public synchronized RegisteredInput registerInput(
+  public RegisteredInput registerInput(
       String poolId,
       String username,
       boolean liquidity,

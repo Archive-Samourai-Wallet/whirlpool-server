@@ -1,6 +1,7 @@
 package com.samourai.whirlpool.server.utils;
 
 import com.samourai.wallet.bip47.rpc.BIP47Wallet;
+import com.samourai.wallet.bipFormat.BIP_FORMAT;
 import com.samourai.wallet.bipWallet.BipWallet;
 import com.samourai.wallet.client.indexHandler.MemoryIndexHandlerSupplier;
 import com.samourai.wallet.hd.BIP_WALLET;
@@ -24,6 +25,6 @@ public class BIP47WalletAndHDWallet {
   }
 
   public BipWallet getBip84Wallet(BIP_WALLET bip) {
-    return new BipWallet(hdWallet, new MemoryIndexHandlerSupplier(), bip);
+    return new BipWallet(BIP_FORMAT.PROVIDER, hdWallet, new MemoryIndexHandlerSupplier(), bip);
   }
 }

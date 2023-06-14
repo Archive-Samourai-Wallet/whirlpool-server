@@ -71,6 +71,13 @@ public class HealthService {
       return; // TODO temporarily disabled to adapt for DEX
     }
     try {
+      // thread check
+      int nbThreads = ServerUtils.getInstance().getThreads().size();
+      if (nbThreads > 150) {
+        log.warn("WARNING: TOO MANY THREADS! " + nbThreads + " threads running!");
+        logThreads();
+      }
+
       WhirlpoolClientConfig config = computeWhirlpoolClientConfig();
       WhirlpoolClient whirlpoolClient = new WhirlpoolClientImpl(config);
       Pool pool = poolService.getPools().iterator().next();
