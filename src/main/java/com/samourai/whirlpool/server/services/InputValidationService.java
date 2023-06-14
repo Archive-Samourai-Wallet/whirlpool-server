@@ -11,15 +11,14 @@ import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import com.samourai.whirlpool.server.exceptions.ServerErrorCode;
 import com.samourai.whirlpool.server.services.fee.WhirlpoolFeeData;
+import java.lang.invoke.MethodHandles;
+import java.util.Collection;
+import java.util.stream.Collectors;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-
-import java.lang.invoke.MethodHandles;
-import java.util.Collection;
-import java.util.stream.Collectors;
 
 @Service
 public class InputValidationService {
@@ -138,9 +137,14 @@ public class InputValidationService {
 
   protected void validateTx0Cascading(Transaction tx) throws Exception {
     // cascading tx0 should only have 1 txid predecessor for previous tx0 change(s)
-    Collection<String> prevTxIds = tx.getInputs().stream().map(txInput -> txInput.getOutpoint().getHash().toString()).distinct().collect(Collectors.toList());
+    Collection<String> prevTxIds =
+        tx.getInputs().stream()
+            .map(txInput -> txInput.getOutpoint().getHash().toString())
+            .distinct()
+            .collect(Collectors.toList());
     if (prevTxIds.size() != 1) {
-      throw new Exception("Invalid prevTxIds.size for cascading tx0=" + tx.getHashAsString() + "): "+prevTxIds);
+      throw new Exception(
+          "Invalid prevTxIds.size for cascading tx0=" + tx.getHashAsString() + "): " + prevTxIds);
     }
 
     // check if parent tx is valid tx0

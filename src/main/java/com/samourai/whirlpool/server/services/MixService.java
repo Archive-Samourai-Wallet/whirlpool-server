@@ -227,7 +227,7 @@ public class MixService {
     return signedBordereau;
   }
 
-  public synchronized void onTimeoutConfirmInput(Mix mix) {
+  public void onTimeoutConfirmInput(Mix mix) {
     if (MixStatus.CONFIRM_INPUT.equals(mix.getMixStatus()) && isConfirmInputReady(mix)) {
       // all inputs confirmed
       if (mix.getSurge() > 0 && !mix.isFullWithSurge() && !mix.isConfirmingSurge()) {
@@ -283,7 +283,7 @@ public class MixService {
     return inputsInvited;
   }
 
-  private synchronized int inviteToMix(Mix mix, boolean liquidity, int maxInvites) {
+  private int inviteToMix(Mix mix, boolean liquidity, int maxInvites) {
     Predicate<Map.Entry<String, RegisteredInput>> filterInputMixable =
         computeFilterInputMixable(mix);
     InputPool queue =
@@ -360,8 +360,7 @@ public class MixService {
     return true;
   }
 
-  public synchronized void registerOutputFailure(String inputsHash, String receiveAddress)
-      throws Exception {
+  public void registerOutputFailure(String inputsHash, String receiveAddress) throws Exception {
     Mix mix = getMixByInputsHash(inputsHash, MixStatus.REGISTER_OUTPUT);
     mix.setLastReceiveAddressesRejected(receiveAddress);
     log.info("[" + mix.getLogId() + "] registered output failure: " + receiveAddress);
@@ -417,7 +416,7 @@ public class MixService {
     log.info("[" + mix.getLogId() + "] " + mix.getLogStatus());
   }
 
-  protected synchronized boolean isRegisterOutputReady(Mix mix) {
+  protected boolean isRegisterOutputReady(Mix mix) {
     if (!isConfirmInputReady(mix)) {
       return false;
     }
@@ -483,7 +482,7 @@ public class MixService {
     }
   }
 
-  protected synchronized boolean isRevealOutputReady(Mix mix) {
+  protected boolean isRevealOutputReady(Mix mix) {
     // don't wait for the last one who didn't sign
     return (mix.getNbRevealedOutputs() == mix.getNbInputs() - 1);
   }
@@ -540,7 +539,7 @@ public class MixService {
     }
   }
 
-  protected synchronized boolean isRegisterSignaturesReady(Mix mix) {
+  protected boolean isRegisterSignaturesReady(Mix mix) {
     if (!isRegisterOutputReady(mix)) {
       return false;
     }
@@ -861,7 +860,7 @@ public class MixService {
     return confirmedInputOpt;
   }
 
-  protected synchronized void onClientDisconnect(String username) {
+  protected void onClientDisconnect(String username) {
     for (Mix mix : getCurrentMixs()) {
       if (!mix.isDone()) {
         String lastReceiveAddressRejected = mix.getLastReceiveAddressesRejected();

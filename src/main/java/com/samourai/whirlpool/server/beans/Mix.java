@@ -157,8 +157,7 @@ public class Mix {
     return pool.getAnonymitySet() - liquiditySlots - getNbInputsMustMix();
   }
 
-  public synchronized void hasAvailableSlotFor(RegisteredInput registeredInput)
-      throws QueueInputException {
+  public void hasAvailableSlotFor(RegisteredInput registeredInput) throws QueueInputException {
     if (isFullWithSurge()) {
       throw new QueueInputException("Current mix is full", registeredInput, pool.getPoolId());
     }
@@ -243,7 +242,7 @@ public class Mix {
     return surges;
   }
 
-  public synchronized void setSurge() {
+  public void setSurge() {
     // update surge limit for mix
     int newSurge = computeSurge();
     if (surge != newSurge) {
@@ -360,8 +359,7 @@ public class Mix {
     return confirmingInputs.hasInput(txOutPoint);
   }
 
-  public synchronized void registerConfirmingInput(RegisteredInput registeredInput)
-      throws NotifiableException {
+  public void registerConfirmingInput(RegisteredInput registeredInput) throws NotifiableException {
     confirmingInputs.register(registeredInput);
     if (this.created == null) {
       timeStatus.put(MixStatus.CONFIRM_INPUT, new Timestamp(System.currentTimeMillis()));
@@ -493,7 +491,7 @@ public class Mix {
     return WhirlpoolProtocol.computeInputsHash(inputs);
   }
 
-  public synchronized void registerOutput(String receiveAddress, byte[] bordereau) {
+  public void registerOutput(String receiveAddress, byte[] bordereau) {
     receiveAddresses.add(receiveAddress);
     bordereaux.add(bordereau);
   }

@@ -21,7 +21,7 @@ public class InputPool {
     this.inputsById = new ConcurrentHashMap<>();
   }
 
-  public synchronized void register(RegisteredInput registeredInput) throws NotifiableException {
+  public void register(RegisteredInput registeredInput) throws NotifiableException {
     if (!hasInput(registeredInput.getOutPoint())) {
       String username = registeredInput.getUsername();
       if (!findByUsername(username).isPresent()) {
