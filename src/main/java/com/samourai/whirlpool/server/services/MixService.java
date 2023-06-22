@@ -340,13 +340,8 @@ public class MixService {
     log.info(
         "["
             + mix.getLogId()
-            + "] "
-            + " inviting "
-            + (registeredInput.isLiquidity() ? "liquidity" : "mustMix")
-            + " to mix: "
-            + registeredInput.getOutPoint()
-            + ", username="
-            + registeredInput.getUsername());
+            + "] inviteToMix: "
+            + registeredInput.toString());
 
     // register confirming input
     mix.registerConfirmingInput(registeredInput);

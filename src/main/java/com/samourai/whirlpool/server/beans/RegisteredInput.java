@@ -97,9 +97,7 @@ public class RegisteredInput {
                 + ", tor="
                 + BooleanUtils.toStringTrueFalse(tor)
                 + ", sorobanPaymentCode="
-                + Utils.obfuscateString(sorobanPaymentCode.toString(), 3)
-            != null
-        ? sorobanPaymentCode.toString()
-        : "null" + ",lastUserHash=" + (lastUserHash != null ? lastUserHash : "null");
+                + (sorobanPaymentCode!= null? Utils.obfuscateString(sorobanPaymentCode.toString(), 3): "null")
+            + ",lastUserHash=" + (lastUserHash != null ? lastUserHash : "null");
   }
 }

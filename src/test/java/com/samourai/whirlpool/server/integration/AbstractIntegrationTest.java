@@ -166,15 +166,14 @@ public abstract class AbstractIntegrationTest {
     mixService.__reset();
   }
 
-  protected void configurePool(PoolMinerFee minerFee, WhirlpoolServerConfig.PoolConfig poolConfig) {
-    poolService.__reset(poolConfig, minerFee);
+  protected Pool configurePool(PoolMinerFee minerFee, WhirlpoolServerConfig.PoolConfig poolConfig) {
+    Pool pool = poolService.__reset(poolConfig, minerFee);
     mixService.__reset();
+    return pool;
   }
 
-  protected Mix __nextMix(PoolMinerFee minerFee, WhirlpoolServerConfig.PoolConfig poolConfig)
-      throws IllegalInputException {
-    configurePool(minerFee, poolConfig);
-    Pool pool = poolService.getPool(poolConfig.getId());
+  protected Mix __nextMix(PoolMinerFee minerFee, WhirlpoolServerConfig.PoolConfig poolConfig) {
+    Pool pool = configurePool(minerFee, poolConfig);
     Mix mix = mixService.__nextMix(pool);
     return mix;
   }
@@ -228,11 +227,12 @@ public abstract class AbstractIntegrationTest {
     return __nextMix(minerFee, poolConfig);
   }
 
-  protected Mix __nextMix(int mustMixMin, int liquidityMin, int anonymitySet, Pool copyPool)
-      throws IllegalInputException {
+  protected Mix __nextMix(int mustMixMin, int liquidityMin, int anonymitySet, String poolId) throws IllegalInputException {
+    Pool copyPool = poolService.getPool(poolId);
+
     // create new pool
     WhirlpoolServerConfig.PoolConfig poolConfig = new WhirlpoolServerConfig.PoolConfig();
-    poolConfig.setId(Utils.generateUniqueString());
+    poolConfig.setId(copyPool.getPoolId());
     poolConfig.setDenomination(copyPool.getDenomination());
     poolConfig.setFeeValue(copyPool.getPoolFee().getFeeValue());
     poolConfig.setFeeAccept(copyPool.getPoolFee().getFeeAccept());
@@ -242,6 +242,11 @@ public abstract class AbstractIntegrationTest {
 
     // run new mix for the pool
     return __nextMix(copyPool.getMinerFee(), poolConfig);
+  }
+
+  protected String __getCurrentPoolId() {
+    Pool pool = poolService.getPools().iterator().next();
+    return pool.getPoolId();
   }
 
   protected Mix __getCurrentMix() {

@@ -110,7 +110,7 @@ public class MixLimitsService {
 
           @Override
           public void onTimeout(TimeoutWatcher timeoutWatcher) {
-            if (log.isDebugEnabled()) {
+            if (log.isTraceEnabled()) {
               log.debug(
                   "[" + mix.getLogId() + "] limitsWatcher.onTimeout: " + " " + mix.getMixStatus());
             }

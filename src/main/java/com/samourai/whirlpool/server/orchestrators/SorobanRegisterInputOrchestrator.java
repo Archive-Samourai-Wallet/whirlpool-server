@@ -121,7 +121,7 @@ public class SorobanRegisterInputOrchestrator extends AbstractOrchestrator {
     if (registeredInput == null) {
       // fresh input
       PaymentCode paymentCode = registerInputSoroban.getSorobanPaymentCode();
-      String username = paymentCode.toString();
+      String username = paymentCode.toString().substring(0, 15);
       RegisterInputSorobanMessage risb = registerInputSoroban.getSorobanMessage();
       registeredInput =
           registerInputService.registerInput(
@@ -131,18 +131,17 @@ public class SorobanRegisterInputOrchestrator extends AbstractOrchestrator {
               risb.utxoHash,
               risb.utxoIndex,
               risb.liquidity,
-              false, // TODO
+              false, // we never know if user is using Tor with Soroban
               risb.blockHeight,
               paymentCode,
               null);
       registeredInputsByKey.put(inputKey, registeredInput);
       return registeredInput;
     } else {
-      // already registered
+      // already registered => update last seen
       if (log.isDebugEnabled()) {
-        log.debug("Skipping Soroban input: " + inputKey + " (already registered)");
+        log.debug("+sorobanLastSeen: " + registeredInput.toString());
       }
-      // update last seen
       registeredInput.setSorobanLastSeen();
     }
     return null;

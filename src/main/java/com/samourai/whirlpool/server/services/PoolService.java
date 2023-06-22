@@ -79,11 +79,10 @@ public class PoolService {
     }
   }
 
-  public void __reset(WhirlpoolServerConfig.PoolConfig poolConfig, PoolMinerFee minerFee) {
+  public Pool __reset(WhirlpoolServerConfig.PoolConfig poolConfig, PoolMinerFee minerFee) {
     String poolId = poolConfig.getId();
 
     Assert.notNull(poolId, "Pool configuration: poolId must not be NULL");
-    Assert.isTrue(!pools.containsKey(poolId), "Pool configuration: poolId must not be duplicate");
     PoolFee poolFee = new PoolFee(poolConfig.getFeeValue(), poolConfig.getFeeAccept());
     Pool pool =
         new Pool(
@@ -99,6 +98,7 @@ public class PoolService {
             minerFee);
     pools.put(poolId, pool);
     metricService.manage(pool);
+    return pool;
   }
 
   public Collection<Pool> getPools() {
@@ -235,11 +235,7 @@ public class PoolService {
       log.debug(
           "["
               + pool.getPoolId()
-              + "] "
-              + " queueing "
-              + (registeredInput.isLiquidity() ? "liquidity" : "mustMix")
-              + ", username="
-              + registeredInput.getUsername());
+              + "] +queue: "+registeredInput.toString());
     }
 
     // queue input

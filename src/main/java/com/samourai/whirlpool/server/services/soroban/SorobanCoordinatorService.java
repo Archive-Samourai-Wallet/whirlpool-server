@@ -17,6 +17,7 @@ import com.samourai.whirlpool.server.services.rpc.RpcClientServiceServer;
 import com.samourai.whirlpool.server.utils.Utils;
 import io.reactivex.Completable;
 import java.lang.invoke.MethodHandles;
+import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,8 +53,12 @@ public class SorobanCoordinatorService {
     BIP47Wallet bip47Wallet =
         Utils.computeSigningBip47Wallet(whirlpoolServerConfig.getSigningWallet(), params);
     this.rpcWallet = new RpcWalletImpl(bip47Wallet);
+    ECKey authenticationKey =
+        Utils.computeSigningAddress(whirlpoolServerConfig.getSigningWallet(), params).getECKey();
     this.rpcClient =
-        rpcClientServiceServer.getRpcClient("coordinator").createRpcClientEncrypted(rpcWallet);
+        rpcClientServiceServer
+            .getRpcClient("coordinator", authenticationKey)
+            .createRpcClientEncrypted(rpcWallet);
 
     // start publishing pools
     poolInfoOrchestrator =
