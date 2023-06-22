@@ -28,8 +28,7 @@ public class MixCsv {
         "mixStatus",
         "failReason",
         "failInfo",
-        "txid",
-        "rawTx"
+        "txid"
       };
 
   @CsvBindByPosition(position = 0)
@@ -92,9 +91,6 @@ public class MixCsv {
   @CsvBindByPosition(position = 17)
   private String txid;
 
-  @CsvBindByPosition(position = 18)
-  private String rawTx;
-
   public MixCsv(MixTO to) {
     this.id = to.getId();
     this.created = to.getCreated();
@@ -118,7 +114,6 @@ public class MixCsv {
 
     if (to.getMixLog() != null) {
       this.txid = to.getMixLog().getTxid();
-      this.rawTx = to.getMixLog().getRawTx();
     }
   }
 
@@ -192,9 +187,5 @@ public class MixCsv {
 
   public String getTxid() {
     return txid;
-  }
-
-  public String getRawTx() {
-    return rawTx;
   }
 }

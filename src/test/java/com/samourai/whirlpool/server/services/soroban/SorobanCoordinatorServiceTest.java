@@ -1,5 +1,7 @@
 package com.samourai.whirlpool.server.services.soroban;
 
+import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
+
 import com.samourai.soroban.client.RpcWallet;
 import com.samourai.soroban.client.rpc.RpcClient;
 import com.samourai.wallet.segwit.SegwitAddress;
@@ -20,6 +22,8 @@ import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.integration.AbstractIntegrationTest;
 import com.samourai.whirlpool.server.orchestrators.SorobanPoolInfoOrchestrator;
 import com.samourai.whirlpool.server.orchestrators.SorobanRegisterInputOrchestrator;
+import java.lang.invoke.MethodHandles;
+import java.util.Collection;
 import org.bitcoinj.core.ECKey;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,11 +31,6 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
-
-import java.lang.invoke.MethodHandles;
-import java.util.Collection;
-
-import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public class SorobanCoordinatorServiceTest extends AbstractIntegrationTest {

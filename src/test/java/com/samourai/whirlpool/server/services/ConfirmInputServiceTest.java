@@ -309,8 +309,7 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
   @Test
   public void confirmInput_shouldQueueWhenMaxMustMixReached() throws Exception {
     Mix mix =
-        __nextMix(
-            1, 1, 2, __getCurrentPoolId()); // 2 users max - 1 liquidityMin = 1 mustMix max
+        __nextMix(1, 1, 2, __getCurrentPoolId()); // 2 users max - 1 liquidityMin = 1 mustMix max
     Pool pool = mix.getPool();
 
     // 1/2 mustMix
@@ -332,8 +331,7 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
   @Test
   public void confirmInput_shouldRequeueLateConfirmingInputs() throws Exception {
     Mix mix =
-        __nextMix(
-            1, 1, 2, __getCurrentPoolId()); // 2 users max - 1 liquidityMin = 1 mustMix max
+        __nextMix(1, 1, 2, __getCurrentPoolId()); // 2 users max - 1 liquidityMin = 1 mustMix max
     Pool pool = mix.getPool();
 
     // 1/1 mustMix

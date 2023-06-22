@@ -337,11 +337,7 @@ public class MixService {
   }
 
   private void inviteToMix(Mix mix, RegisteredInput registeredInput) throws Exception {
-    log.info(
-        "["
-            + mix.getLogId()
-            + "] inviteToMix: "
-            + registeredInput.toString());
+    log.info("[" + mix.getLogId() + "] inviteToMix: " + registeredInput.toString());
 
     // register confirming input
     mix.registerConfirmingInput(registeredInput);

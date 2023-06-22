@@ -87,17 +87,20 @@ public class RegisteredInput {
   @Override
   public String toString() {
     return "poolId="
-                + poolId
-                + ", outPoint="
-                + outPoint
-                + ", liquidity="
-                + liquidity
-                + ", username="
-                + username
-                + ", tor="
-                + BooleanUtils.toStringTrueFalse(tor)
-                + ", sorobanPaymentCode="
-                + (sorobanPaymentCode!= null? Utils.obfuscateString(sorobanPaymentCode.toString(), 3): "null")
-            + ",lastUserHash=" + (lastUserHash != null ? lastUserHash : "null");
+        + poolId
+        + ", outPoint="
+        + outPoint
+        + ", liquidity="
+        + liquidity
+        + ", username="
+        + username
+        + ", tor="
+        + BooleanUtils.toStringTrueFalse(tor)
+        + ", sorobanPaymentCode="
+        + (sorobanPaymentCode != null
+            ? Utils.obfuscateString(sorobanPaymentCode.toString(), 3)
+            : "null")
+        + ",lastUserHash="
+        + (lastUserHash != null ? lastUserHash : "null");
   }
 }

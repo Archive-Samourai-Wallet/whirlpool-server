@@ -1,7 +1,4 @@
-td.rawTx {
-    max-width: 300px;
-}
-td.mixId, td.txid, td.rawTx {
+td.mixId, td.txid {
     font-size: 0.8em;
 }
 .popover-body {

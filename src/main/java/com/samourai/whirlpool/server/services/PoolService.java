@@ -232,10 +232,7 @@ public class PoolService {
     }
 
     if (log.isDebugEnabled()) {
-      log.debug(
-          "["
-              + pool.getPoolId()
-              + "] +queue: "+registeredInput.toString());
+      log.debug("[" + pool.getPoolId() + "] +queue: " + registeredInput.toString());
     }
 
     // queue input

@@ -69,7 +69,6 @@ public class HistoryWebController {
         mixTO.getFailInfo();
         MixLogTO mixLogTO = mixTO.getMixLog();
         mixLogTO.getTxid();
-        mixLogTO.getRawTx();
       }
     }
     return "history";

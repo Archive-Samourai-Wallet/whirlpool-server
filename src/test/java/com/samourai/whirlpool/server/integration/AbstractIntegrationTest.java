@@ -227,7 +227,8 @@ public abstract class AbstractIntegrationTest {
     return __nextMix(minerFee, poolConfig);
   }
 
-  protected Mix __nextMix(int mustMixMin, int liquidityMin, int anonymitySet, String poolId) throws IllegalInputException {
+  protected Mix __nextMix(int mustMixMin, int liquidityMin, int anonymitySet, String poolId)
+      throws IllegalInputException {
     Pool copyPool = poolService.getPool(poolId);
 
     // create new pool
