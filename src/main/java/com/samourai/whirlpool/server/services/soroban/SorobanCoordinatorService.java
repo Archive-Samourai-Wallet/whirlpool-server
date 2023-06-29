@@ -2,20 +2,20 @@ package com.samourai.whirlpool.server.services.soroban;
 
 import com.samourai.soroban.client.RpcWallet;
 import com.samourai.soroban.client.RpcWalletImpl;
-import com.samourai.soroban.client.rpc.RpcClientEncrypted;
+import com.samourai.soroban.client.rpc.RpcSession;
 import com.samourai.wallet.bip47.rpc.BIP47Wallet;
-import com.samourai.wallet.bip47.rpc.PaymentCode;
+import com.samourai.wallet.crypto.CryptoUtil;
 import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
-import com.samourai.whirlpool.server.orchestrators.SorobanPoolInfoOrchestrator;
-import com.samourai.whirlpool.server.orchestrators.SorobanRegisterInputOrchestrator;
+import com.samourai.whirlpool.server.orchestrators.SorobanCoordinatorOrchestrator;
+import com.samourai.whirlpool.server.orchestrators.SorobanInputOrchestrator;
 import com.samourai.whirlpool.server.services.MinerFeeService;
 import com.samourai.whirlpool.server.services.PoolService;
 import com.samourai.whirlpool.server.services.RegisterInputService;
 import com.samourai.whirlpool.server.services.rpc.RpcClientServiceServer;
 import com.samourai.whirlpool.server.utils.Utils;
-import io.reactivex.Completable;
+import io.reactivex.Single;
 import java.lang.invoke.MethodHandles;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.NetworkParameters;
@@ -31,10 +31,10 @@ public class SorobanCoordinatorService {
   private SorobanCoordinatorApi sorobanCoordinatorApi;
   private WhirlpoolServerConfig whirlpoolServerConfig;
   private RpcWallet rpcWallet;
-  private RpcClientEncrypted rpcClient;
+  private RpcSession rpcSession;
 
-  private SorobanPoolInfoOrchestrator poolInfoOrchestrator;
-  private SorobanRegisterInputOrchestrator registerInputOrchestrator;
+  private SorobanCoordinatorOrchestrator coordinatorOrchestrator;
+  private SorobanInputOrchestrator inputOrchestrator;
 
   @Autowired
   public SorobanCoordinatorService(
@@ -52,44 +52,63 @@ public class SorobanCoordinatorService {
     NetworkParameters params = whirlpoolServerConfig.getNetworkParameters();
     BIP47Wallet bip47Wallet =
         Utils.computeSigningBip47Wallet(whirlpoolServerConfig.getSigningWallet(), params);
-    this.rpcWallet = new RpcWalletImpl(bip47Wallet);
+    CryptoUtil cryptoUtil = CryptoUtil.getInstanceJava();
+    this.rpcWallet = new RpcWalletImpl(bip47Wallet, cryptoUtil);
     ECKey authenticationKey =
         Utils.computeSigningAddress(whirlpoolServerConfig.getSigningWallet(), params).getECKey();
-    this.rpcClient =
-        rpcClientServiceServer
-            .getRpcClient("coordinator", authenticationKey)
-            .createRpcClientEncrypted(rpcWallet);
+    this.rpcSession = rpcClientServiceServer.getRpcSession("coordinator", authenticationKey);
 
     // start publishing pools
-    poolInfoOrchestrator =
-        new SorobanPoolInfoOrchestrator(
-            poolService, minerFeeService, sorobanCoordinatorApi, rpcClient);
-    poolInfoOrchestrator.start(true);
+    coordinatorOrchestrator =
+        new SorobanCoordinatorOrchestrator(
+            whirlpoolServerConfig,
+            poolService,
+            minerFeeService,
+            sorobanCoordinatorApi,
+            rpcSession,
+            rpcWallet);
+    coordinatorOrchestrator.start(true);
 
     // start watching for Soroban inputs
-    registerInputOrchestrator =
-        new SorobanRegisterInputOrchestrator(
-            poolService, sorobanCoordinatorApi, registerInputService, rpcClient);
-    registerInputOrchestrator.start(true);
+    inputOrchestrator =
+        new SorobanInputOrchestrator(
+            poolService, sorobanCoordinatorApi, registerInputService, rpcSession, rpcWallet);
+    inputOrchestrator.start(true);
   }
 
-  public Completable inviteToMix(RegisteredInput registeredInput, Mix mix) throws Exception {
-    String coordinatorIp = whirlpoolServerConfig.getExternalIp();
-    PaymentCode paymentCodeCoordinator = rpcWallet.getPaymentCode();
-    return sorobanCoordinatorApi.inviteToMix(
-        rpcClient, registeredInput, mix, coordinatorIp, paymentCodeCoordinator);
+  public Single<String> inviteToMix(RegisteredInput registeredInput, Mix mix) throws Exception {
+    return rpcSession
+        .withRpcClientEncrypted(
+            rpcWallet.getEncrypter(),
+            rce ->
+                // invite input
+                sorobanCoordinatorApi.inviteToMix(
+                    rce,
+                    registeredInput,
+                    mix,
+                    whirlpoolServerConfig.getExternalUrlClear(),
+                    whirlpoolServerConfig.getExternalUrlOnion(),
+                    rpcWallet))
+        // unregister input
+        .doAfterSuccess(
+            invitePayload ->
+                rpcSession.withRpcClient(
+                    rpcClient ->
+                        sorobanCoordinatorApi
+                            .unregisterInput(rpcClient, registeredInput)
+                            .subscribe()));
   }
 
   public void stop() {
-    registerInputOrchestrator.stop();
-    poolInfoOrchestrator.stop();
+    inputOrchestrator.stop();
+    coordinatorOrchestrator.stop();
   }
 
-  public SorobanPoolInfoOrchestrator _getPoolInfoOrchestrator() { // for tests
-    return poolInfoOrchestrator;
+  public SorobanCoordinatorOrchestrator _getCoordinatorOrchestrator() { // for tests
+    return coordinatorOrchestrator;
   }
 
-  public SorobanRegisterInputOrchestrator _getRegisterInputOrchestrator() { // for tests
-    return registerInputOrchestrator;
+  public SorobanInputOrchestrator _getInputOrchestrator() { // for tests
+    return inputOrchestrator;
   }
 }

@@ -48,7 +48,9 @@ public class WhirlpoolServerConfig extends ServerConfig {
   private PoolConfig[] pools;
   private long requestTimeout;
   private SecretWalletConfig signingWallet;
-  private String externalIp;
+  private String coordinatorId;
+  private String externalUrlClear;
+  private String externalUrlOnion;
 
   public SamouraiFeeConfig getSamouraiFees() {
     return samouraiFees;
@@ -220,12 +222,28 @@ public class WhirlpoolServerConfig extends ServerConfig {
     return Utils.computeSigningPaymentCode(signingWallet, networkParameters);
   }
 
-  public String getExternalIp() {
-    return externalIp;
+  public String getCoordinatorId() {
+    return coordinatorId;
   }
 
-  public void setExternalIp(String externalIp) {
-    this.externalIp = externalIp;
+  public void setCoordinatorId(String coordinatorId) {
+    this.coordinatorId = coordinatorId;
+  }
+
+  public String getExternalUrlClear() {
+    return externalUrlClear;
+  }
+
+  public void setExternalUrlClear(String externalUrlClear) {
+    this.externalUrlClear = externalUrlClear;
+  }
+
+  public String getExternalUrlOnion() {
+    return externalUrlOnion;
+  }
+
+  public void setExternalUrlOnion(String externalUrlOnion) {
+    this.externalUrlOnion = externalUrlOnion;
   }
 
   public static class RegisterInputConfig {
@@ -925,6 +943,14 @@ public class WhirlpoolServerConfig extends ServerConfig {
   @Override
   public Map<String, String> getConfigInfo() {
     Map<String, String> configInfo = super.getConfigInfo();
+    configInfo.put(
+        "coordinator",
+        "coordinatorId="
+            + coordinatorId
+            + ", externalUrlClear="
+            + externalUrlClear
+            + ", externalUrlOnion="
+            + externalUrlOnion);
     configInfo.put("testMode", String.valueOf(testMode));
     configInfo.put("failMode", String.valueOf(failMode));
     configInfo.put(

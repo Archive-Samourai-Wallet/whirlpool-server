@@ -20,8 +20,6 @@ import com.samourai.whirlpool.server.services.rpc.JSONRpcClientServiceImpl;
 import com.samourai.whirlpool.server.services.rpc.RpcClientService;
 import java.lang.invoke.MethodHandles;
 import java.math.BigDecimal;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -89,21 +87,6 @@ public class Utils {
     return sortedMap;
   }
 
-  public static <K, V> Map.Entry<K, V> getRandomEntry(Map<K, V> map) {
-    if (map.isEmpty()) {
-      return null;
-    }
-    Object entries[] = map.entrySet().toArray();
-    return (Map.Entry<K, V>) entries[secureRandom.nextInt(entries.length)];
-  }
-
-  public static <T> T getRandomEntry(List<T> list) {
-    if (list.isEmpty()) {
-      return null;
-    }
-    return list.get(secureRandom.nextInt(list.size()));
-  }
-
   public static String computeInputId(TxOutPoint outPoint) {
     return computeInputId(outPoint.getHash(), outPoint.getIndex());
   }
@@ -115,6 +98,7 @@ public class Utils {
   public static void setLoggerDebug() {
     serverUtils.setLoggerDebug("com.samourai.whirlpool");
     serverUtils.setLoggerDebug("com.samourai.wallet");
+    serverUtils.setLoggerDebug("com.samourai.soroban.client");
   }
 
   public static BigDecimal satoshisToBtc(long satoshis) {
@@ -244,12 +228,5 @@ public class Utils {
       log.debug("signing address: " + signingAddress.getAddressString());
     }
     return MessageSignUtilGeneric.getInstance().signMessage(signingAddress.getECKey(), payload);
-  }
-
-  public static String findExternalIp() throws Exception {
-    try (final DatagramSocket datagramSocket = new DatagramSocket()) {
-      datagramSocket.connect(InetAddress.getByName("8.8.8.8"), 12345);
-      return datagramSocket.getLocalAddress().getHostAddress();
-    }
   }
 }

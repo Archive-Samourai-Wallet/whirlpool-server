@@ -9,13 +9,11 @@ import com.samourai.stomp.client.JettyStompClientService;
 import com.samourai.tor.client.TorClientService;
 import com.samourai.wallet.bip47.rpc.PaymentCode;
 import com.samourai.wallet.chain.ChainSupplier;
-import com.samourai.wallet.crypto.CryptoUtil;
 import com.samourai.whirlpool.client.mix.MixParams;
 import com.samourai.whirlpool.client.mix.handler.*;
 import com.samourai.whirlpool.client.soroban.SorobanClientApi;
 import com.samourai.whirlpool.client.utils.ClientUtils;
 import com.samourai.whirlpool.client.wallet.beans.IndexRange;
-import com.samourai.whirlpool.client.whirlpool.ServerApi;
 import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientConfig;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.server.beans.Pool;
@@ -34,7 +32,6 @@ public class WhirlpoolClientService {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private JavaHttpClientService httpClientService;
   private WhirlpoolServerConfig serverConfig;
-  private CryptoUtil cryptoUtil;
   private BlockchainDataService blockchainDataService;
   private RpcClientServiceServer rpcClientServiceServer;
 
@@ -42,12 +39,10 @@ public class WhirlpoolClientService {
   public WhirlpoolClientService(
       JavaHttpClientService httpClientService,
       WhirlpoolServerConfig serverConfig,
-      CryptoUtil cryptoUtil,
       BlockchainDataService blockchainDataService,
       RpcClientServiceServer rpcClientServiceServer) {
     this.httpClientService = httpClientService;
     this.serverConfig = serverConfig;
-    this.cryptoUtil = cryptoUtil;
     this.blockchainDataService = blockchainDataService;
     this.rpcClientServiceServer = rpcClientServiceServer;
   }
@@ -75,10 +70,6 @@ public class WhirlpoolClientService {
           }
         };
 
-    ServerApi serverApi =
-        new ServerApi(
-            serverUrl, httpClientService.getHttpClient(), httpClientService.getHttpClient());
-
     try {
       PaymentCode paymentCodeCoordinator = serverConfig.computeSigningPaymentCode();
       return new WhirlpoolClientConfig(
@@ -86,12 +77,12 @@ public class WhirlpoolClientService {
           stompClientService,
           torClientService,
           rpcClientServiceServer,
-          serverApi,
           new SorobanClientApi(),
           null,
           params,
           IndexRange.FULL,
-          paymentCodeCoordinator);
+          paymentCodeCoordinator,
+          false);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

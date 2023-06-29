@@ -157,6 +157,7 @@ public class MetricService {
               outPoint,
               false,
               null,
+              null,
               "");
       TxOutPoint outPoint2 =
           new TxOutPoint("hash2", RandomUtils.nextInt(0, 999999), 1, 1, null, "");
@@ -167,6 +168,7 @@ public class MetricService {
               true,
               outPoint2,
               false,
+              null,
               null,
               "");
 

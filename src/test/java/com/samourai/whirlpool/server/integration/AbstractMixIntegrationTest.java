@@ -52,6 +52,7 @@ public abstract class AbstractMixIntegrationTest extends AbstractIntegrationTest
         false,
         blockchainDataService.getBlockHeight(),
         sorobanPaymentCodeOrNull,
+        null,
         null);
     waitMixLimitsService(mix);
     return txOutPoint;

@@ -69,6 +69,7 @@ public class ConfirmInputService {
           registeredInput.getOutPoint(),
           registeredInput.getTor(),
           registeredInput.getSorobanPaymentCode(),
+          registeredInput.getSorobanInitialPayload(),
           userHash);
       return Optional.empty();
     } catch (MixException e) {

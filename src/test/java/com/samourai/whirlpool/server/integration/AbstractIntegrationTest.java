@@ -6,11 +6,13 @@ import com.samourai.http.client.IWhirlpoolHttpClientService;
 import com.samourai.javaserver.utils.ServerUtils;
 import com.samourai.soroban.client.RpcWallet;
 import com.samourai.soroban.client.RpcWalletImpl;
+import com.samourai.soroban.client.wallet.SorobanWalletService;
 import com.samourai.wallet.api.backend.BackendServer;
 import com.samourai.wallet.bip47.rpc.BIP47Account;
 import com.samourai.wallet.bip47.rpc.BIP47Wallet;
 import com.samourai.wallet.bip47.rpc.java.Bip47UtilJava;
 import com.samourai.wallet.bip47.rpc.java.SecretPointFactoryJava;
+import com.samourai.wallet.bipFormat.BIP_FORMAT;
 import com.samourai.wallet.crypto.CryptoUtil;
 import com.samourai.wallet.hd.HD_Wallet;
 import com.samourai.wallet.hd.HD_WalletFactoryGeneric;
@@ -271,7 +273,6 @@ public abstract class AbstractIntegrationTest {
             cryptoService,
             rpcClientService,
             blockchainDataService,
-            whirlpoolClientService,
             whirlpoolClientConfig(),
             params);
     return multiClientManager;
@@ -291,7 +292,7 @@ public abstract class AbstractIntegrationTest {
         walletFactory.restoreWallet(
             MOCK_SEED_WORDS, MOCK_SEED_PASSPHRASE, serverConfig.getNetworkParameters());
     BIP47Wallet bip47Wallet = new BIP47Wallet(hdw84);
-    return new RpcWalletImpl(bip47Wallet);
+    return new RpcWalletImpl(bip47Wallet, cryptoUtil);
   }
 
   public TxOutPoint createAndMockTxOutPoint(
@@ -345,20 +346,23 @@ public abstract class AbstractIntegrationTest {
           @Override
           public void stop() {}
         };
+    SorobanWalletService sorobanWalletService =
+        new SorobanWalletService(bip47Util, BIP_FORMAT.PROVIDER, params, rpcClientServiceServer);
     WhirlpoolWalletConfig config =
         new WhirlpoolWalletConfig(
             dataSourceFactory,
             SecretPointFactoryJava.getInstance(),
-            null,
+            cryptoUtil,
+            sorobanWalletService,
             multiUsageHttpClientService,
             rpcClientServiceServer,
-            null,
             null,
             null,
             new SorobanClientApi(),
             TestNet3Params.get(),
             false,
-            WhirlpoolServer.TESTNET.getSigningPaymentCode());
+            WhirlpoolServer.TESTNET.getSigningPaymentCode(),
+            false);
     return config;
   }
 

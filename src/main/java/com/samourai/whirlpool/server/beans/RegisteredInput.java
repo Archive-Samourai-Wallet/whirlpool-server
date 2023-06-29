@@ -13,6 +13,7 @@ public class RegisteredInput {
   private Boolean tor;
   private PaymentCode sorobanPaymentCode; // null for non-Soroban clients
   private Long sorobanLastSeen; // last seen time on Soroban
+  private String sorobanInitialPayload; // encrypted registerInput payload on Soroban
   private String lastUserHash; // unknown until confirmInput attempt
 
   public RegisteredInput(
@@ -22,6 +23,7 @@ public class RegisteredInput {
       TxOutPoint outPoint,
       Boolean tor,
       PaymentCode sorobanPaymentCode,
+      String sorobanInitialPayload,
       String lastUserHash) {
     this.poolId = poolId;
     this.username = username;
@@ -33,15 +35,8 @@ public class RegisteredInput {
     if (sorobanPaymentCode != null) {
       setSorobanLastSeen();
     }
+    this.sorobanInitialPayload = sorobanInitialPayload;
     this.lastUserHash = lastUserHash;
-  }
-
-  public Long getSorobanLastSeen() {
-    return sorobanLastSeen;
-  }
-
-  public void setSorobanLastSeen() {
-    this.sorobanLastSeen = System.currentTimeMillis();
   }
 
   public long computeMinerFees(Pool pool) {
@@ -76,6 +71,18 @@ public class RegisteredInput {
     return sorobanPaymentCode;
   }
 
+  public Long getSorobanLastSeen() {
+    return sorobanLastSeen;
+  }
+
+  public void setSorobanLastSeen() {
+    this.sorobanLastSeen = System.currentTimeMillis();
+  }
+
+  public String getSorobanInitialPayload() {
+    return sorobanInitialPayload;
+  }
+
   public String getLastUserHash() {
     return lastUserHash;
   }
@@ -100,6 +107,9 @@ public class RegisteredInput {
         + (sorobanPaymentCode != null
             ? Utils.obfuscateString(sorobanPaymentCode.toString(), 3)
             : "null")
+        + (sorobanLastSeen != null ? sorobanLastSeen : "null")
+        + ", sorobanInitialPayload="
+        + (sorobanInitialPayload != null ? Utils.obfuscateString(sorobanInitialPayload, 3) : "null")
         + ",lastUserHash="
         + (lastUserHash != null ? lastUserHash : "null");
   }

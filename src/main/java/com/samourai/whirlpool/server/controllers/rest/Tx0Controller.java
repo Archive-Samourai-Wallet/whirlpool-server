@@ -2,6 +2,7 @@ package com.samourai.whirlpool.server.controllers.rest;
 
 import com.google.common.collect.ImmutableMap;
 import com.samourai.wallet.util.MessageSignUtilGeneric;
+import com.samourai.wallet.util.RandomUtil;
 import com.samourai.whirlpool.protocol.WhirlpoolEndpoint;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.protocol.rest.Tx0DataRequestV2;
@@ -363,7 +364,8 @@ public class Tx0Controller extends AbstractRestController {
     }
 
     // use random SCODE
-    WhirlpoolServerConfig.ScodeSamouraiFeeConfig scodeConfig = Utils.getRandomEntry(nonZeroScodes);
+    WhirlpoolServerConfig.ScodeSamouraiFeeConfig scodeConfig =
+        RandomUtil.getInstance().next(nonZeroScodes);
     int feeValuePercent = scodeConfig.getFeeValuePercent();
     long feeValue = poolFee.computeFeeValue(feeValuePercent);
     return feeValue;

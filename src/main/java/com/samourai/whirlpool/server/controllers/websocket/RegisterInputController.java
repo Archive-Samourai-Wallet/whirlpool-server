@@ -81,6 +81,7 @@ public class RegisterInputController extends AbstractWebSocketController {
           tor,
           payload.blockHeight,
           null,
+          null,
           computeClientDetails(messageHeaderAccessor));
     } catch (AlreadyRegisteredInputException e) {
       // silent error

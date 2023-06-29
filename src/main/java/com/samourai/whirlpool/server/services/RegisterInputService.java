@@ -64,6 +64,7 @@ public class RegisterInputService {
       Boolean tor,
       int blockHeight,
       PaymentCode sorobanPaymentCodeOrNull,
+      String sorobanInitialPayloadOrNull,
       Map<String, String> clientDetails)
       throws NotifiableException {
 
@@ -134,7 +135,14 @@ public class RegisterInputService {
       // register input to pool
       RegisteredInput registeredInput =
           poolService.registerInput(
-              poolId, username, liquidity, txOutPoint, tor, sorobanPaymentCodeOrNull, null);
+              poolId,
+              username,
+              liquidity,
+              txOutPoint,
+              tor,
+              sorobanPaymentCodeOrNull,
+              sorobanInitialPayloadOrNull,
+              null);
 
       // log activity
       if (clientDetails == null) {

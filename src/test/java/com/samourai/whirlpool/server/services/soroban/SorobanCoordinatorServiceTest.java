@@ -3,7 +3,7 @@ package com.samourai.whirlpool.server.services.soroban;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import com.samourai.soroban.client.RpcWallet;
-import com.samourai.soroban.client.rpc.RpcClient;
+import com.samourai.soroban.client.rpc.RpcSession;
 import com.samourai.wallet.segwit.SegwitAddress;
 import com.samourai.wallet.util.AsyncUtil;
 import com.samourai.whirlpool.client.WhirlpoolClient;
@@ -15,13 +15,13 @@ import com.samourai.whirlpool.client.soroban.SorobanClientApi;
 import com.samourai.whirlpool.client.whirlpool.listener.WhirlpoolClientListener;
 import com.samourai.whirlpool.protocol.beans.Utxo;
 import com.samourai.whirlpool.protocol.rest.PoolInfoSoroban;
-import com.samourai.whirlpool.protocol.soroban.PoolInfoSorobanMessage;
+import com.samourai.whirlpool.protocol.soroban.RegisterCoordinatorSorobanMessage;
 import com.samourai.whirlpool.server.beans.Pool;
 import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.integration.AbstractIntegrationTest;
-import com.samourai.whirlpool.server.orchestrators.SorobanPoolInfoOrchestrator;
-import com.samourai.whirlpool.server.orchestrators.SorobanRegisterInputOrchestrator;
+import com.samourai.whirlpool.server.orchestrators.SorobanCoordinatorOrchestrator;
+import com.samourai.whirlpool.server.orchestrators.SorobanInputOrchestrator;
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import org.bitcoinj.core.ECKey;
@@ -36,16 +36,16 @@ import org.springframework.boot.test.context.SpringBootTest;
 public class SorobanCoordinatorServiceTest extends AbstractIntegrationTest {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  private SorobanPoolInfoOrchestrator poolInfoOrchestrator;
-  private SorobanRegisterInputOrchestrator registerInputOrchestrator;
+  private SorobanCoordinatorOrchestrator poolInfoOrchestrator;
+  private SorobanInputOrchestrator registerInputOrchestrator;
 
   @BeforeEach
   @Override
   public void setUp() throws Exception {
     super.setUp();
     serverConfig.setTestMode(true);
-    poolInfoOrchestrator = sorobanCoordinatorService._getPoolInfoOrchestrator();
-    registerInputOrchestrator = sorobanCoordinatorService._getRegisterInputOrchestrator();
+    poolInfoOrchestrator = sorobanCoordinatorService._getCoordinatorOrchestrator();
+    registerInputOrchestrator = sorobanCoordinatorService._getInputOrchestrator();
   }
 
   @Test
@@ -54,16 +54,18 @@ public class SorobanCoordinatorServiceTest extends AbstractIntegrationTest {
     poolInfoOrchestrator._runOrchestrator();
     poolInfoOrchestrator._runOrchestrator();
 
-    RpcClient rpcClient = rpcClientServiceServer.getRpcClient("test");
+    RpcSession rpcSession = rpcClientServiceServer.getRpcSession("test");
     SorobanClientApi sorobanClientApi = new SorobanClientApi();
 
     // fetch pools from Soroban
-    Collection<PoolInfoSorobanMessage> poolInfoSorobanMessages =
-        AsyncUtil.getInstance().blockingGet(sorobanClientApi.fetchPools(rpcClient));
+    Collection<RegisterCoordinatorSorobanMessage> registerCoordinatorSorobanMessages =
+        rpcSession.withRpcClient(
+            rpcClient ->
+                AsyncUtil.getInstance().blockingGet(sorobanClientApi.fetchCoordinators(rpcClient)));
 
-    Assertions.assertEquals(1, poolInfoSorobanMessages.size());
+    Assertions.assertEquals(1, registerCoordinatorSorobanMessages.size());
     Collection<PoolInfoSoroban> poolInfoSorobans =
-        poolInfoSorobanMessages.iterator().next().poolInfo;
+        registerCoordinatorSorobanMessages.iterator().next().pools;
     Assertions.assertEquals(4, poolInfoSorobans.size());
   }
 

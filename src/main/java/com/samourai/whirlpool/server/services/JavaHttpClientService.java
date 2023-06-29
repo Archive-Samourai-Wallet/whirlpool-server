@@ -1,5 +1,7 @@
 package com.samourai.whirlpool.server.services;
 
+import com.samourai.http.client.HttpUsage;
+import com.samourai.http.client.IHttpClient;
 import com.samourai.http.client.IHttpClientService;
 import com.samourai.http.client.JettyHttpClient;
 import com.samourai.whirlpool.client.utils.ClientUtils;
@@ -21,8 +23,7 @@ public class JavaHttpClientService implements IHttpClientService {
     this.httpClient = null;
   }
 
-  @Override
-  public JettyHttpClient getHttpClient() {
+  public IHttpClient getHttpClient() {
     if (httpClient == null) {
       if (log.isDebugEnabled()) {
         log.debug("+httpClient");
@@ -30,6 +31,12 @@ public class JavaHttpClientService implements IHttpClientService {
       httpClient = this.computeHttpClient();
     }
     return httpClient;
+  }
+
+  @Override
+  public IHttpClient getHttpClient(HttpUsage httpUsage) {
+    // ignore httpUsage for whirlpool-server
+    return getHttpClient();
   }
 
   private JettyHttpClient computeHttpClient() {

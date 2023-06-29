@@ -616,7 +616,8 @@ public class MixService {
                 confirmingInput.getOutPoint(),
                 confirmingInput.getTor(),
                 confirmingInput.getSorobanPaymentCode(),
-                confirmingInput.getLastUserHash());
+                confirmingInput.getLastUserHash(),
+                confirmingInput.getSorobanInitialPayload());
           } catch (Exception e) {
             log.error("requeue confirming input failed", e);
           }

@@ -189,6 +189,7 @@ public class PoolService {
       TxOutPoint txOutPoint,
       Boolean tor,
       PaymentCode sorobanPaymentCodeOrNull,
+      String sorobanInitialPayloadOrNull,
       String lastUserHash)
       throws NotifiableException {
     Pool pool = getPool(poolId);
@@ -211,7 +212,14 @@ public class PoolService {
 
     RegisteredInput registeredInput =
         new RegisteredInput(
-            poolId, username, liquidity, txOutPoint, tor, sorobanPaymentCodeOrNull, lastUserHash);
+            poolId,
+            username,
+            liquidity,
+            txOutPoint,
+            tor,
+            sorobanPaymentCodeOrNull,
+            sorobanInitialPayloadOrNull,
+            lastUserHash);
 
     // verify confirmations
     if (!isUtxoConfirmed(txOutPoint, liquidity)) {

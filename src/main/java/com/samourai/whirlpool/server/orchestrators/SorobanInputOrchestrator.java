@@ -1,6 +1,7 @@
 package com.samourai.whirlpool.server.orchestrators;
 
-import com.samourai.soroban.client.rpc.RpcClientEncrypted;
+import com.samourai.soroban.client.RpcWallet;
+import com.samourai.soroban.client.rpc.RpcSession;
 import com.samourai.wallet.bip47.rpc.PaymentCode;
 import com.samourai.wallet.util.AbstractOrchestrator;
 import com.samourai.whirlpool.protocol.soroban.RegisterInputSorobanMessage;
@@ -15,45 +16,45 @@ import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SorobanRegisterInputOrchestrator extends AbstractOrchestrator {
+public class SorobanInputOrchestrator extends AbstractOrchestrator {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private static final int LOOP_DELAY = 10000;
-  private static final int START_DELAY = 2000;
 
   private PoolService poolService;
   private SorobanCoordinatorApi sorobanCoordinatorApi;
   private RegisterInputService registerInputService;
-  private RpcClientEncrypted rpcClient;
+  private RpcSession rpcSession;
+  private RpcWallet rpcWallet;
 
   private Map<String, RegisteredInput> registeredInputsByKey;
   private Set<String> invalidInputKeys;
 
-  public SorobanRegisterInputOrchestrator(
+  public SorobanInputOrchestrator(
       PoolService poolService,
       SorobanCoordinatorApi sorobanCoordinatorApi,
       RegisterInputService registerInputService,
-      RpcClientEncrypted rpcClient) {
-    super(LOOP_DELAY, START_DELAY, null);
+      RpcSession rpcSession,
+      RpcWallet rpcWallet) {
+    super(LOOP_DELAY, 0, null);
     this.poolService = poolService;
     this.sorobanCoordinatorApi = sorobanCoordinatorApi;
     this.registerInputService = registerInputService;
-    this.rpcClient = rpcClient;
+    this.rpcSession = rpcSession;
+    this.rpcWallet = rpcWallet;
   }
 
   @Override
   protected void runOrchestrator() {
+    int freshInputs = 0;
+    int existingInputs = 0;
+    int invalidInputs = 0;
     for (Pool pool : poolService.getPools()) {
       String poolId = pool.getPoolId();
-      int freshInputs = 0;
-      int existingInputs = 0;
-      int invalidInputs = 0;
-
       try {
         Collection<RegisterInputSoroban> registerInputSorobans =
-            sorobanCoordinatorApi.getListRegisterInputSorobanByPoolId(rpcClient, poolId);
-        if (log.isDebugEnabled()) {
-          log.debug(poolId + " inputs: " + registerInputSorobans.size() + " messages...");
-        }
+            rpcSession.withRpcClientEncrypted(
+                rpcWallet.getEncrypter(),
+                rce -> sorobanCoordinatorApi.getListRegisterInputSorobanByPoolId(rce, poolId));
         for (RegisterInputSoroban registerInputSoroban : registerInputSorobans) {
           String inputKey = computeInputKey(registerInputSoroban);
           try {
@@ -78,20 +79,19 @@ public class SorobanRegisterInputOrchestrator extends AbstractOrchestrator {
             invalidInputs++;
           }
         }
-        if (log.isDebugEnabled()) {
-          log.debug(
-              poolId
-                  + " inputs => "
-                  + freshInputs
-                  + " freshs, "
-                  + invalidInputs
-                  + " invalids, "
-                  + existingInputs
-                  + " existings");
-        }
       } catch (Exception e) {
         log.error("Failed to list Soroban inputs for poolId=" + poolId, e);
       }
+    }
+    if (log.isDebugEnabled()) {
+      log.debug(
+          "Soroban inputs: "
+              + freshInputs
+              + " freshs, "
+              + existingInputs
+              + " existings, "
+              + invalidInputs
+              + " invalids");
     }
   }
 
@@ -121,8 +121,11 @@ public class SorobanRegisterInputOrchestrator extends AbstractOrchestrator {
     if (registeredInput == null) {
       // fresh input
       PaymentCode paymentCode = registerInputSoroban.getSorobanPaymentCode();
-      String username = paymentCode.toString().substring(0, 15);
+
+      // username should be unique for each input
       RegisterInputSorobanMessage risb = registerInputSoroban.getSorobanMessage();
+      String username =
+          paymentCode.toString().substring(0, 15) + "/" + risb.utxoHash + ":" + risb.utxoIndex;
       registeredInput =
           registerInputService.registerInput(
               risb.poolId,
@@ -134,6 +137,7 @@ public class SorobanRegisterInputOrchestrator extends AbstractOrchestrator {
               false, // we never know if user is using Tor with Soroban
               risb.blockHeight,
               paymentCode,
+              registerInputSoroban.getInitialPayload(),
               null);
       registeredInputsByKey.put(inputKey, registeredInput);
       return registeredInput;

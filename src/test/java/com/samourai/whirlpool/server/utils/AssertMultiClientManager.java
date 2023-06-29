@@ -5,6 +5,7 @@ import com.samourai.soroban.client.RpcWalletImpl;
 import com.samourai.wallet.bip47.rpc.BIP47Wallet;
 import com.samourai.wallet.bipWallet.BipWallet;
 import com.samourai.wallet.chain.ChainSupplier;
+import com.samourai.wallet.crypto.CryptoUtil;
 import com.samourai.wallet.hd.BIP_WALLET;
 import com.samourai.wallet.segwit.SegwitAddress;
 import com.samourai.wallet.util.TxUtil;
@@ -22,7 +23,6 @@ import com.samourai.whirlpool.server.beans.rpc.RpcTransaction;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.services.BlockchainDataService;
 import com.samourai.whirlpool.server.services.CryptoService;
-import com.samourai.whirlpool.server.services.WhirlpoolClientService;
 import com.samourai.whirlpool.server.services.rpc.MockRpcClientServiceImpl;
 import java.lang.invoke.MethodHandles;
 import org.bitcoinj.core.ECKey;
@@ -39,7 +39,6 @@ public class AssertMultiClientManager extends MultiClientManager {
   private CryptoService cryptoService;
   private MockRpcClientServiceImpl rpcClientService;
   private BlockchainDataService blockchainDataService;
-  private WhirlpoolClientService whirlpoolClientService;
   private WhirlpoolClientConfig whirlpoolClientConfig;
 
   private Mix mix;
@@ -56,7 +55,6 @@ public class AssertMultiClientManager extends MultiClientManager {
       CryptoService cryptoService,
       MockRpcClientServiceImpl rpcClientService,
       BlockchainDataService blockchainDataService,
-      WhirlpoolClientService whirlpoolClientService,
       WhirlpoolClientConfig whirlpoolClientConfig,
       NetworkParameters params) {
     this.mix = mix;
@@ -64,7 +62,6 @@ public class AssertMultiClientManager extends MultiClientManager {
     this.cryptoService = cryptoService;
     this.rpcClientService = rpcClientService;
     this.blockchainDataService = blockchainDataService;
-    this.whirlpoolClientService = whirlpoolClientService;
     this.whirlpoolClientConfig = whirlpoolClientConfig;
 
     inputs = new TxOutPoint[nbClients];
@@ -164,7 +161,8 @@ public class AssertMultiClientManager extends MultiClientManager {
     IPostmixHandler postmixHandler = new Bip84PostmixHandler(params, bip84Wallet, IndexRange.EVEN);
     ChainSupplier chainSupplier = blockchainDataService.computeChainSupplier();
     BIP47Wallet bip47Wallet = new BIP47Wallet(bip84Wallet.getHdWallet());
-    RpcWallet rpcWallet = new RpcWalletImpl(bip47Wallet);
+    CryptoUtil cryptoUtil = CryptoUtil.getInstanceJava();
+    RpcWallet rpcWallet = new RpcWalletImpl(bip47Wallet, cryptoUtil);
     MixParams mixParams =
         new MixParams(
             pool.getPoolId(),

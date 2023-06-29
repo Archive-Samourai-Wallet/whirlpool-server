@@ -1,6 +1,7 @@
 package com.samourai.whirlpool.server.beans;
 
 import com.samourai.javaserver.exceptions.NotifiableException;
+import com.samourai.wallet.util.RandomUtil;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.exceptions.AlreadyRegisteredInputException;
 import com.samourai.whirlpool.server.exceptions.ServerErrorCode;
@@ -65,7 +66,7 @@ public class InputPool {
 
   private synchronized Optional<RegisteredInput> removeRandom(List<String> eligibleInputIds) {
     if (!eligibleInputIds.isEmpty()) {
-      String randomInputId = Utils.getRandomEntry(eligibleInputIds);
+      String randomInputId = RandomUtil.getInstance().next(eligibleInputIds);
       RegisteredInput registeredInput = inputsById.remove(randomInputId);
       return Optional.of(registeredInput);
     }

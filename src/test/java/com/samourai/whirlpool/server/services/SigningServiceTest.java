@@ -121,6 +121,7 @@ public class SigningServiceTest extends AbstractIntegrationTest {
                 firstTxOutPoint,
                 false,
                 null,
+                null,
                 null),
             "userHash1"));
     mix.registerOutput(testUtils.generateSegwitAddress().getBech32AsString(), bordereau);
@@ -202,6 +203,7 @@ public class SigningServiceTest extends AbstractIntegrationTest {
         liquidity,
         false,
         blockchainDataService.getBlockHeight(),
+        null,
         null,
         null);
     waitMixLimitsService(mix);
