@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.user.SimpUserRegistry;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -49,7 +48,7 @@ public class HealthService {
     this.whirlpoolClientConfig = null;
   }
 
-  @Scheduled(fixedDelay = 120000)
+  // @Scheduled(fixedDelay = 120000)
   public void scheduleConnectCheck() {
     try {
       // thread check
