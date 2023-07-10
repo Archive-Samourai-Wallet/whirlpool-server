@@ -13,7 +13,7 @@
 		<dependency>
 			<groupId>io.samourai.code.whirlpool</groupId>
 			<artifactId>java-server</artifactId>
-			<version>1.0.7</version>
+			<version>1.0.8</version>
 		</dependency>
 		<dependency>
 			<groupId>io.samourai.code.whirlpool</groupId>
