@@ -314,4 +314,19 @@ public class PoolService {
       }
     }
   }
+
+  public int getNbInputs() {
+    return pools.values().stream()
+        .mapToInt(pool -> pool.getLiquidityQueue().getSize() + pool.getMustMixQueue().getSize())
+        .sum();
+  }
+
+  public int getNbInputsBySoroban(boolean soroban) {
+    return pools.values().stream()
+        .mapToInt(
+            pool ->
+                pool.getLiquidityQueue().getSizeBySoroban(soroban)
+                    + pool.getMustMixQueue().getSizeBySoroban(soroban))
+        .sum();
+  }
 }

@@ -102,10 +102,8 @@ public class StatusWebController {
                   computeCurrentStepProgressLabel(
                       mix.getMixStatus(), currentStepElapsedTime, currentStepRemainingTime);
               poolAttributes.put("currentStepProgressLabel", currentStepProgressLabel);
-
               poolAttributes.put("mustMixQueued", mix.getPool().getMustMixQueue().getSize());
               poolAttributes.put("liquiditiesQueued", mix.getPool().getLiquidityQueue().getSize());
-              poolAttributes.put("mustMixQueued", mix.getPool().getMustMixQueue().getSize());
 
               Map<MixStatus, Timestamp> timeStatus = mix.getTimeStatus();
               List<StatusStep> steps = new ArrayList<>();
@@ -124,7 +122,7 @@ public class StatusWebController {
               }
               poolAttributes.put("steps", steps);
 
-              List<StatusEvent> events = new ArrayList<>();
+              /*List<StatusEvent> events = new ArrayList<>();
               events.add(
                   new StatusEvent(
                       mix.getTimeStarted(),
@@ -133,10 +131,13 @@ public class StatusWebController {
               timeStatus.forEach(
                   ((mixStatus, timestamp) ->
                       events.add(new StatusEvent(timestamp, mixStatus.toString(), null))));
-              poolAttributes.put("events", events);
+              poolAttributes.put("events", events);*/
               pools.add(poolAttributes);
             });
     model.addAttribute("pools", pools);
+    model.addAttribute("nbInputsClassic", poolService.getNbInputsBySoroban(false));
+    model.addAttribute("nbInputsSoroban", poolService.getNbInputsBySoroban(true));
+    model.addAttribute("nbInputsTotal", poolService.getNbInputs());
     return "status";
   }
 

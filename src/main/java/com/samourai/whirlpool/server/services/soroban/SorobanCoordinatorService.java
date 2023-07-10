@@ -54,9 +54,10 @@ public class SorobanCoordinatorService {
         Utils.computeSigningBip47Wallet(whirlpoolServerConfig.getSigningWallet(), params);
     CryptoUtil cryptoUtil = CryptoUtil.getInstanceJava();
     this.rpcWallet = new RpcWalletImpl(bip47Wallet, cryptoUtil);
+    this.rpcSession = rpcClientServiceServer.getRpcSession("coordinator");
     ECKey authenticationKey =
         Utils.computeSigningAddress(whirlpoolServerConfig.getSigningWallet(), params).getECKey();
-    this.rpcSession = rpcClientServiceServer.getRpcSession("coordinator", authenticationKey);
+    this.rpcSession.setAuthenticationKey(authenticationKey);
 
     // start publishing pools
     coordinatorOrchestrator =

@@ -124,4 +124,9 @@ public class InputPool {
             .filter(input -> Boolean.valueOf(tor).equals(input.getTor()))
             .count();
   }
+
+  public int getSizeBySoroban(boolean soroban) {
+    return (int)
+        inputsById.values().parallelStream().filter(input -> soroban == input.isSoroban()).count();
+  }
 }

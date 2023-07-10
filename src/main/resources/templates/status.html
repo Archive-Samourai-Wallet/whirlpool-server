@@ -22,17 +22,20 @@
         <table class="table">
             <thead>
                 <th class="align-middle">PoolId</th>
+                <th class="align-middle">Last mix</th>
                 <th class="align-middle">Status</th>
                 <th class="align-middle">Confirmed</th>
                 <th class="align-middle">Queued</th>
-                <th class="align-middle">Elapsed time</th>
                 <th class="align-middle">Configuration</th>
             </thead>
             <tbody>
             <div th:each="pool,poolIter : *{pools}">
                 <tr>
-                <th class="align-middle" rowspan="2"><span th:text="${pool.poolId}"/><br/><small th:text="${pool.mixId}"></small></th>
-                <td>
+                <th class="align-middle">
+                    <span th:text="${pool.poolId}"/>
+                </th>
+                <td class="align-middle"><span th:text="${@templateUtil.duration(pool.elapsedTime/1000)}"/></td>
+                <td class="align-middle">
                     <span th:text="${pool.mixStatus}"/><br/>
                     <strong th:text="${pool.nbInputs}"/> / <span th:text="${pool.anonymitySetWithSurge}"/> confirmed<br/>
                     <div th:if="${pool.currentStepProgress != null}">
@@ -44,52 +47,50 @@
                         </div>
                     </div>
                 </td>
-                <td>
+                <td class="align-middle">
                     <strong th:text="${pool.nbInputsMustMix}"/> / <span th:text="${pool.minMustMix}"/> mustMix, <strong th:text="${pool.minerFeeAccumulated}"/> / <span th:text="${pool.minerFeeMix}"/> sat<br/>
                     <strong th:text="${pool.nbInputsLiquidities}"/> / <span th:text="${pool.minLiquidity}"/> liquidities<br/>
                     <strong th:text="${pool.nbInputsSurge}"/> / <span th:text="${pool.mixSurge}"/> surges</span>
                 </td>
-                <td>
+                <td class="align-middle">
                     <strong th:text="${pool.mustMixQueued}" title="mustMix"/> mustMix<br/>
                     <strong th:text="${pool.liquiditiesQueued}" title="liquidities"/> liquidities<br/>
-                    <div th:if="${!pool.surgeDisabledForLowLiquidityPool}"><strong th:text="${pool.poolSurge}" title="surge limit"/> surges</div>
-                    <div th:if="${pool.surgeDisabledForLowLiquidityPool}"><span style="text-decoration:line-through"><strong th:text="${pool.poolSurge}" title="surge limit"/> surges</span> (low liquidity)</div>
                 </td>
-                <td><span th:text="${@templateUtil.duration(pool.elapsedTime/1000)}"/></td>
-                <td>
-                    Pool fee: <span th:text="${@templateUtil.satoshisToBtc(pool.feeValue)}"/><br/>
-                    Miner fee: <span th:text="${pool.minerFee.minerFeeMin}" title="minerFeeMin"/>-<span th:text="${pool.minerFee.minerFeeCap}" title="minerFeeMaxCap"/>, minRelaySatPerB=<span th:text="${pool.minerFee.minRelaySatPerB}" title="minRelaySatPerB"/>, minLiquidityPoolForSurge=<span th:text="${pool.minLiquidityPoolForSurge}" title="minLiquidityPoolForSurge"/><br/>
-                    Tx0 max outputs: <span th:text="${pool.tx0MaxOutputs}" />
+                <td class="align-middle"><small>
+                    poolFee=<span th:text="${@templateUtil.satoshisToBtc(pool.feeValue)}"/>, minerFee=<span th:text="${pool.minerFee.minerFeeMin}" title="minerFeeMin"/>-<span th:text="${pool.minerFee.minerFeeCap}" title="minerFeeMaxCap"/>, minRelay=<span th:text="${pool.minerFee.minRelaySatPerB}" title="minRelaySatPerB"/>sat/B, tx0MaxOutputs=<span th:text="${pool.tx0MaxOutputs}" /><br/>
+                    <span th:if="${!pool.surgeDisabledForLowLiquidityPool}"><span th:text="${pool.poolSurge}" title="surge limit"/> surges</span>
+                    <span th:if="${pool.surgeDisabledForLowLiquidityPool}"><span style="text-decoration:line-through"><strong th:text="${pool.poolSurge}" title="surge limit"/> surges</span> (low liquidity)</span><br/>
+                    mixId=<span th:text="${pool.mixId}" title="mixId"/>
+                </small>
                 </td>
-                </tr>
-                <tr>
-                    <td colspan="6" th:id="${poolIter.index+'_details'}" style="display:none; border:none">
-                        <div class="row">
-                            <div class="col-sm-1"></div>
-                            <div class="col-sm-10">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <div class="sw-main sw-theme-dots">
-                                            <ul class="nav nav-tabs step-anchor">
-                                                <li th:each="step : *{pool.steps}" th:class="${step.done} ? 'nav-item done' : (${step.active} ? 'nav-item active' : 'nav-item')"><a href="#" class="nav-link" th:text="${step.title}"/></li>
-                                            </ul>
-                                        </div>
-                                        <table class="table table-borderless" style="margin:0">
-                                            <tbody>
-                                            <tr th:each="event : *{pool.events}">
-                                                <td><span th:text="${#dates.format(event.date, 'dd-MMM-yyyy HH:mm:ss')}"/></td>
-                                                <td><span th:text="${event.title}"/></td>
-                                                <td><span th:if="${event.details != null}" th:text="${event.details}"/></td>
-                                            </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </td>
                 </tr>
             </div>
+            </tbody>
+        </table>
+
+        <table class="table" style="margin:0px auto; width:300px;">
+            <thead>
+            <tr>
+                <th class="align-middle" colspan="3" style="text-align: center">MIXING QUEUE</th>
+            </tr>
+            <tr>
+                <th class="align-middle">Classic</th>
+                <th class="align-middle">Soroban</th>
+                <th class="align-middle">Total</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td class="align-middle">
+                    <span th:text="${nbInputsClassic}"/>
+                </td>
+                <td class="align-middle">
+                    <span th:text="${nbInputsSoroban}"/>
+                </td>
+                <td class="align-middle">
+                    <strong th:text="${nbInputsTotal}"/>
+                </td>
+            </tr>
             </tbody>
         </table>
     </div>

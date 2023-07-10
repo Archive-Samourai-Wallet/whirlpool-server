@@ -4,6 +4,7 @@ import com.samourai.soroban.client.RpcWallet;
 import com.samourai.soroban.client.meeting.SorobanMessageWithSender;
 import com.samourai.soroban.client.rpc.RpcClient;
 import com.samourai.soroban.client.rpc.RpcClientEncrypted;
+import com.samourai.soroban.client.rpc.RpcMode;
 import com.samourai.wallet.bip47.BIP47UtilGeneric;
 import com.samourai.wallet.bip47.rpc.PaymentCode;
 import com.samourai.wallet.bip47.rpc.java.Bip47UtilJava;
@@ -23,7 +24,6 @@ import io.reactivex.Single;
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.LinkedList;
-import java.util.Map;
 import org.bitcoinj.core.NetworkParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +49,7 @@ public class SorobanCoordinatorApi {
     CoordinatorInfo coordinatorInfo = new CoordinatorInfo(coordinatorId, urlClear, urlOnion);
     RegisterCoordinatorSorobanMessage message =
         new RegisterCoordinatorSorobanMessage(coordinatorInfo, poolInfos);
-    return rpcClient.send(directory, message.toPayload());
+    return rpcClient.directoryAdd(directory, message.toPayload(), RpcMode.NORMAL);
   }
 
   public Single<String> inviteToMix(
@@ -75,11 +75,11 @@ public class SorobanCoordinatorApi {
             bip47Util,
             params);
     return rpcClient.sendEncrypted(
-        directory, inviteMixSorobanMessage.toPayload(), paymentCodeClient);
+        directory, inviteMixSorobanMessage.toPayload(), paymentCodeClient, RpcMode.SHORT);
   }
 
-  public Single<Map<String, Object>> unregisterInput(
-      RpcClient rpcClient, RegisteredInput registeredInput) throws Exception {
+  public Completable unregisterInput(RpcClient rpcClient, RegisteredInput registeredInput)
+      throws Exception {
     String directory = WhirlpoolProtocol.getSorobanDirRegisterInput(registeredInput.getPoolId());
     return rpcClient.directoryRemove(directory, registeredInput.getSorobanInitialPayload());
   }
