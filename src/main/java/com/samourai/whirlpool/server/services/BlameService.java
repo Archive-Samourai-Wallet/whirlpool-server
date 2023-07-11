@@ -8,6 +8,7 @@ import com.samourai.whirlpool.server.beans.export.ActivityCsv;
 import com.samourai.whirlpool.server.persistence.to.BlameTO;
 import com.samourai.whirlpool.server.utils.Utils;
 import java.lang.invoke.MethodHandles;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.groovy.util.Maps;
@@ -58,7 +59,10 @@ public class BlameService {
     }
 
     // log activity
-    Map<String, String> clientDetails = ImmutableMap.of("u", registeredInput.getUsername());
+    Map<String, String> clientDetails = new LinkedHashMap<>();
+    if (registeredInput.getUsername() != null) {
+      ImmutableMap.of("u", registeredInput.getUsername());
+    }
     ActivityCsv activityCsv =
         new ActivityCsv(
             "BLAME", mix.getPool().getPoolId(), registeredInput, detailsParam, clientDetails);

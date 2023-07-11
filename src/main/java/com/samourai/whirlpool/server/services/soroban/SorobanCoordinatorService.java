@@ -90,14 +90,15 @@ public class SorobanCoordinatorService {
                     whirlpoolServerConfig.getExternalUrlClear(),
                     whirlpoolServerConfig.getExternalUrlOnion(),
                     rpcWallet))
-        // unregister input
         .doAfterSuccess(
-            invitePayload ->
-                rpcSession.withRpcClient(
-                    rpcClient ->
-                        sorobanCoordinatorApi
-                            .unregisterInput(rpcClient, registeredInput)
-                            .subscribe()));
+            invitePayload -> {
+              // unregister input
+              inputOrchestrator.unregisterInput(
+                  registeredInput.getPoolId(),
+                  registeredInput.getSorobanInitialPayload(),
+                  registeredInput.getOutPoint().getHash(),
+                  registeredInput.getOutPoint().getIndex());
+            });
   }
 
   public void stop() {

@@ -5,6 +5,7 @@ import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;
 import com.samourai.whirlpool.server.exceptions.MixException;
 import com.samourai.whirlpool.server.exceptions.QueueInputException;
+import com.samourai.whirlpool.server.exceptions.ServerErrorCode;
 import java.lang.invoke.MethodHandles;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -42,39 +43,49 @@ public class ConfirmInputService {
           mixService.confirmInput(
               mixId, username, blindedBordereau, userHash, utxoHashOrNull, utxoIndexOrNull));
     } catch (QueueInputException e) {
-      // input queued => re-enqueue in pool
-      RegisteredInput registeredInput = e.getRegisteredInput();
-      String poolId = e.getPoolId();
-      if (log.isDebugEnabled()) {
-        log.debug(
-            "["
-                + poolId
-                + "/"
-                + mixId
-                + "] Input queued: "
-                + registeredInput.getOutPoint()
-                + ", reason="
-                + e.getMessage());
+      // confirmInput rejected
+      boolean isSoroban = utxoHashOrNull != null;
+      if (!isSoroban) {
+        // requeue classic input which stays connected to websocket
+        if (log.isDebugEnabled()) {
+          log.debug(
+              "["
+                  + e.getPoolId()
+                  + "/"
+                  + mixId
+                  + "] Input queued: "
+                  + e.getRegisteredInput().getOutPoint()
+                  + ", reason="
+                  + e.getMessage());
+        }
+        queueOnConfirmInputClassicRejected(e.getRegisteredInput(), userHash);
+        return Optional.empty();
+      } else {
+        // disconnect Soroban input
+        throw new NotifiableException(ServerErrorCode.INPUT_REJECTED, e.getMessage());
       }
-
-      // log activity
-      ActivityCsv activityCsv =
-          new ActivityCsv("CONFIRM_INPUT:QUEUED", poolId, registeredInput, null, null);
-      exportService.exportActivity(activityCsv);
-
-      poolService.registerInput(
-          poolId,
-          registeredInput.getUsername(),
-          registeredInput.isLiquidity(),
-          registeredInput.getOutPoint(),
-          registeredInput.getTor(),
-          registeredInput.getSorobanPaymentCode(),
-          registeredInput.getSorobanInitialPayload(),
-          userHash);
-      return Optional.empty();
     } catch (MixException e) {
       // ConfirmInput too late, mix already started => input was already silently requeued
       return Optional.empty();
     }
+  }
+
+  private void queueOnConfirmInputClassicRejected(RegisteredInput registeredInput, String userHash)
+      throws NotifiableException {
+    String poolId = registeredInput.getPoolId();
+    // log activity
+    ActivityCsv activityCsv =
+        new ActivityCsv("CONFIRM_INPUT:QUEUED", poolId, registeredInput, null, null);
+    exportService.exportActivity(activityCsv);
+
+    poolService.registerInput(
+        poolId,
+        registeredInput.getUsername(),
+        registeredInput.isLiquidity(),
+        registeredInput.getOutPoint(),
+        registeredInput.getTor(),
+        registeredInput.getSorobanPaymentCode(),
+        registeredInput.getSorobanInitialPayload(),
+        userHash);
   }
 }

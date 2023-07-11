@@ -12,15 +12,15 @@
         </a>
     </li>
     <li class="nav-item">
-        <a th:class="${dashboardModel.currentPage == 'metricsApp'} ? 'nav-link active' : 'nav-link'" href="/status/metrics/app">
-            <span data-feather="bar-chart"></span>
-            Live status
-        </a>
-    </li>
-    <li class="nav-item">
         <a th:class="${dashboardModel.currentPage == 'history'} ? 'nav-link active' : 'nav-link'" href="/status/history">
             <span data-feather="list"></span>
             History
+        </a>
+    </li>
+    <li class="nav-item">
+        <a th:class="${dashboardModel.currentPage == 'clients'} ? 'nav-link active' : 'nav-link'" href="/status/clients">
+            <span data-feather="users"></span>
+            Clients
         </a>
     </li>
     <li class="nav-item">
@@ -39,6 +39,12 @@
         <a th:class="${dashboardModel.currentPage == 'system'} ? 'nav-link active' : 'nav-link'" href="/status/system">
             <span data-feather="activity"></span>
             System
+        </a>
+    </li>
+    <li class="nav-item">
+        <a th:class="${dashboardModel.currentPage == 'metricsApp'} ? 'nav-link active' : 'nav-link'" href="/status/metrics/app">
+            <span data-feather="bar-chart"></span>
+            Live status
         </a>
     </li>
     <li class="nav-item">

@@ -2,7 +2,7 @@ package com.samourai.whirlpool.server.integration;
 
 import com.samourai.http.client.HttpUsage;
 import com.samourai.http.client.IHttpClient;
-import com.samourai.http.client.IWhirlpoolHttpClientService;
+import com.samourai.http.client.IHttpClientService;
 import com.samourai.javaserver.utils.ServerUtils;
 import com.samourai.soroban.client.RpcWallet;
 import com.samourai.soroban.client.RpcWalletImpl;
@@ -23,10 +23,9 @@ import com.samourai.wallet.util.FormatsUtilGeneric;
 import com.samourai.wallet.util.MessageSignUtilGeneric;
 import com.samourai.wallet.util.TxUtil;
 import com.samourai.whirlpool.client.WhirlpoolClient;
-import com.samourai.whirlpool.client.soroban.SorobanClientApi;
 import com.samourai.whirlpool.client.utils.ClientCryptoService;
 import com.samourai.whirlpool.client.wallet.WhirlpoolWalletConfig;
-import com.samourai.whirlpool.client.wallet.beans.WhirlpoolServer;
+import com.samourai.whirlpool.client.wallet.beans.WhirlpoolNetwork;
 import com.samourai.whirlpool.client.wallet.data.dataSource.DataSourceFactory;
 import com.samourai.whirlpool.client.wallet.data.dataSource.DojoDataSourceFactory;
 import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientConfig;
@@ -53,7 +52,6 @@ import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.core.TransactionOutput;
-import org.bitcoinj.params.TestNet3Params;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -279,8 +277,7 @@ public abstract class AbstractIntegrationTest {
   }
 
   private WhirlpoolClientConfig whirlpoolClientConfig() {
-    String serverUrl = "http://127.0.0.1:" + port;
-    return whirlpoolClientService.createWhirlpoolClientConfig(serverUrl, params);
+    return whirlpoolClientService.createWhirlpoolClientConfig();
   }
 
   public WhirlpoolClient createClient() {
@@ -336,8 +333,8 @@ public abstract class AbstractIntegrationTest {
   protected WhirlpoolWalletConfig computeWhirlpoolWalletConfig() {
     DataSourceFactory dataSourceFactory =
         new DojoDataSourceFactory(BackendServer.TESTNET, false, null);
-    IWhirlpoolHttpClientService multiUsageHttpClientService =
-        new IWhirlpoolHttpClientService() {
+    IHttpClientService multiUsageHttpClientService =
+        new IHttpClientService() {
           @Override
           public IHttpClient getHttpClient(HttpUsage httpUsage) {
             return null;
@@ -358,10 +355,9 @@ public abstract class AbstractIntegrationTest {
             rpcClientServiceServer,
             null,
             null,
-            new SorobanClientApi(),
-            TestNet3Params.get(),
+            bip47Util,
+            WhirlpoolNetwork.TESTNET,
             false,
-            WhirlpoolServer.TESTNET.getSigningPaymentCode(),
             false);
     return config;
   }

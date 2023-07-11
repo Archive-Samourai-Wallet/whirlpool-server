@@ -135,9 +135,6 @@ public class StatusWebController {
               pools.add(poolAttributes);
             });
     model.addAttribute("pools", pools);
-    model.addAttribute("nbInputsClassic", poolService.getNbInputsBySoroban(false));
-    model.addAttribute("nbInputsSoroban", poolService.getNbInputsBySoroban(true));
-    model.addAttribute("nbInputsTotal", poolService.getNbInputs());
     return "status";
   }
 

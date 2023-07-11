@@ -2,12 +2,12 @@ package com.samourai.whirlpool.server.services;
 
 import com.samourai.http.client.HttpUsage;
 import com.samourai.http.client.IHttpClient;
-import com.samourai.http.client.IWhirlpoolHttpClientService;
+import com.samourai.http.client.IHttpClientService;
 import com.samourai.soroban.client.RpcWallet;
 import com.samourai.stomp.client.IStompClientService;
 import com.samourai.stomp.client.JettyStompClientService;
 import com.samourai.tor.client.TorClientService;
-import com.samourai.wallet.bip47.rpc.PaymentCode;
+import com.samourai.wallet.bip47.rpc.java.Bip47UtilJava;
 import com.samourai.wallet.chain.ChainSupplier;
 import com.samourai.whirlpool.client.mix.MixParams;
 import com.samourai.whirlpool.client.mix.handler.*;
@@ -21,7 +21,6 @@ import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.services.rpc.RpcClientServiceServer;
 import java.lang.invoke.MethodHandles;
 import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.NetworkParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,8 +46,7 @@ public class WhirlpoolClientService {
     this.rpcClientServiceServer = rpcClientServiceServer;
   }
 
-  public WhirlpoolClientConfig createWhirlpoolClientConfig(
-      String serverUrl, NetworkParameters params) {
+  public WhirlpoolClientConfig createWhirlpoolClientConfig() {
     TorClientService torClientService =
         new TorClientService() {
           @Override
@@ -57,8 +55,8 @@ public class WhirlpoolClientService {
     IStompClientService stompClientService =
         new JettyStompClientService(
             httpClientService, WhirlpoolProtocol.HEADER_MESSAGE_TYPE, ClientUtils.USER_AGENT);
-    IWhirlpoolHttpClientService multiUsageHttpClientService =
-        new IWhirlpoolHttpClientService() {
+    IHttpClientService multiUsageHttpClientService =
+        new IHttpClientService() {
           @Override
           public IHttpClient getHttpClient(HttpUsage httpUsage) {
             return httpClientService.getHttpClient();
@@ -71,17 +69,16 @@ public class WhirlpoolClientService {
         };
 
     try {
-      PaymentCode paymentCodeCoordinator = serverConfig.computeSigningPaymentCode();
       return new WhirlpoolClientConfig(
           multiUsageHttpClientService,
           stompClientService,
           torClientService,
           rpcClientServiceServer,
-          new SorobanClientApi(),
+          new SorobanClientApi(serverConfig.getWhirlpoolNetwork()),
+          Bip47UtilJava.getInstance(),
           null,
-          params,
+          serverConfig.getWhirlpoolNetwork(), // TODO String serverUrl = "http://127.0.0.1:" + port;
           IndexRange.FULL,
-          paymentCodeCoordinator,
           false);
     } catch (Exception e) {
       throw new RuntimeException(e);

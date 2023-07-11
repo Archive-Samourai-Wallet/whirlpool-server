@@ -3,6 +3,7 @@ package com.samourai.whirlpool.server.config;
 import com.samourai.javaserver.config.ServerConfig;
 import com.samourai.javaserver.exceptions.NotifiableException;
 import com.samourai.wallet.bip47.rpc.PaymentCode;
+import com.samourai.whirlpool.client.wallet.beans.WhirlpoolNetwork;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.server.beans.FailMode;
 import com.samourai.whirlpool.server.exceptions.ServerErrorCode;
@@ -51,6 +52,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
   private String coordinatorId;
   private String externalUrlClear;
   private String externalUrlOnion;
+  private WhirlpoolNetwork whirlpoolNetwork;
 
   public SamouraiFeeConfig getSamouraiFees() {
     return samouraiFees;
@@ -244,6 +246,14 @@ public class WhirlpoolServerConfig extends ServerConfig {
 
   public void setExternalUrlOnion(String externalUrlOnion) {
     this.externalUrlOnion = externalUrlOnion;
+  }
+
+  public WhirlpoolNetwork getWhirlpoolNetwork() {
+    return whirlpoolNetwork;
+  }
+
+  public void setWhirlpoolNetwork(WhirlpoolNetwork whirlpoolNetwork) {
+    this.whirlpoolNetwork = whirlpoolNetwork;
   }
 
   public static class RegisterInputConfig {
@@ -950,7 +960,9 @@ public class WhirlpoolServerConfig extends ServerConfig {
             + ", externalUrlClear="
             + externalUrlClear
             + ", externalUrlOnion="
-            + externalUrlOnion);
+            + externalUrlOnion
+            + ", whirlpoolNetwork="
+            + whirlpoolNetwork);
     configInfo.put("testMode", String.valueOf(testMode));
     configInfo.put("failMode", String.valueOf(failMode));
     configInfo.put(

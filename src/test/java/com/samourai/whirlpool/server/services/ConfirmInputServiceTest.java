@@ -151,6 +151,7 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
             false,
             blockchainDataService.getBlockHeight(),
             null,
+            null,
             new LinkedHashMap<>())
         .getOutPoint();
     waitMixLimitsService(mix);
@@ -167,6 +168,7 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
             false,
             false,
             blockchainDataService.getBlockHeight(),
+            null,
             null,
             null)
         .getOutPoint();
@@ -238,6 +240,7 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
         false,
         blockchainDataService.getBlockHeight(),
         null,
+        null,
         null);
     waitMixLimitsService(mix);
     testUtils.assertPoolEmpty(pool);
@@ -252,6 +255,7 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
         false,
         false,
         blockchainDataService.getBlockHeight(),
+        null,
         null,
         null);
     waitMixLimitsService(mix);

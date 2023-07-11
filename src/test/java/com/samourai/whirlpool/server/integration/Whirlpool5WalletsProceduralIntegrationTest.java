@@ -3,7 +3,6 @@ package com.samourai.whirlpool.server.integration;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import com.samourai.wallet.bip47.rpc.BIP47Wallet;
-import com.samourai.wallet.bip47.rpc.PaymentAddress;
 import com.samourai.wallet.bip47.rpc.PaymentCode;
 import com.samourai.wallet.bip69.BIP69InputComparator;
 import com.samourai.wallet.bip69.BIP69OutputComparator;
@@ -519,20 +518,18 @@ public class Whirlpool5WalletsProceduralIntegrationTest extends AbstractIntegrat
       String toPCode = mixers.get(i);
 
       // sender calculates address with receiver's payment code
-      PaymentAddress sendAddress =
+      SegwitAddress sendAddress =
           bip47Util.getSendAddress(
               bip47Wallets.get(fromPCode), new PaymentCode(toPCode), 0, params);
       // receiver calculates address with sender's payment code
-      PaymentAddress receiveAddress =
+      SegwitAddress receiveAddress =
           bip47Util.getReceiveAddress(
               bip47Wallets.get(toPCode), new PaymentCode(fromPCode), 0, params);
 
       // sender calculates from pubkey
-      String addressFromSender =
-          bech32Util.toBech32(sendAddress.getSendECKey().getPubKey(), params);
+      String addressFromSender = bech32Util.toBech32(sendAddress.getECKey().getPubKey(), params);
       // receiver can calculate from privkey
-      String addressToReceiver =
-          bech32Util.toBech32(receiveAddress.getReceiveECKey().getPubKey(), params);
+      String addressToReceiver = bech32Util.toBech32(receiveAddress.getECKey().getPubKey(), params);
       Assertions.assertEquals(addressFromSender, addressToReceiver);
 
       Pair<Byte, byte[]> pair = Bech32Segwit.decode(isTestnet ? "tb" : "bc", addressToReceiver);

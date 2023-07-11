@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{decorators/dashboard}">
+<head>
+    <title>Clients</title>
+    <meta http-equiv="refresh" content="60" />
+    <link rel="stylesheet" href="/css/smartwizard.css"/>
+    <link rel="stylesheet" href="/css/status.css"/>
+</head>
+<body>
+    <div layout:fragment="main">
+        <h1 class="h2">Clients
+            <svg width="20px" height="20px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid" class="lds-eclipse">
+                <path stroke="none" d="M10 50A40 40 0 0 0 90 50A40 42 0 0 1 10 50" fill="#bd4030">
+                    <animateTransform attributeName="transform" type="rotate" calcMode="linear" values="0 50 51;360 50 51" keyTimes="0;1" dur="1s" begin="0s" repeatCount="indefinite"></animateTransform>
+                </path>
+            </svg>
+        </h1>
+
+        <table class="table table-sm">
+            <thead>
+                <th class="align-middle">PoolId</th>
+                <th class="align-middle">Status</th>
+                <th class="align-middle">Utxo</th>
+                <th class="align-middle">Amount</th>
+                <th class="align-middle">Liquidity</th>
+                <th class="align-middle">Tor</th>
+                <th class="align-middle">Canal</th>
+                <th class="align-middle">Since</th>
+                <th class="align-middle">Last seen</th>
+                <th class="align-middle">Username / userhash</th>
+            </thead>
+            <tbody>
+            <div th:each="input,inputIter : *{registeredInputs}">
+                <tr>
+                <td class="align-middle">
+                    <span th:text="${input.right.poolId}"/>
+                </td>
+                    <td class="align-middle">
+                        <small th:text="${input.left}"/>
+                    </td>
+                    <td class="align-middle">
+                        <small th:text="${input.right.outPoint.toKey()}"/>
+                    </td>
+                    <td class="align-middle">
+                        <small th:text="${@templateUtil.satoshisToBtc(input.right.outPoint.value)}"/>
+                    </td>
+                    <td class="align-middle">
+                        <span th:text="${input.right.liquidity?'LIQUIDITY':'MUSTMIX'}"/>
+                    </td>
+                    <td class="align-middle">
+                        <span th:text="${input.right.tor!=null?(input.right.tor?'Yes':'No'):'unknown'}"/>
+                    </td>
+                    <td class="align-middle">
+                        <span th:text="${input.right.isSoroban()?'SOROBAN':'CLASSIC'}"/>
+                    </td>
+                    <td class="align-middle">
+                        <span th:text="${#dates.format(input.right.since, 'dd-MMM-yyyy HH:mm:ss')}"/>
+                    </td>
+                    <td class="align-middle">
+                        <small th:if="${input.right.isSoroban()}">
+                            <span th:text="${#dates.format(input.right.sorobanLastSeen, 'dd-MMM-yyyy HH:mm:ss')}"/>
+                        </small>
+                        <small th:if="${!input.right.isSoroban()}">now</small>
+                    </td>
+                    <td class="align-middle">
+                        <small th:text="${input.right.username!=null?input.right.username:'-'}"/><br/>
+                        <small th:text="${input.right.lastUserHash!=null?input.right.lastUserHash:'-'}"/>
+                    </td>
+                </tr>
+            </div>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

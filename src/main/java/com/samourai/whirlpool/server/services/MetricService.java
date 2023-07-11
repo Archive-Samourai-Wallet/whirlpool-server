@@ -3,8 +3,6 @@ package com.samourai.whirlpool.server.services;
 import com.samourai.whirlpool.protocol.websocket.notifications.MixStatus;
 import com.samourai.whirlpool.server.beans.*;
 import com.samourai.whirlpool.server.beans.export.MixCsv;
-import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
-import com.samourai.whirlpool.server.persistence.to.MixTO;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Tag;
 import java.lang.invoke.MethodHandles;
@@ -13,7 +11,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collection;
 import org.apache.commons.lang3.BooleanUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -21,7 +18,6 @@ import org.springframework.stereotype.Service;
 @Service
 public class MetricService {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-  public static boolean MOCK = false; // METRICS MOCK
 
   private static final String COUNTER_MIX_SUCCESS_TOTAL = "whirlpool_mix_success_total";
   private static final String COUNTER_MIX_FAIL_TOTAL = "whirlpool_mix_fail_total";
@@ -49,7 +45,7 @@ public class MetricService {
 
   public MetricService() {}
 
-  public void onMixResult(MixCsv mix, Collection<ConfirmedInput> inputs) {
+  public void onMixResult(MixCsv mix, Collection<RegisteredInput> inputs) {
     if (MixStatus.SUCCESS.equals(mix.getMixStatus())) {
       // mix success
       Metrics.counter(COUNTER_MIX_SUCCESS_TOTAL, "poolId", mix.getPoolId()).increment();
@@ -70,8 +66,7 @@ public class MetricService {
     }
 
     // inputs
-    for (ConfirmedInput confirmedInput : inputs) {
-      RegisteredInput input = confirmedInput.getRegisteredInput();
+    for (RegisteredInput input : inputs) {
       Metrics.counter(
               COUNTER_MIX_INPUT_TOTAL,
               "poolId",
@@ -97,36 +92,27 @@ public class MetricService {
     Iterable<Tag> tagsClearnet =
         Arrays.asList(Tag.of("poolId", pool.getPoolId()), Tag.of("tor", Boolean.toString(false)));
     Metrics.gauge(
-        GAUGE_POOL_QUEUE_MUSTMIX, tagsTor, pool, p -> mock(p.getMustMixQueue().getSizeByTor(true)));
+        GAUGE_POOL_QUEUE_MUSTMIX, tagsTor, pool, p -> p.getMustMixQueue().getSizeByTor(true));
     Metrics.gauge(
-        GAUGE_POOL_QUEUE_MUSTMIX,
-        tagsClearnet,
-        pool,
-        p -> mock(p.getMustMixQueue().getSizeByTor(false)));
+        GAUGE_POOL_QUEUE_MUSTMIX, tagsClearnet, pool, p -> p.getMustMixQueue().getSizeByTor(false));
 
     // queue-liquidity
     Metrics.gauge(
-        GAUGE_POOL_QUEUE_LIQUIDITY,
-        tagsTor,
-        pool,
-        p -> mock(p.getLiquidityQueue().getSizeByTor(true)));
+        GAUGE_POOL_QUEUE_LIQUIDITY, tagsTor, pool, p -> p.getLiquidityQueue().getSizeByTor(true));
     Metrics.gauge(
         GAUGE_POOL_QUEUE_LIQUIDITY,
         tagsClearnet,
         pool,
-        p -> mock(p.getLiquidityQueue().getSizeByTor(false)));
+        p -> p.getLiquidityQueue().getSizeByTor(false));
 
     // mixing-mustMix
     Iterable<Tag> tags = Arrays.asList(Tag.of("poolId", pool.getPoolId()));
     Metrics.gauge(
-        GAUGE_POOL_MIXING_MUSTMIX, tags, pool, p -> mock(p.getCurrentMix().getNbInputsMustMix()));
+        GAUGE_POOL_MIXING_MUSTMIX, tags, pool, p -> p.getCurrentMix().getNbInputsMustMix());
 
     // mixing-liquidity
     Metrics.gauge(
-        GAUGE_POOL_MIXING_LIQUIDITY,
-        tags,
-        pool,
-        p -> mock(p.getCurrentMix().getNbInputsLiquidities()));
+        GAUGE_POOL_MIXING_LIQUIDITY, tags, pool, p -> p.getCurrentMix().getNbInputsLiquidities());
 
     // start time
     Metrics.gauge(
@@ -134,96 +120,5 @@ public class MetricService {
         tags,
         pool,
         p -> p.getCurrentMix().getTimeStarted().getTime() / 1000);
-  }
-
-  private long mock(long nb) {
-    if (!MOCK) {
-      return nb;
-    }
-    return nb + RandomUtils.nextInt(0, 30);
-  }
-
-  public void mockPools(Collection<Pool> pools) {
-    if (!MOCK) {
-      return;
-    }
-    for (Pool pool : pools) {
-      TxOutPoint outPoint = new TxOutPoint("hash", RandomUtils.nextInt(0, 999999), 1, 1, null, "");
-      RegisteredInput input =
-          new RegisteredInput(
-              pool.getPoolId(),
-              "username" + RandomUtils.nextInt(0, 999999),
-              false,
-              outPoint,
-              false,
-              null,
-              null,
-              "");
-      TxOutPoint outPoint2 =
-          new TxOutPoint("hash2", RandomUtils.nextInt(0, 999999), 1, 1, null, "");
-      RegisteredInput input2 =
-          new RegisteredInput(
-              pool.getPoolId(),
-              "username" + RandomUtils.nextInt(0, 999999),
-              true,
-              outPoint2,
-              false,
-              null,
-              null,
-              "");
-
-      Mix mix = pool.getCurrentMix();
-      if (mix != null) {
-        if (RandomUtils.nextBoolean()) {
-          try {
-            mix.registerConfirmingInput(input);
-          } catch (Exception e) {
-            log.error("", e);
-          }
-          try {
-            mix.registerInput(new ConfirmedInput(input, "userHash"));
-          } catch (Exception e) {
-            log.error("", e);
-          }
-        }
-        if (RandomUtils.nextBoolean()) {
-          try {
-            mix.registerConfirmingInput(input2);
-          } catch (Exception e) {
-            log.error("", e);
-          }
-          try {
-            mix.registerInput(new ConfirmedInput(input2, "userHash2"));
-          } catch (Exception e) {
-            log.error("", e);
-          }
-        }
-        if (RandomUtils.nextBoolean()) {
-          onBlame(input);
-          if (RandomUtils.nextBoolean()) {
-            onBan(input);
-          }
-        }
-
-        if (RandomUtils.nextBoolean()) {
-          if (RandomUtils.nextBoolean()) {
-            mix.setMixStatusAndTime(MixStatus.SUCCESS);
-          } else {
-            mix.setMixStatusAndTime(MixStatus.FAIL);
-            if (RandomUtils.nextBoolean()) {
-              mix.setFailReason(FailReason.DISCONNECT);
-            } else if (RandomUtils.nextBoolean()) {
-              mix.setFailReason(FailReason.FAIL_REGISTER_OUTPUTS);
-            } else {
-              mix.setFailReason(FailReason.FAIL_SIGNING);
-            }
-          }
-          MixTO mixTO = mix.computeMixTO();
-          mixTO.setFrom(mix, RandomUtils.nextLong(100, 10000), RandomUtils.nextLong(1, 1000));
-          MixCsv mixCsv = new MixCsv(mixTO);
-          onMixResult(mixCsv, mix.getInputs());
-        }
-      }
-    }
   }
 }

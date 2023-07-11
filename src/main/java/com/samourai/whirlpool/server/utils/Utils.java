@@ -20,7 +20,6 @@ import com.samourai.whirlpool.server.services.rpc.JSONRpcClientServiceImpl;
 import com.samourai.whirlpool.server.services.rpc.RpcClientService;
 import java.lang.invoke.MethodHandles;
 import java.math.BigDecimal;
-import java.security.SecureRandom;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
@@ -34,7 +33,6 @@ import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 
 public class Utils {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-  private static final SecureRandom secureRandom = new SecureRandom();
   private static final ServerUtils serverUtils = ServerUtils.getInstance();
 
   private static int BTC_TO_SATOSHIS = 100000000;

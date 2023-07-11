@@ -8,7 +8,6 @@ import com.samourai.whirlpool.client.mix.handler.PremixHandler;
 import com.samourai.whirlpool.client.mix.handler.UtxoWithBalance;
 import com.samourai.whirlpool.client.utils.ClientUtils;
 import com.samourai.whirlpool.protocol.websocket.notifications.MixStatus;
-import com.samourai.whirlpool.server.beans.ConfirmedInput;
 import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
@@ -113,16 +112,14 @@ public class SigningServiceTest extends AbstractIntegrationTest {
     TxOutPoint firstTxOutPoint =
         createAndMockTxOutPoint(testUtils.generateSegwitAddress(), inputBalance, 10);
     mix.registerInput(
-        new ConfirmedInput(
-            new RegisteredInput(
-                mix.getPool().getPoolId(),
-                firstUsername,
-                false,
-                firstTxOutPoint,
-                false,
-                null,
-                null,
-                null),
+        new RegisteredInput(
+            mix.getPool().getPoolId(),
+            firstUsername,
+            false,
+            firstTxOutPoint,
+            false,
+            null,
+            null,
             "userHash1"));
     mix.registerOutput(testUtils.generateSegwitAddress().getBech32AsString(), bordereau);
 

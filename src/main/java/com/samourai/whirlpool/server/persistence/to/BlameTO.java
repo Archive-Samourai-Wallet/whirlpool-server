@@ -40,7 +40,7 @@ public class BlameTO extends EntityCreatedTO {
     return mixId;
   }
 
-  public Boolean getTor() {
+  public Boolean isTor() {
     return tor;
   }
 
@@ -53,7 +53,7 @@ public class BlameTO extends EntityCreatedTO {
         + ", mixId="
         + (mixId != null ? mixId : "null")
         + ", tor="
-        + BooleanUtils.toStringTrueFalse(tor)
+        + (tor != null ? BooleanUtils.toStringTrueFalse(tor) : "null")
         + ", created="
         + (getCreated() != null ? getCreated() : "");
   }

@@ -1,10 +1,7 @@
 package com.samourai.whirlpool.server.beans;
 
-import com.samourai.javaserver.exceptions.NotifiableException;
 import com.samourai.wallet.util.RandomUtil;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
-import com.samourai.whirlpool.server.exceptions.AlreadyRegisteredInputException;
-import com.samourai.whirlpool.server.exceptions.ServerErrorCode;
 import com.samourai.whirlpool.server.utils.Utils;
 import java.lang.invoke.MethodHandles;
 import java.util.*;
@@ -22,34 +19,36 @@ public class InputPool {
     this.inputsById = new ConcurrentHashMap<>();
   }
 
-  public void register(RegisteredInput registeredInput) throws NotifiableException {
-    if (!hasInput(registeredInput.getOutPoint())) {
-      String username = registeredInput.getUsername();
-      if (!findByUsername(username).isPresent()) {
-        String inputId = Utils.computeInputId(registeredInput.getOutPoint());
-        inputsById.put(inputId, registeredInput);
-      } else {
-        throw new NotifiableException(
-            ServerErrorCode.INPUT_ALREADY_REGISTERED,
-            "Username already registered another input: " + username); // shouldn't happen...
-      }
-    } else {
-      throw new AlreadyRegisteredInputException(
-          "Input already registered: " + registeredInput.getOutPoint());
-    }
+  public void register(RegisteredInput registeredInput) {
+    // overwrite if it was already registered
+    String inputId = Utils.computeInputId(registeredInput.getOutPoint());
+    inputsById.put(inputId, registeredInput);
   }
 
   public Optional<RegisteredInput> findByUsername(String username) {
     return inputsById
         .values()
         .parallelStream()
-        .filter(registeredInput -> registeredInput.getUsername().equals(username))
+        .filter(registeredInput -> username.equals(registeredInput.getUsername()))
         .findFirst();
+  }
+
+  public Optional<RegisteredInput> findByUtxo(TxOutPoint outPoint) {
+    return findByUtxo(outPoint.getHash(), outPoint.getIndex());
   }
 
   public Optional<RegisteredInput> findByUtxo(String utxoHash, long utxoIndex) {
     String key = Utils.computeInputId(utxoHash, utxoIndex);
     return Optional.ofNullable(inputsById.get(key));
+  }
+
+  public Optional<RegisteredInput> findByAddress(String address) {
+    String addressToLower = address.toLowerCase();
+    return inputsById.values().stream()
+        .filter(
+            confirmedInput ->
+                addressToLower.equals(confirmedInput.getOutPoint().getToAddress().toLowerCase()))
+        .findFirst();
   }
 
   public synchronized Optional<RegisteredInput> removeRandom(
@@ -91,6 +90,10 @@ public class InputPool {
     return input;
   }
 
+  public synchronized Optional<RegisteredInput> removeByUtxo(TxOutPoint txOut) {
+    return removeByUtxo(txOut.getHash(), txOut.getIndex());
+  }
+
   public synchronized Collection<RegisteredInput> clear() {
     Collection<RegisteredInput> inputs =
         new LinkedList<>(inputsById.values()); // copy to avoid getting cleared next!
@@ -128,5 +131,22 @@ public class InputPool {
   public int getSizeBySoroban(boolean soroban) {
     return (int)
         inputsById.values().parallelStream().filter(input -> soroban == input.isSoroban()).count();
+  }
+
+  public int getSizeByLiquidity(boolean liquidity) {
+    return (int)
+        inputsById
+            .values()
+            .parallelStream()
+            .filter(input -> liquidity == input.isLiquidity())
+            .count();
+  }
+
+  public long sumAmount() {
+    return inputsById.values().stream().mapToLong(input -> input.getOutPoint().getValue()).sum();
+  }
+
+  public Collection<RegisteredInput> _getInputs() {
+    return inputsById.values();
   }
 }

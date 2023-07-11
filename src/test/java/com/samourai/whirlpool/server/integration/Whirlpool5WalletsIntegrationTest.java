@@ -6,7 +6,6 @@ import com.samourai.wallet.bipWallet.BipWallet;
 import com.samourai.wallet.hd.BIP_WALLET;
 import com.samourai.wallet.segwit.SegwitAddress;
 import com.samourai.whirlpool.protocol.websocket.notifications.MixStatus;
-import com.samourai.whirlpool.server.beans.ConfirmedInput;
 import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.integration.manual.ManualMixer;
@@ -449,7 +448,7 @@ public class Whirlpool5WalletsIntegrationTest extends AbstractIntegrationTest {
     // connected clients should have registered their inputs...
     Thread.sleep(2000);
     Assertions.assertEquals(MixStatus.CONFIRM_INPUT, mix.getMixStatus());
-    Assertions.assertEquals(NB_CLIENTS - 1, mix.getInputs().size());
+    Assertions.assertEquals(NB_CLIENTS - 1, mix.getInputs().getSize());
 
     // connect last client
     Thread.sleep(500);
@@ -460,8 +459,7 @@ public class Whirlpool5WalletsIntegrationTest extends AbstractIntegrationTest {
     // all clients should have registered their inputs
     Assertions.assertEquals(NB_CLIENTS, mix.getNbInputs());
 
-    for (ConfirmedInput confirmedInput : mix.getInputs()) {
-      RegisteredInput registeredInput = confirmedInput.getRegisteredInput();
+    for (RegisteredInput registeredInput : mix.getInputs()._getInputs()) {
       String txOutPointStr =
           registeredInput.getOutPoint().getHash() + "-" + registeredInput.getOutPoint().getIndex();
       Assertions.assertTrue(premixer.toUTXO.values().contains(txOutPointStr));

@@ -90,8 +90,7 @@ public class MixService {
   }
 
   /** Last input validations when adding it to a mix (not when queueing it) */
-  private void validateOnConfirmInput(
-      Mix mix, RegisteredInput registeredInput, String userHashOrNull)
+  private void validateOnConfirmInput(Mix mix, RegisteredInput registeredInput)
       throws QueueInputException, IllegalInputException {
     Pool pool = mix.getPool();
 
@@ -115,11 +114,13 @@ public class MixService {
 
     // verify unique userHash
     int maxInputsSameUserHash = whirlpoolServerConfig.getRegisterInput().getMaxInputsSameUserHash();
+    String userHashOrNull = registeredInput.getLastUserHash();
     if (userHashOrNull != null) {
       long countInputSameUserHash =
           mix.getInputs()
+              ._getInputs()
               .parallelStream()
-              .filter(input -> input.getUserHash().equals(userHashOrNull))
+              .filter(input -> userHashOrNull.equals(input.getLastUserHash()))
               .count();
       if ((countInputSameUserHash + 1) > maxInputsSameUserHash) {
         if (log.isTraceEnabled()) {
@@ -141,8 +142,9 @@ public class MixService {
     int maxInputsSameHash = whirlpoolServerConfig.getRegisterInput().getMaxInputsSameHash();
     long countInputsSameHash =
         mix.getInputs()
+            ._getInputs()
             .parallelStream()
-            .filter(input -> input.getRegisteredInput().getOutPoint().getHash().equals(inputHash))
+            .filter(input -> input.getOutPoint().getHash().equals(inputHash))
             .count();
     if ((countInputsSameHash + 1) > maxInputsSameHash) {
       if (log.isTraceEnabled()) {
@@ -154,14 +156,13 @@ public class MixService {
 
     // verify no input address reuse with other inputs
     String inputAddress = registeredInput.getOutPoint().getToAddress();
-    if (mix.getInputByAddress(inputAddress).isPresent()) {
+    if (mix.getInputs().findByAddress(inputAddress).isPresent()) {
       throw new QueueInputException(
           "Current mix is full for inputs with same address", registeredInput, pool.getPoolId());
     }
 
     // verify input not already confirmed
-    ConfirmedInput alreadyConfirmedInput = mix.findInput(registeredInput.getOutPoint());
-    if (alreadyConfirmedInput != null) {
+    if (mix.getInputs().findByUtxo(registeredInput.getOutPoint()).isPresent()) {
       // input already confirmed => reject duplicate client
       throw new IllegalInputException(
           ServerErrorCode.INPUT_ALREADY_REGISTERED, "Input already confirmed");
@@ -170,8 +171,7 @@ public class MixService {
 
   public void validateForConfirmInput(Mix mix, RegisteredInput registeredInput)
       throws QueueInputException, IllegalInputException {
-    String userHash = registeredInput.getLastUserHash(); // may be null
-    validateOnConfirmInput(mix, registeredInput, userHash);
+    validateOnConfirmInput(mix, registeredInput);
   }
 
   public synchronized byte[] confirmInput(
@@ -198,6 +198,8 @@ public class MixService {
                               + utxoHashOrNull
                               + ":"
                               + utxoIndexOrNull));
+      // update username from websocket
+      registeredInput.setUsername(username);
     } else {
       // old non-soroban clients
       registeredInput =
@@ -212,16 +214,14 @@ public class MixService {
     // set lastUserHash
     registeredInput.setLastUserHash(userHash);
 
-    ConfirmedInput confirmedInput = new ConfirmedInput(registeredInput, userHash);
-
-    // last input validations
-    validateOnConfirmInput(mix, confirmedInput.getRegisteredInput(), confirmedInput.getUserHash());
+    // last input validations (after setting lastUserHash)
+    validateOnConfirmInput(mix, registeredInput);
 
     // sign bordereau to reply
     byte[] signedBordereau = cryptoService.signBlindedOutput(blindedBordereau, mix.getKeyPair());
 
     // add to mix inputs
-    mix.registerInput(confirmedInput);
+    mix.registerInput(registeredInput);
     log.info(
         "["
             + mix.getLogId()
@@ -252,6 +252,7 @@ public class MixService {
   }
 
   public void onTimeoutConfirmInput(Mix mix) {
+    mix.cleanConfirmingInputs();
     if (MixStatus.CONFIRM_INPUT.equals(mix.getMixStatus()) && isConfirmInputReady(mix)) {
       // all inputs confirmed
       if (mix.getSurge() > 0 && !mix.isFullWithSurge() && !mix.isConfirmingSurge()) {
@@ -325,7 +326,7 @@ public class MixService {
         break;
       }
 
-      // invite one more
+      // invite
       try {
         inviteToMix(mix, registeredInput.get());
         nbInvited++;
@@ -416,7 +417,7 @@ public class MixService {
     }
 
     // verify no output address reuse with inputs
-    if (mix.getInputByAddress(receiveAddress).isPresent()) {
+    if (mix.getInputs().findByAddress(receiveAddress).isPresent()) {
       throw new IllegalInputException(
           ServerErrorCode.INPUT_ALREADY_REGISTERED, "output already registered as input");
     }
@@ -445,21 +446,24 @@ public class MixService {
 
   protected boolean revalidateInputsForSpent(Mix mix) {
     // check for spent inputs
-    List<ConfirmedInput> spentInputs = new ArrayList<>();
-    for (ConfirmedInput confirmedInput : mix.getInputs()) {
-      TxOutPoint outPoint = confirmedInput.getRegisteredInput().getOutPoint();
-      if (!rpcClientService.isTxOutUnspent(outPoint.getHash(), outPoint.getIndex())) {
-        // input was spent in meantime
-        spentInputs.add(confirmedInput);
-      }
-    }
+    List<RegisteredInput> spentInputs =
+        mix.getInputs()
+            ._getInputs()
+            .parallelStream()
+            .filter(
+                registeredInput -> {
+                  TxOutPoint outPoint = registeredInput.getOutPoint();
+                  // input was spent in meantime
+                  return !rpcClientService.isTxOutUnspent(outPoint.getHash(), outPoint.getIndex());
+                })
+            .collect(Collectors.toList());
 
     if (spentInputs.isEmpty()) {
       return true; // no input spent => valid
     }
 
     // remove spent inputs
-    for (ConfirmedInput spentInput : spentInputs) {
+    for (RegisteredInput spentInput : spentInputs) {
       log.warn(
           "Found " + spentInputs.size() + " confirmed input(s) spent in meantime!", spentInput);
       mix.unregisterInput(spentInput);
@@ -511,8 +515,9 @@ public class MixService {
     Mix mix = getMix(mixId, MixStatus.SIGNING);
 
     // check user
-    ConfirmedInput confirmedInput =
-        mix.getInputByUsername(username)
+    RegisteredInput confirmedInput =
+        mix.getInputs()
+            .findByUsername(username)
             .orElseThrow(
                 () ->
                     new IllegalInputException(
@@ -522,7 +527,7 @@ public class MixService {
       throw new IllegalInputException(
           ServerErrorCode.INPUT_ALREADY_REGISTERED, "User already signed, username=" + username);
     }
-    TxOutPoint txOutPoint = confirmedInput.getRegisteredInput().getOutPoint();
+    TxOutPoint txOutPoint = confirmedInput.getOutPoint();
 
     // sign
     Transaction tx = mix.getTx();
@@ -597,30 +602,15 @@ public class MixService {
       mix.setMixStatusAndTime(mixStatus);
 
       if (mixStatus == MixStatus.REGISTER_OUTPUT) {
-        // silently requeue late confirming inputs
+        // ignore confirming inputs (they are still in pool queue)
         Collection<RegisteredInput> confirmingInputs = mix.clearConfirmingInputs();
         if (log.isDebugEnabled()) {
           log.debug(
               "[MIX "
                   + mix.getLogId()
-                  + "] Requeueing "
+                  + "] Ignoring "
                   + confirmingInputs.size()
                   + " late confirming inputs");
-        }
-        for (RegisteredInput confirmingInput : confirmingInputs) {
-          try {
-            poolService.registerInput(
-                mix.getPool().getPoolId(),
-                confirmingInput.getUsername(),
-                confirmingInput.isLiquidity(),
-                confirmingInput.getOutPoint(),
-                confirmingInput.getTor(),
-                confirmingInput.getSorobanPaymentCode(),
-                confirmingInput.getLastUserHash(),
-                confirmingInput.getSorobanInitialPayload());
-          } catch (Exception e) {
-            log.error("requeue confirming input failed", e);
-          }
         }
       }
 
@@ -653,8 +643,9 @@ public class MixService {
   private void sendToMixingUsers(Mix mix, Object payload) {
     List<String> usernames =
         mix.getInputs()
+            ._getInputs()
             .parallelStream()
-            .map(confirmedInput -> confirmedInput.getRegisteredInput().getUsername())
+            .map(confirmedInput -> confirmedInput.getUsername())
             .collect(Collectors.toList());
     WSMessageService.sendPrivate(usernames, payload);
   }
@@ -758,11 +749,10 @@ public class MixService {
     //
     // create 1 mix tx
     //
-    for (ConfirmedInput confirmedInput : mix.getInputs()) {
-      RegisteredInput registeredInput = confirmedInput.getRegisteredInput();
+    for (RegisteredInput input : mix.getInputs()._getInputs()) {
       // send from bech32 input
-      long spendAmount = registeredInput.getOutPoint().getValue();
-      TxOutPoint registeredOutPoint = registeredInput.getOutPoint();
+      long spendAmount = input.getOutPoint().getValue();
+      TxOutPoint registeredOutPoint = input.getOutPoint();
       TransactionOutPoint outPoint =
           new TransactionOutPoint(
               params,
@@ -802,7 +792,7 @@ public class MixService {
 
   private void blameForRevealOutputAndResetMix(Mix mix) {
     // blame users who didn't register outputs
-    List<ConfirmedInput> confirmedInputsToBlame = mix.getInputsNotRevealedOutput();
+    List<RegisteredInput> confirmedInputsToBlame = mix.getInputsNotRevealedOutput();
     log.info(
         "["
             + mix.getLogId()
@@ -815,7 +805,7 @@ public class MixService {
 
   public void onTimeoutSigning(Mix mix) {
     // blame users who didn't sign
-    List<ConfirmedInput> confirmedInputsToBlame = mix.getInputsNotSigned();
+    List<RegisteredInput> confirmedInputsToBlame = mix.getInputsNotSigned();
     log.info(
         "["
             + mix.getLogId()
@@ -826,10 +816,10 @@ public class MixService {
   }
 
   public void blameAndResetMix(
-      Mix mix, List<ConfirmedInput> spentInputs, BlameReason blameReason, FailReason failReason) {
+      Mix mix, List<RegisteredInput> spentInputs, BlameReason blameReason, FailReason failReason) {
     // blame inputs
-    for (ConfirmedInput spentInput : spentInputs) {
-      blameService.blame(spentInput.getRegisteredInput(), blameReason, mix);
+    for (RegisteredInput spentInput : spentInputs) {
+      blameService.blame(spentInput, blameReason, mix);
     }
 
     // reset mix
@@ -837,10 +827,10 @@ public class MixService {
     goFail(mix, failReason, outpointKeysToBlame);
   }
 
-  private String computeOutpointKeysToBlame(Collection<ConfirmedInput> confirmedInputsToBlame) {
+  private String computeOutpointKeysToBlame(Collection<RegisteredInput> confirmedInputsToBlame) {
     List<String> outpointKeysToBlame = new ArrayList<>();
-    for (ConfirmedInput confirmedInputToBlame : confirmedInputsToBlame) {
-      outpointKeysToBlame.add(confirmedInputToBlame.getRegisteredInput().getOutPoint().toKey());
+    for (RegisteredInput confirmedInputToBlame : confirmedInputsToBlame) {
+      outpointKeysToBlame.add(confirmedInputToBlame.getOutPoint().toKey());
     }
     String outpointKeysToBlameStr = StringUtils.join(outpointKeysToBlame, ";");
     return outpointKeysToBlameStr;
@@ -868,36 +858,22 @@ public class MixService {
     changeMixStatus(mix.getMixId(), MixStatus.SUCCESS);
   }
 
-  private Optional<ConfirmedInput> unregister(
-      Mix mix, String username, Optional<ConfirmedInput> confirmedInputOpt) {
-    // remove from confirming inputs
-    mix.removeConfirmingInputByUsername(username);
-
-    // remove from confirmed input
-    if (confirmedInputOpt.isPresent()) {
-      ConfirmedInput confirmedInput = confirmedInputOpt.get();
-      mix.unregisterInput(confirmedInput);
-    }
-    return confirmedInputOpt;
-  }
-
   protected void onClientDisconnect(String username) {
     for (Mix mix : getCurrentMixs()) {
       if (!mix.isDone()) {
         String lastReceiveAddressRejected = mix.getLastReceiveAddressesRejected();
 
         // was input already confirmed?
-        Optional<ConfirmedInput> unregisterInputOpt = mix.getInputByUsername(username);
+        Optional<RegisteredInput> unregisterInputOpt = mix.getInputs().findByUsername(username);
         if (unregisterInputOpt.isPresent()) {
-          ConfirmedInput confirmedInput = unregisterInputOpt.get();
+          RegisteredInput confirmedInput = unregisterInputOpt.get();
 
           if (mix.isBlamableStatus()) {
             // don't unregister input to preserve original mix metrics
 
             // blame
             BlameReason blameReason = BlameReason.DISCONNECT;
-            blameService.blame(
-                confirmedInput.getRegisteredInput(), blameReason, mix, lastReceiveAddressRejected);
+            blameService.blame(confirmedInput, blameReason, mix, lastReceiveAddressRejected);
 
             // restart mix
             String failInfo = computeOutpointKeysToBlame(Arrays.asList(confirmedInput));
@@ -907,13 +883,18 @@ public class MixService {
             }
             goFail(mix, failReason, failInfo);
           } else {
-            // unregister
-            unregister(mix, username, unregisterInputOpt);
+            // remove from confirming inputs
+            mix.removeConfirmingInputByUsername(username);
+
+            // remove from confirmed input
+            if (unregisterInputOpt.isPresent()) {
+              mix.unregisterInput(unregisterInputOpt.get());
+            }
 
             // mix can continue
             if (mix.getSurge() > 0) {
               // adjust surge limit on mustmix disconnect
-              if (!confirmedInput.getRegisteredInput().isLiquidity()) {
+              if (!confirmedInput.isLiquidity()) {
                 // adjust surge which may be lowered down
                 mix.setSurge();
                 int excessLiquidities = mix.getExessLiquidityAndSurge();
@@ -966,7 +947,7 @@ public class MixService {
     // export to CSV
     try {
       MixCsv mixCsv = exportService.exportMix(mix);
-      metricService.onMixResult(mixCsv, mix.getInputs());
+      metricService.onMixResult(mixCsv, mix.getInputs()._getInputs());
     } catch (Exception e) {
       log.error("", e);
     }

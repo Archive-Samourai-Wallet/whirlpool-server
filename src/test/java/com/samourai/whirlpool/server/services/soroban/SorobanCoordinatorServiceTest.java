@@ -55,7 +55,7 @@ public class SorobanCoordinatorServiceTest extends AbstractIntegrationTest {
     poolInfoOrchestrator._runOrchestrator();
 
     RpcSession rpcSession = rpcClientServiceServer.getRpcSession("test");
-    SorobanClientApi sorobanClientApi = new SorobanClientApi();
+    SorobanClientApi sorobanClientApi = new SorobanClientApi(serverConfig.getWhirlpoolNetwork());
 
     // fetch pools from Soroban
     Collection<RegisterCoordinatorSorobanMessage> registerCoordinatorSorobanMessages =

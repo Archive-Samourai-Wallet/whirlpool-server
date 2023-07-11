@@ -103,7 +103,9 @@ public class ActivityCsv {
 
       // clientDetails
       Map<String, String> clientDetails = new LinkedHashMap<>();
-      clientDetails.put("u", registeredInput.getUsername());
+      if (registeredInput.getUsername() != null) {
+        clientDetails.put("u", registeredInput.getUsername());
+      }
       if (registeredInput.getLastUserHash() != null) {
         clientDetails.put("uh", registeredInput.getLastUserHash());
       }

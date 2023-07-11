@@ -74,8 +74,8 @@ public class FeePayloadService {
     if (feeOpReturnImpl == null) {
       throw new Exception("Unknown FeeOpReturnImpl");
     }
-    if (log.isDebugEnabled()) {
-      log.debug("decode(): opReturnVersion=" + feeOpReturnImpl.getOpReturnVersion());
+    if (log.isTraceEnabled()) {
+      log.trace("decode(): opReturnVersion=" + feeOpReturnImpl.getOpReturnVersion());
     }
     BIP47Account bip47Account =
         feeOpReturnImpl.getOpReturnVersion() == FeeOpReturnImplV0.OP_RETURN_VERSION

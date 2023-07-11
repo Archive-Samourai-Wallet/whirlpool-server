@@ -75,6 +75,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
           false,
           blockchainDataService.getBlockHeight(),
           null,
+          null,
           null);
       waitMixLimitsService(mix);
 
@@ -196,6 +197,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
                   false,
                   blockchainDataService.getBlockHeight(),
                   null,
+                  null,
                   null);
             });
     Assertions.assertEquals("Pool not found", e.getMessage());
@@ -243,6 +245,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
             false,
             blockchainDataService.getBlockHeight(),
             null,
+            null,
             null);
 
         // VERIFY
@@ -280,6 +283,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
                   false,
                   false,
                   blockchainDataService.getBlockHeight(),
+                  null,
                   null,
                   null);
             });
@@ -319,6 +323,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
                   false,
                   blockchainDataService.getBlockHeight(),
                   null,
+                  null,
                   null);
             });
     Assertions.assertEquals("Invalid signature", e.getMessage());
@@ -353,6 +358,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
         false,
         blockchainDataService.getBlockHeight(),
         null,
+        null,
         null);
     waitMixLimitsService(mix);
     testUtils.assertPoolEmpty(pool);
@@ -367,6 +373,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
         false,
         false,
         blockchainDataService.getBlockHeight(),
+        null,
         null,
         null); // AlreadyRegisteredInputException thrown in background
     waitMixLimitsService(mix);
@@ -402,6 +409,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
                   false,
                   false,
                   blockchainDataService.getBlockHeight(),
+                  null,
                   null,
                   null);
             });
@@ -440,6 +448,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
         false,
         blockchainDataService.getBlockHeight(),
         null,
+        null,
         null);
     waitMixLimitsService(mix);
 
@@ -475,6 +484,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
                   false,
                   false,
                   blockchainDataService.getBlockHeight(),
+                  null,
                   null,
                   null);
             });

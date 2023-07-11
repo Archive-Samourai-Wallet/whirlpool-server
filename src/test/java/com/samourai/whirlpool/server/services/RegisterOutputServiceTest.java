@@ -276,7 +276,7 @@ public class RegisterOutputServiceTest extends AbstractMixIntegrationTest {
     // - fail on receiveAddress reuse from inputs
     try {
       String reusedAddress =
-          mix.getInputs().iterator().next().getRegisteredInput().getOutPoint().getToAddress();
+          mix.getInputs()._getInputs().iterator().next().getOutPoint().getToAddress();
       registerOutputService.registerOutput(
           mix.computeInputsHash(),
           unblindedSignedBordereau,

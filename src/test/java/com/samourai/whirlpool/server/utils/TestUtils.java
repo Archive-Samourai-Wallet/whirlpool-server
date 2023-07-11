@@ -9,7 +9,6 @@ import com.samourai.wallet.segwit.SegwitAddress;
 import com.samourai.wallet.segwit.bech32.Bech32UtilGeneric;
 import com.samourai.wallet.send.provider.SimpleUtxoKeyProvider;
 import com.samourai.wallet.util.CryptoTestUtil;
-import com.samourai.whirlpool.server.beans.ConfirmedInput;
 import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.beans.Pool;
 import com.samourai.whirlpool.server.beans.RegisteredInput;
@@ -127,14 +126,11 @@ public class TestUtils {
     return pem;
   }
 
-  public ConfirmedInput computeConfirmedInput(
+  public RegisteredInput computeConfirmedInput(
       String poolId, String utxoHash, long utxoIndex, boolean liquidity) {
     TxOutPoint outPoint = new TxOutPoint(utxoHash, utxoIndex, 1234, 99, null, "fakeReceiveAddress");
-    RegisteredInput registeredInput =
-        new RegisteredInput(poolId, "foo", liquidity, outPoint, false, null, null);
-    ConfirmedInput confirmedInput =
-        new ConfirmedInput(registeredInput, "userHash" + utxoHash + utxoIndex);
-    return confirmedInput;
+    return new RegisteredInput(
+        poolId, "foo", liquidity, outPoint, false, null, null, "userHash" + utxoHash + utxoIndex);
   }
 
   public UnspentOutput computeUnspentOutput(String hash, int index, long value, String toAddress)

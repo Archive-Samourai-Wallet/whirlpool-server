@@ -44,9 +44,8 @@ public class BanServiceTest extends AbstractIntegrationTest {
 
     boolean liquidity = false; // mustmix
     RegisteredInput registeredInput =
-        testUtils
-            .computeConfirmedInput(mix.getPool().getPoolId(), UTXO_HASH, UTXO_INDEX, liquidity)
-            .getRegisteredInput();
+        testUtils.computeConfirmedInput(
+            mix.getPool().getPoolId(), UTXO_HASH, UTXO_INDEX, liquidity);
 
     // not banned yet
     Assertions.assertFalse(banService.findActiveBan(UTXO_HASH, UTXO_INDEX).isPresent());
@@ -97,9 +96,8 @@ public class BanServiceTest extends AbstractIntegrationTest {
 
     boolean liquidity = true; // liquidity
     RegisteredInput registeredInput =
-        testUtils
-            .computeConfirmedInput(mix.getPool().getPoolId(), UTXO_HASH, UTXO_INDEX, liquidity)
-            .getRegisteredInput();
+        testUtils.computeConfirmedInput(
+            mix.getPool().getPoolId(), UTXO_HASH, UTXO_INDEX, liquidity);
 
     // not banned yet
     Assertions.assertFalse(banService.findActiveBan(UTXO_HASH, UTXO_INDEX).isPresent());

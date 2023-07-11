@@ -56,7 +56,7 @@ public class RegisterInputService {
 
   public RegisteredInput registerInput(
       String poolId,
-      String username,
+      String usernameOrNull, // NULL for Soroban
       String signature,
       String utxoHash,
       long utxoIndex,
@@ -72,7 +72,7 @@ public class RegisterInputService {
     if (blockHeight > 0) { // check disabled for protocol < 0.23.9
       if (!blockchainDataService.checkBlockHeight(blockHeight)) {
         throw new IllegalInputException(
-            ServerErrorCode.INVALID_BLOCK_HEIGHT, "invalid blockHeight");
+            ServerErrorCode.INVALID_BLOCK_HEIGHT, "Invalid blockHeight: " + blockHeight);
       }
     }
 
@@ -80,10 +80,12 @@ public class RegisterInputService {
       throw new IllegalInputException(ServerErrorCode.INPUT_REJECTED, HEALTH_CHECK_SUCCESS);
     }
     if (!cryptoService.isValidTxHash(utxoHash)) {
-      throw new IllegalInputException(ServerErrorCode.INPUT_REJECTED, "Invalid utxoHash");
+      throw new IllegalInputException(
+          ServerErrorCode.INPUT_REJECTED, "Invalid utxoHash: " + utxoHash);
     }
     if (utxoIndex < 0) {
-      throw new IllegalInputException(ServerErrorCode.INPUT_REJECTED, "Invalid utxoIndex");
+      throw new IllegalInputException(
+          ServerErrorCode.INPUT_REJECTED, "Invalid utxoIndex: " + utxoIndex);
     }
 
     // verify UTXO not banned
@@ -136,7 +138,7 @@ public class RegisterInputService {
       RegisteredInput registeredInput =
           poolService.registerInput(
               poolId,
-              username,
+              usernameOrNull,
               liquidity,
               txOutPoint,
               tor,

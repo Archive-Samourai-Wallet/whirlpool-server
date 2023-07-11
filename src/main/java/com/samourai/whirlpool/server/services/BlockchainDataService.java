@@ -75,8 +75,8 @@ public class BlockchainDataService {
               + testBlockHeight);
       return false;
     } else if (spread > 1) {
-      if (log.isDebugEnabled()) {
-        log.debug(
+      if (log.isTraceEnabled()) {
+        log.trace(
             "blockHeight tolerance: spread="
                 + spread
                 + ", blockHeight="

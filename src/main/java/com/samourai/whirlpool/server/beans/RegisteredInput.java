@@ -7,14 +7,16 @@ import org.apache.commons.lang3.BooleanUtils;
 
 public class RegisteredInput {
   private String poolId;
-  private String username;
+  private String username; // null for Soroban clients until confirmed
   private TxOutPoint outPoint;
   private boolean liquidity;
-  private Boolean tor;
+  private Boolean tor; // null for Soroban clients until confirmed
+  private long since;
   private PaymentCode sorobanPaymentCode; // null for non-Soroban clients
   private Long sorobanLastSeen; // last seen time on Soroban
   private String sorobanInitialPayload; // encrypted registerInput payload on Soroban
   private String lastUserHash; // unknown until confirmInput attempt
+  private Long confirmingSince; // null until confirming
 
   public RegisteredInput(
       String poolId,
@@ -30,6 +32,7 @@ public class RegisteredInput {
     this.liquidity = liquidity;
     this.outPoint = outPoint;
     this.tor = tor;
+    this.since = System.currentTimeMillis();
     this.sorobanPaymentCode = sorobanPaymentCode;
     this.sorobanLastSeen = null;
     if (sorobanPaymentCode != null) {
@@ -37,6 +40,7 @@ public class RegisteredInput {
     }
     this.sorobanInitialPayload = sorobanInitialPayload;
     this.lastUserHash = lastUserHash;
+    this.confirmingSince = null;
   }
 
   public long computeMinerFees(Pool pool) {
@@ -51,6 +55,10 @@ public class RegisteredInput {
     return username;
   }
 
+  public void setUsername(String username) {
+    this.username = username;
+  }
+
   public boolean isLiquidity() {
     return liquidity;
   }
@@ -61,6 +69,10 @@ public class RegisteredInput {
 
   public Boolean getTor() {
     return tor;
+  }
+
+  public long getSince() {
+    return since;
   }
 
   public boolean isSoroban() {
@@ -91,6 +103,14 @@ public class RegisteredInput {
     this.lastUserHash = lastUserHash;
   }
 
+  public Long getConfirmingSince() {
+    return confirmingSince;
+  }
+
+  public void setConfirmingSince(Long confirmingSince) {
+    this.confirmingSince = confirmingSince;
+  }
+
   @Override
   public String toString() {
     return "poolId="
@@ -100,9 +120,11 @@ public class RegisteredInput {
         + ", liquidity="
         + liquidity
         + ", username="
-        + username
+        + (username != null ? username : "null")
         + ", tor="
         + BooleanUtils.toStringTrueFalse(tor)
+        + ", since="
+        + since
         + ", sorobanPaymentCode="
         + (sorobanPaymentCode != null
             ? Utils.obfuscateString(sorobanPaymentCode.toString(), 3)
@@ -110,7 +132,9 @@ public class RegisteredInput {
         + (sorobanLastSeen != null ? sorobanLastSeen : "null")
         + ", sorobanInitialPayload="
         + (sorobanInitialPayload != null ? Utils.obfuscateString(sorobanInitialPayload, 3) : "null")
-        + ",lastUserHash="
-        + (lastUserHash != null ? lastUserHash : "null");
+        + ", lastUserHash="
+        + (lastUserHash != null ? lastUserHash : "null")
+        + ", confirmingSince="
+        + (confirmingSince != null ? confirmingSince : "null");
   }
 }

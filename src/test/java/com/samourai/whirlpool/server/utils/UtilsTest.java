@@ -3,7 +3,7 @@ package com.samourai.whirlpool.server.utils;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import com.samourai.wallet.util.PrivKeyReader;
-import com.samourai.whirlpool.server.beans.ConfirmedInput;
+import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.beans.TxOutSignature;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.integration.AbstractIntegrationTest;
@@ -25,25 +25,25 @@ public class UtilsTest extends AbstractIntegrationTest {
 
   @Test
   public void computeBlameIdentitifer_mustmix() {
-    ConfirmedInput confirmedInput =
+    RegisteredInput confirmedInput =
         testUtils.computeConfirmedInput(
             "poolId", "cb2fad88ae75fdabb2bcc131b2f4f0ff2c82af22b6dd804dc341900195fb6187", 2, false);
 
     // mustmix => should ban TX0
     String expected = "cb2fad88ae75fdabb2bcc131b2f4f0ff2c82af22b6dd804dc341900195fb6187";
-    String actual = Utils.computeBlameIdentitifer(confirmedInput.getRegisteredInput());
+    String actual = Utils.computeBlameIdentitifer(confirmedInput);
     Assertions.assertEquals(expected, actual);
   }
 
   @Test
   public void computeBlameIdentitifer_liquidity() {
-    ConfirmedInput confirmedInput =
+    RegisteredInput confirmedInput =
         testUtils.computeConfirmedInput(
             "poolId", "cb2fad88ae75fdabb2bcc131b2f4f0ff2c82af22b6dd804dc341900195fb6187", 2, true);
 
     // liquidity => should ban UTXO
     String expected = "cb2fad88ae75fdabb2bcc131b2f4f0ff2c82af22b6dd804dc341900195fb6187:2";
-    String actual = Utils.computeBlameIdentitifer(confirmedInput.getRegisteredInput());
+    String actual = Utils.computeBlameIdentitifer(confirmedInput);
     Assertions.assertEquals(expected, actual);
   }
 

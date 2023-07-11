@@ -52,14 +52,6 @@ public class PoolService {
 
     // listen websocket onDisconnect
     wsSessionService.addOnDisconnectListener(username -> onClientDisconnect(username));
-
-    if (MetricService.MOCK) {
-      taskScheduler.scheduleAtFixedRate(
-          () -> {
-            metricService.mockPools(getPools());
-          },
-          4000);
-    }
   }
 
   public void __reset() {
@@ -184,7 +176,7 @@ public class PoolService {
 
   public RegisteredInput registerInput(
       String poolId,
-      String username,
+      String usernameOrNull, // null for Soroban
       boolean liquidity,
       TxOutPoint txOutPoint,
       Boolean tor,
@@ -213,7 +205,7 @@ public class PoolService {
     RegisteredInput registeredInput =
         new RegisteredInput(
             poolId,
-            username,
+            usernameOrNull,
             liquidity,
             txOutPoint,
             tor,
@@ -225,26 +217,35 @@ public class PoolService {
     if (!isUtxoConfirmed(txOutPoint, liquidity)) {
       throw new IllegalInputException(ServerErrorCode.INPUT_REJECTED, "Input is not confirmed");
     }
-    queueToPool(pool, registeredInput);
+
+    // queue input
+    getPoolQueue(registeredInput).register(registeredInput);
+    if (log.isDebugEnabled()) {
+      log.debug("[" + registeredInput.getPoolId() + "] +queue: " + registeredInput.toString());
+    }
     return registeredInput;
   }
 
-  private void queueToPool(Pool pool, RegisteredInput registeredInput) throws NotifiableException {
-    InputPool queue;
-    if (registeredInput.isLiquidity()) {
-      // liquidity
-      queue = pool.getLiquidityQueue();
-    } else {
-      // mustMix
-      queue = pool.getMustMixQueue();
-    }
+  public void unregisterInput(RegisteredInput registeredInput) throws NotifiableException {
+    InputPool queue = getPoolQueue(registeredInput);
 
     if (log.isDebugEnabled()) {
-      log.debug("[" + pool.getPoolId() + "] +queue: " + registeredInput.toString());
+      log.debug("[" + registeredInput.getPoolId() + "] -queue: " + registeredInput.toString());
     }
 
     // queue input
-    queue.register(registeredInput);
+    queue.removeByUtxo(
+        registeredInput.getOutPoint().getHash(), registeredInput.getOutPoint().getIndex());
+  }
+
+  private InputPool getPoolQueue(RegisteredInput registeredInput) throws NotifiableException {
+    Pool pool = getPool(registeredInput.getPoolId());
+    if (registeredInput.isLiquidity()) {
+      // liquidity
+      return pool.getLiquidityQueue();
+    }
+    // mustMix
+    return pool.getMustMixQueue();
   }
 
   public void resetLastUserHash(Mix mix) {

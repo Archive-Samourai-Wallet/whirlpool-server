@@ -28,6 +28,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
       new String[] {
         StatusWebController.ENDPOINT,
         HistoryWebController.ENDPOINT,
+        ClientsWebController.ENDPOINT,
         ConfigWebController.ENDPOINT,
         BanWebController.ENDPOINT,
         SystemWebController.ENDPOINT,
