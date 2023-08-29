@@ -51,6 +51,20 @@ public class InputPool {
         .findFirst();
   }
 
+  public Collection<RegisteredInput> findByQuarantine(boolean quarantine) {
+    return inputsById
+        .values()
+        .parallelStream()
+        .filter(registeredInput -> registeredInput.isQuarantine() == quarantine)
+        .collect(Collectors.toList());
+  }
+
+  public String getQuarantineDetails() {
+    return findByQuarantine(true).stream()
+        .map(input -> input.getOutPoint().toKey() + ": " + input.getQuarantineReason())
+        .toString();
+  }
+
   public synchronized Optional<RegisteredInput> removeRandom(
       Predicate<Map.Entry<String, RegisteredInput>> filter) {
     List<String> eligibleInputIds =
@@ -99,6 +113,10 @@ public class InputPool {
         new LinkedList<>(inputsById.values()); // copy to avoid getting cleared next!
     inputsById.clear();
     return inputs;
+  }
+
+  public synchronized void clearQuarantine() {
+    inputsById.values().stream().forEach(input -> input.clearQuarantine());
   }
 
   public void resetLastUserHash() {

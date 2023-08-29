@@ -17,16 +17,17 @@ public class RegisteredInput {
   private String sorobanInitialPayload; // encrypted registerInput payload on Soroban
   private String lastUserHash; // unknown until confirmInput attempt
   private Long confirmingSince; // null until confirming
+  private String quarantineReason; // only set when on "quarantine" for current mix
 
   public RegisteredInput(
-      String poolId,
-      String username,
-      boolean liquidity,
-      TxOutPoint outPoint,
-      Boolean tor,
-      PaymentCode sorobanPaymentCode,
-      String sorobanInitialPayload,
-      String lastUserHash) {
+          String poolId,
+          String username,
+          boolean liquidity,
+          TxOutPoint outPoint,
+          Boolean tor,
+          PaymentCode sorobanPaymentCode,
+          String sorobanInitialPayload,
+          String lastUserHash) {
     this.poolId = poolId;
     this.username = username;
     this.liquidity = liquidity;
@@ -41,6 +42,7 @@ public class RegisteredInput {
     this.sorobanInitialPayload = sorobanInitialPayload;
     this.lastUserHash = lastUserHash;
     this.confirmingSince = null;
+    this.quarantineReason = null;
   }
 
   public long computeMinerFees(Pool pool) {
@@ -111,30 +113,46 @@ public class RegisteredInput {
     this.confirmingSince = confirmingSince;
   }
 
+  public boolean isQuarantine() {
+    return quarantineReason != null;
+  }
+
+  public String getQuarantineReason() {
+    return quarantineReason;
+  }
+
+  public void setQuarantineReason(String quarantineReason) {
+    this.quarantineReason = quarantineReason;
+  }
+
+  public void clearQuarantine() {
+    this.quarantineReason = null;
+  }
+
   @Override
   public String toString() {
     return "poolId="
-        + poolId
-        + ", outPoint="
-        + outPoint
-        + ", liquidity="
-        + liquidity
-        + ", username="
-        + (username != null ? username : "null")
-        + ", tor="
-        + BooleanUtils.toStringTrueFalse(tor)
-        + ", since="
-        + since
-        + ", sorobanPaymentCode="
-        + (sorobanPaymentCode != null
+            + poolId
+            + ", outPoint="
+            + outPoint
+            + ", liquidity="
+            + liquidity
+            + ", username="
+            + (username != null ? username : "null")
+            + ", tor="
+            + BooleanUtils.toStringTrueFalse(tor)
+            + ", since="
+            + since
+            + ", sorobanPaymentCode="
+            + (sorobanPaymentCode != null
             ? Utils.obfuscateString(sorobanPaymentCode.toString(), 3)
             : "null")
-        + (sorobanLastSeen != null ? sorobanLastSeen : "null")
-        + ", sorobanInitialPayload="
-        + (sorobanInitialPayload != null ? Utils.obfuscateString(sorobanInitialPayload, 3) : "null")
-        + ", lastUserHash="
-        + (lastUserHash != null ? lastUserHash : "null")
-        + ", confirmingSince="
-        + (confirmingSince != null ? confirmingSince : "null");
+            + (sorobanLastSeen != null ? sorobanLastSeen : "null")
+            + ", sorobanInitialPayload="
+            + (sorobanInitialPayload != null ? Utils.obfuscateString(sorobanInitialPayload, 3) : "null")
+            + ", lastUserHash="
+            + (lastUserHash != null ? lastUserHash : "null")
+            + ", confirmingSince="
+            + (confirmingSince != null ? confirmingSince : "null");
   }
 }
