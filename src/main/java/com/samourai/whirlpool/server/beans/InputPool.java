@@ -98,7 +98,7 @@ public class InputPool {
   }
 
   public synchronized void clearQuarantine() {
-    inputsById.values().stream().forEach(input -> input.clearQuarantine());
+    findByQuarantine(true).forEach(input -> input.clearQuarantine());
   }
 
   public void resetLastUserHash() {
