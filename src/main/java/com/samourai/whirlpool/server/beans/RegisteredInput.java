@@ -11,6 +11,7 @@ public class RegisteredInput {
   private boolean liquidity;
   private String ip;
   private String lastUserHash; // unknown until confirmInput attempt
+  private String quarantineReason; // only set when on "quarantine" for current mix
 
   public RegisteredInput(
       String poolId,
@@ -25,6 +26,7 @@ public class RegisteredInput {
     this.outPoint = outPoint;
     this.ip = ip;
     this.lastUserHash = lastUserHash;
+    this.quarantineReason = null;
   }
 
   public long computeMinerFees(Pool pool) {
@@ -61,6 +63,22 @@ public class RegisteredInput {
 
   public boolean isTor() {
     return IP_TOR.equals(ip);
+  }
+
+  public boolean isQuarantine() {
+    return quarantineReason != null;
+  }
+
+  public String getQuarantineReason() {
+    return quarantineReason;
+  }
+
+  public void setQuarantineReason(String quarantineReason) {
+    this.quarantineReason = quarantineReason;
+  }
+
+  public void clearQuarantine() {
+    this.quarantineReason = null;
   }
 
   @Override

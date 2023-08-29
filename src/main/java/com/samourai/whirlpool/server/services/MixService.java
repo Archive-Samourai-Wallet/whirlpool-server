@@ -17,6 +17,7 @@ import com.samourai.whirlpool.server.exceptions.*;
 import com.samourai.whirlpool.server.services.rpc.RpcClientService;
 import com.samourai.whirlpool.server.utils.Utils;
 import java.lang.invoke.MethodHandles;
+import java.text.DateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
@@ -889,6 +890,9 @@ public class MixService {
             // unregister
             unregister(mix, username, unregisterInputOpt);
 
+            // invalidate quarantine to recompute it
+            mix.getPool().clearQuarantine();
+
             // mix can continue
             if (mix.getSurge() > 0) {
               // adjust surge limit on mustmix disconnect
@@ -982,6 +986,7 @@ public class MixService {
       currentMixs.remove(currentMix.getMixId());
       // TODO disconnect all clients (except liquidities?)
     }
+    pool.clearQuarantine();
 
     String mixId = mix.getMixId();
     currentMixs.put(mixId, mix);
@@ -995,10 +1000,15 @@ public class MixService {
   private Predicate<Map.Entry<String, RegisteredInput>> computeFilterInputMixable(Mix mix) {
     return entry -> {
       RegisteredInput registeredInput = entry.getValue();
+      if (registeredInput.isQuarantine()) {
+        return false; // not mixable
+      }
       try {
         validateForConfirmInput(mix, registeredInput);
         return true; // mixable
       } catch (Exception e) {
+        String dateStr = DateFormat.getDateTimeInstance().format(new Date());
+        registeredInput.setQuarantineReason(dateStr + ": " + e.getMessage());
         return false; // not mixable
       }
     };

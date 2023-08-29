@@ -50,8 +50,8 @@
                     <strong th:text="${pool.nbInputsSurge}"/> / <span th:text="${pool.mixSurge}"/> surges</span>
                 </td>
                 <td>
-                    <strong th:text="${pool.mustMixQueued}" title="mustMix"/> mustMix<br/>
-                    <strong th:text="${pool.liquiditiesQueued}" title="liquidities"/> liquidities<br/>
+                    <strong th:text="${pool.mustMixQueuedNoQuarantine}" title="mustMixs"/> mustMix <span th:if="${pool.mustMixQueuedQuarantine>0}" style="color:red; text-decoration:line-through">+ <span th:text="${pool.mustMixQueuedQuarantine}" th:title="${pool.mustMixQueuedQuarantineDetails}"/> quarantine</span><br/>
+                    <strong th:text="${pool.liquiditiesQueuedNoQuarantine}" title="liquidities"/> liquidities <span th:if="${pool.liquiditiesQueuedQuarantine>0}" style="color:red; text-decoration:line-through">+ <span th:text="${pool.liquiditiesQueuedQuarantine}" th:title="${pool.liquiditiesQueuedQuarantineDetails}"/> quarantine</span><br/>
                     <div th:if="${!pool.surgeDisabledForLowLiquidityPool}"><strong th:text="${pool.poolSurge}" title="surge limit"/> surges</div>
                     <div th:if="${pool.surgeDisabledForLowLiquidityPool}"><span style="text-decoration:line-through"><strong th:text="${pool.poolSurge}" title="surge limit"/> surges</span> (low liquidity)</div>
                 </td>

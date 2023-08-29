@@ -103,8 +103,24 @@ public class StatusWebController {
                       mix.getMixStatus(), currentStepElapsedTime, currentStepRemainingTime);
               poolAttributes.put("currentStepProgressLabel", currentStepProgressLabel);
 
-              poolAttributes.put("mustMixQueued", mix.getPool().getMustMixQueue().getSize());
-              poolAttributes.put("liquiditiesQueued", mix.getPool().getLiquidityQueue().getSize());
+              poolAttributes.put(
+                  "mustMixQueuedNoQuarantine",
+                  mix.getPool().getMustMixQueue().findByQuarantine(false).size());
+              poolAttributes.put(
+                  "mustMixQueuedQuarantine",
+                  mix.getPool().getMustMixQueue().findByQuarantine(true).size());
+              poolAttributes.put(
+                  "mustMixQueuedQuarantineDetails",
+                  mix.getPool().getMustMixQueue().getQuarantineDetails());
+              poolAttributes.put(
+                  "liquiditiesQueuedNoQuarantine",
+                  mix.getPool().getLiquidityQueue().findByQuarantine(false).size());
+              poolAttributes.put(
+                  "liquiditiesQueuedQuarantine",
+                  mix.getPool().getLiquidityQueue().findByQuarantine(true).size());
+              poolAttributes.put(
+                  "liquiditiesQueuedQuarantineDetails",
+                  mix.getPool().getLiquidityQueue().getQuarantineDetails());
               poolAttributes.put("mustMixQueued", mix.getPool().getMustMixQueue().getSize());
 
               Map<MixStatus, Timestamp> timeStatus = mix.getTimeStatus();

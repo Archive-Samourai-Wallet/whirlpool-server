@@ -71,6 +71,11 @@ public class Pool {
         denomination, computeMustMixBalanceMax(), liquidity);
   }
 
+  public void clearQuarantine() {
+    getLiquidityQueue().clearQuarantine();
+    getMustMixQueue().clearQuarantine();
+  }
+
   public boolean isSurgeDisabledForLowLiquidityPool() {
     return surge > 0 && liquidityQueue.getSize() < minLiquidityPoolForSurge;
   }
