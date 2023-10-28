@@ -51,7 +51,7 @@
                         <span th:text="${input.right.liquidity?'LIQUIDITY':'MUSTMIX'}"/>
                     </td>
                     <td class="align-middle">
-                        <span th:text="${input.right.tor!=null?(input.right.tor?'Yes':'No'):'unknown'}"/>
+                        <span th:text="${input.right.tor!=null?(input.right.tor?'Yes':'No'):'n/a'}"/>
                     </td>
                     <td class="align-middle">
                         <span th:text="${input.right.isSoroban()?'SOROBAN':'CLASSIC'}"/>

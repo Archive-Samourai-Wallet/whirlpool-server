@@ -20,14 +20,14 @@ public class RegisteredInput {
   private String quarantineReason; // only set when on "quarantine" for current mix
 
   public RegisteredInput(
-          String poolId,
-          String username,
-          boolean liquidity,
-          TxOutPoint outPoint,
-          Boolean tor,
-          PaymentCode sorobanPaymentCode,
-          String sorobanInitialPayload,
-          String lastUserHash) {
+      String poolId,
+      String username,
+      boolean liquidity,
+      TxOutPoint outPoint,
+      Boolean tor,
+      PaymentCode sorobanPaymentCode,
+      String sorobanInitialPayload,
+      String lastUserHash) {
     this.poolId = poolId;
     this.username = username;
     this.liquidity = liquidity;
@@ -132,27 +132,27 @@ public class RegisteredInput {
   @Override
   public String toString() {
     return "poolId="
-            + poolId
-            + ", outPoint="
-            + outPoint
-            + ", liquidity="
-            + liquidity
-            + ", username="
-            + (username != null ? username : "null")
-            + ", tor="
-            + BooleanUtils.toStringTrueFalse(tor)
-            + ", since="
-            + since
-            + ", sorobanPaymentCode="
-            + (sorobanPaymentCode != null
+        + poolId
+        + ", outPoint="
+        + outPoint
+        + ", liquidity="
+        + liquidity
+        + ", username="
+        + (username != null ? username : "null")
+        + ", tor="
+        + BooleanUtils.toStringTrueFalse(tor)
+        + ", since="
+        + since
+        + ", sorobanPaymentCode="
+        + (sorobanPaymentCode != null
             ? Utils.obfuscateString(sorobanPaymentCode.toString(), 3)
             : "null")
-            + (sorobanLastSeen != null ? sorobanLastSeen : "null")
-            + ", sorobanInitialPayload="
-            + (sorobanInitialPayload != null ? Utils.obfuscateString(sorobanInitialPayload, 3) : "null")
-            + ", lastUserHash="
-            + (lastUserHash != null ? lastUserHash : "null")
-            + ", confirmingSince="
-            + (confirmingSince != null ? confirmingSince : "null");
+        + (sorobanLastSeen != null ? sorobanLastSeen : "null")
+        + ", sorobanInitialPayload="
+        + (sorobanInitialPayload != null ? Utils.obfuscateString(sorobanInitialPayload, 3) : "null")
+        + ", lastUserHash="
+        + (lastUserHash != null ? lastUserHash : "null")
+        + ", confirmingSince="
+        + (confirmingSince != null ? confirmingSince : "null");
   }
 }

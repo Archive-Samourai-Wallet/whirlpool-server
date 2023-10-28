@@ -77,8 +77,8 @@ public class StatusWebController {
               poolAttributes.put("nbInputs", mix.getNbInputs());
               poolAttributes.put("nbInputsNonSurge", mix.getNbInputsNonSurge());
               poolAttributes.put("nbInputsSurge", mix.getNbInputsSurge());
-              poolAttributes.put("nbInputsMustMix", mix.getNbInputsMustMix());
-              poolAttributes.put("nbInputsLiquidities", mix.getNbInputsLiquidities());
+              poolAttributes.put("inputsMustMix", mix.getInputsMustMix());
+              poolAttributes.put("inputsLiquidities", mix.getInputsLiquidities());
               poolAttributes.put("elapsedTime", mix.getElapsedTime());
 
               Long currentStepElapsedTime =
@@ -105,22 +105,16 @@ public class StatusWebController {
 
               poolAttributes.put(
                   "mustMixQueuedNoQuarantine",
-                  mix.getPool().getMustMixQueue().findByQuarantine(false).size());
+                  mix.getPool().getMustMixQueue().findByQuarantine(false));
               poolAttributes.put(
                   "mustMixQueuedQuarantine",
-                  mix.getPool().getMustMixQueue().findByQuarantine(true).size());
-              poolAttributes.put(
-                  "mustMixQueuedQuarantineDetails",
-                  mix.getPool().getMustMixQueue().getQuarantineDetails());
+                  mix.getPool().getMustMixQueue().findByQuarantine(true));
               poolAttributes.put(
                   "liquiditiesQueuedNoQuarantine",
-                  mix.getPool().getLiquidityQueue().findByQuarantine(false).size());
+                  mix.getPool().getLiquidityQueue().findByQuarantine(false));
               poolAttributes.put(
                   "liquiditiesQueuedQuarantine",
-                  mix.getPool().getLiquidityQueue().findByQuarantine(true).size());
-              poolAttributes.put(
-                  "liquiditiesQueuedQuarantineDetails",
-                  mix.getPool().getLiquidityQueue().getQuarantineDetails());
+                  mix.getPool().getLiquidityQueue().findByQuarantine(true));
 
               Map<MixStatus, Timestamp> timeStatus = mix.getTimeStatus();
               List<StatusStep> steps = new ArrayList<>();

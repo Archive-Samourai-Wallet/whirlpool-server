@@ -59,10 +59,10 @@ public class InputPool {
         .collect(Collectors.toList());
   }
 
-  public String getQuarantineDetails() {
+  public Collection<String> getQuarantineDetails() {
     return findByQuarantine(true).stream()
         .map(input -> input.getOutPoint().toKey() + ": " + input.getQuarantineReason())
-        .toString();
+        .collect(Collectors.toList());
   }
 
   public synchronized Optional<RegisteredInput> removeRandom(
@@ -152,12 +152,15 @@ public class InputPool {
   }
 
   public int getSizeByLiquidity(boolean liquidity) {
-    return (int)
-        inputsById
-            .values()
-            .parallelStream()
-            .filter(input -> liquidity == input.isLiquidity())
-            .count();
+    return getListByLiquidity(liquidity).size();
+  }
+
+  public Collection<RegisteredInput> getListByLiquidity(boolean liquidity) {
+    return inputsById
+        .values()
+        .parallelStream()
+        .filter(input -> liquidity == input.isLiquidity())
+        .collect(Collectors.toList());
   }
 
   public long sumAmount() {

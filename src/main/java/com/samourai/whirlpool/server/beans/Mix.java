@@ -449,8 +449,16 @@ public class Mix {
     return getInputs().getSizeByLiquidity(false);
   }
 
+  public Collection<RegisteredInput> getInputsMustMix() {
+    return getInputs().getListByLiquidity(false);
+  }
+
   public int getNbInputsLiquidities() {
     return getInputs().getSizeByLiquidity(true);
+  }
+
+  public Collection<RegisteredInput> getInputsLiquidities() {
+    return getInputs().getListByLiquidity(true);
   }
 
   public long computeMinerFeeAccumulated() {

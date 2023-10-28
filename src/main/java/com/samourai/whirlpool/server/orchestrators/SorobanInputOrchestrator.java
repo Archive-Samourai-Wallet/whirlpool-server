@@ -187,7 +187,7 @@ public class SorobanInputOrchestrator extends AbstractOrchestrator {
               risb.utxoHash,
               risb.utxoIndex,
               risb.liquidity,
-              false, // we never know if user is using Tor with Soroban
+              null, // we never know if user is using Tor with Soroban
               risb.blockHeight,
               paymentCode,
               registerInputSoroban.getInitialPayload(),
