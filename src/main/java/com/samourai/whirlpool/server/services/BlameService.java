@@ -11,7 +11,6 @@ import java.lang.invoke.MethodHandles;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.apache.groovy.util.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,7 +50,8 @@ public class BlameService {
     List<BlameTO> blames = dbService.findBlames(identifier);
     banService.onBlame(registeredInput, identifier, blames);
 
-    Map<String, String> detailsParam = Maps.of("reason", reason.name());
+    Map<String, String> detailsParam = new LinkedHashMap<>();
+    detailsParam.put("reason", reason.name());
     if (receiveAddress != null) {
       // we can't be sure that rejected output is related to disconnected input
       // blameReason = BlameReason.REJECTED_OUTPUT;

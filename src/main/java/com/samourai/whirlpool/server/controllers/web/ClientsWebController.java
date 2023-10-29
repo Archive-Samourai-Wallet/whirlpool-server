@@ -46,7 +46,9 @@ public class ClientsWebController {
 
     poolService.getPools().stream()
         .flatMap(pool -> pool.getCurrentMix().getInputs()._getInputs().stream())
-        .forEach(input -> registeredInputs.add(Pair.of("MIXING", input)));
+        .forEach(
+            input ->
+                registeredInputs.add(Pair.of("MIXING", input))); // 'MIXING' used in clients.html
 
     poolService.getPools().stream()
         .flatMap(pool -> pool.getCurrentMix().getConfirmingInputs()._getInputs().stream())
@@ -54,12 +56,5 @@ public class ClientsWebController {
 
     model.addAttribute("registeredInputs", registeredInputs);
     return "clients";
-  }
-
-  private Long toSeconds(Long milliseconds) {
-    if (milliseconds == null) {
-      return null;
-    }
-    return milliseconds / 1000;
   }
 }

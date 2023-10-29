@@ -57,13 +57,13 @@
                         <span th:text="${input.right.isSoroban()?'SOROBAN':'CLASSIC'}"/>
                     </td>
                     <td class="align-middle">
-                        <span th:text="${#dates.format(input.right.since, 'dd-MMM-yyyy HH:mm:ss')}"/>
+                        <span th:text="${@templateUtil.durationFromNow(input.right.since)}"/>
                     </td>
                     <td class="align-middle">
-                        <small th:if="${input.right.isSoroban()}">
-                            <span th:text="${#dates.format(input.right.sorobanLastSeen, 'dd-MMM-yyyy HH:mm:ss')}"/>
-                        </small>
-                        <small th:if="${!input.right.isSoroban()}">now</small>
+                        <span th:if="${input.right.isSoroban() && !input.left.equals('MIXING')}">
+                            <span th:text="${@templateUtil.durationFromNow(input.right.sorobanLastSeen)}"/>
+                        </span>
+                        <span th:if="${!input.right.isSoroban() || input.left.equals('MIXING')}">connected</span>
                     </td>
                     <td class="align-middle">
                         <small th:text="${input.right.username!=null?input.right.username:'-'}"/><br/>

@@ -24,6 +24,12 @@
         </a>
     </li>
     <li class="nav-item">
+        <a th:class="${dashboardModel.currentPage == 'soroban'} ? 'nav-link active' : 'nav-link'" href="/status/soroban">
+            <span data-feather="activity"></span>
+            Soroban status
+        </a>
+    </li>
+    <li class="nav-item">
         <a th:class="${dashboardModel.currentPage == 'ban'} ? 'nav-link active' : 'nav-link'" href="/status/ban">
             <span data-feather="slash"></span>
             Banned inputs

@@ -31,6 +31,11 @@ public class TemplateUtil {
     return result;
   }
 
+  public String durationFromNow(long ms) {
+    int seconds = (int) (System.currentTimeMillis() - ms) / 1000;
+    return duration(seconds, true);
+  }
+
   public String duration(int seconds) {
     return duration(seconds, true);
   }

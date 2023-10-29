@@ -10,6 +10,7 @@ import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.orchestrators.SorobanCoordinatorOrchestrator;
 import com.samourai.whirlpool.server.orchestrators.SorobanInputOrchestrator;
+import com.samourai.whirlpool.server.orchestrators.SorobanUpStatusOrchestrator;
 import com.samourai.whirlpool.server.services.MinerFeeService;
 import com.samourai.whirlpool.server.services.PoolService;
 import com.samourai.whirlpool.server.services.RegisterInputService;
@@ -33,6 +34,7 @@ public class SorobanCoordinatorService {
   private RpcWallet rpcWallet;
   private RpcSession rpcSession;
 
+  private SorobanUpStatusOrchestrator sorobanUpStatusOrchestrator;
   private SorobanCoordinatorOrchestrator coordinatorOrchestrator;
   private SorobanInputOrchestrator inputOrchestrator;
 
@@ -58,6 +60,11 @@ public class SorobanCoordinatorService {
     ECKey authenticationKey =
         Utils.computeSigningAddress(whirlpoolServerConfig.getSigningWallet(), params).getECKey();
     this.rpcSession.setAuthenticationKey(authenticationKey);
+
+    // start watching soroban statuses
+    sorobanUpStatusOrchestrator =
+        new SorobanUpStatusOrchestrator(whirlpoolServerConfig, rpcSession);
+    sorobanUpStatusOrchestrator.start(true);
 
     // start publishing pools
     coordinatorOrchestrator =
@@ -112,5 +119,9 @@ public class SorobanCoordinatorService {
 
   public SorobanInputOrchestrator _getInputOrchestrator() { // for tests
     return inputOrchestrator;
+  }
+
+  public RpcSession getRpcSession() {
+    return rpcSession;
   }
 }

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{decorators/dashboard}">
+<head>
+    <title>Soroban status</title>
+    <meta http-equiv="refresh" content="60" />
+    <link rel="stylesheet" href="/css/smartwizard.css"/>
+    <link rel="stylesheet" href="/css/status.css"/>
+</head>
+<body>
+    <div layout:fragment="main">
+        <h1 class="h2">Soroban status
+            <svg width="20px" height="20px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid" class="lds-eclipse">
+                <path stroke="none" d="M10 50A40 40 0 0 0 90 50A40 42 0 0 1 10 50" fill="#bd4030">
+                    <animateTransform attributeName="transform" type="rotate" calcMode="linear" values="0 50 51;360 50 51" keyTimes="0;1" dur="1s" begin="0s" repeatCount="indefinite"></animateTransform>
+                </path>
+            </svg>
+        </h1>
+
+        <strong th:text="${nbUp}"/> servers up, <strong th:text="${nbDown}"/> servers down.
+        <table class="table table-sm">
+            <thead>
+                <th class="align-middle">Url</th>
+                <th class="align-middle">Status</th>
+                <th class="align-middle">Since</th>
+                <th class="align-middle">Last check</th>
+                <th class="align-middle">Down reason</th>
+            </thead>
+            <tbody>
+            <div th:each="upStatus : *{upStatuses}">
+                <tr>
+                    <td class="align-middle">
+                        <span th:text="${upStatus.id}"/>
+                    </td>
+                    <td class="align-middle">
+                        <small th:text="${upStatus.up?'UP':'DOWN'}"/>
+                    </td>
+                    <td class="align-middle">
+                        <small th:text="${@templateUtil.durationFromNow(upStatus.since)}"/>
+                    </td>
+                    <td class="align-middle">
+                        <small><span th:text="${@templateUtil.durationFromNow(upStatus.lastCheck)}"/></small>
+                    </td>
+                    <td class="align-middle">
+                        <small th:text="${upStatus.up ? '-' : upStatus.downReason}"/>
+                    </td>
+                </tr>
+            </div>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

@@ -10,6 +10,8 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 import org.apache.commons.lang3.BooleanUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,13 +69,14 @@ public class MetricService {
 
     // inputs
     for (RegisteredInput input : inputs) {
-      Metrics.counter(
-              COUNTER_MIX_INPUT_TOTAL,
-              "poolId",
-              mix.getPoolId(),
-              "tor",
-              BooleanUtils.toStringTrueFalse(input.getTor()))
-          .increment();
+      List<String> tags = new LinkedList<>();
+      tags.add("poolId");
+      tags.add(mix.getPoolId());
+      if (input.getTor() != null) {
+        tags.add("tor");
+        tags.add(BooleanUtils.toStringTrueFalse(input.getTor()));
+      }
+      Metrics.counter(COUNTER_MIX_INPUT_TOTAL, tags.toArray(new String[] {})).increment();
     }
   }
 
