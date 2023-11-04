@@ -1,5 +1,6 @@
 package com.samourai.whirlpool.server.controllers.web;
 
+import com.samourai.wallet.util.Util;
 import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.utils.Utils;
 import java.math.BigDecimal;
@@ -32,31 +33,10 @@ public class TemplateUtil {
   }
 
   public String durationFromNow(long ms) {
-    int seconds = (int) (System.currentTimeMillis() - ms) / 1000;
-    return duration(seconds, true);
+    return Util.formatDurationFromNow(ms);
   }
 
-  public String duration(int seconds) {
-    return duration(seconds, true);
-  }
-
-  public String duration(int seconds, boolean withSeconds) {
-    StringBuffer sb = new StringBuffer();
-    if (seconds > 60) {
-      int minutes = (int) Math.floor(seconds / 60);
-
-      if (minutes > 60) {
-        int hours = (int) Math.floor(minutes / 60);
-        sb.append(hours + "h");
-        minutes -= hours * 60;
-      }
-
-      sb.append(minutes + "m");
-      seconds -= minutes * 60;
-    }
-    if (withSeconds) {
-      sb.append(seconds + "s");
-    }
-    return sb.toString();
+  public String duration(int ms) {
+    return Util.formatDuration(ms);
   }
 }

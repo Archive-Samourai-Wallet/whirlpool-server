@@ -5,6 +5,7 @@ import com.samourai.wallet.bip69.BIP69OutputComparator;
 import com.samourai.wallet.segwit.bech32.Bech32UtilGeneric;
 import com.samourai.wallet.util.TxUtil;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
+import com.samourai.whirlpool.protocol.WhirlpoolProtocolSoroban;
 import com.samourai.whirlpool.protocol.websocket.messages.ConfirmInputResponse;
 import com.samourai.whirlpool.protocol.websocket.notifications.*;
 import com.samourai.whirlpool.server.beans.*;
@@ -46,6 +47,7 @@ public class MixService {
   private TaskService taskService;
   private TxUtil txUtil;
   private SorobanCoordinatorService sorobanCoordinatorService;
+  private WhirlpoolProtocolSoroban whirlpoolProtocolSoroban;
 
   private Map<String, Mix> currentMixs;
 
@@ -67,6 +69,7 @@ public class MixService {
       TaskService taskService,
       TxUtil txUtil,
       SorobanCoordinatorService sorobanCoordinatorService,
+      WhirlpoolProtocolSoroban whirlpoolProtocolSoroban,
       WSSessionService wsSessionService) {
     this.cryptoService = cryptoService;
     this.blameService = blameService;
@@ -83,6 +86,7 @@ public class MixService {
     this.taskService = taskService;
     this.txUtil = txUtil;
     this.sorobanCoordinatorService = sorobanCoordinatorService;
+    this.whirlpoolProtocolSoroban = whirlpoolProtocolSoroban;
 
     this.__reset();
 
@@ -253,7 +257,9 @@ public class MixService {
   }
 
   public void onTimeoutConfirmInput(Mix mix) {
-    mix.cleanConfirmingInputs();
+    long minConfirmingSince =
+        System.currentTimeMillis() - (3 * whirlpoolProtocolSoroban.getRegisterInputFrequencyMs());
+    mix.cleanConfirmingInputs(minConfirmingSince);
     if (MixStatus.CONFIRM_INPUT.equals(mix.getMixStatus()) && isConfirmInputReady(mix)) {
       // all inputs confirmed
       if (mix.getSurge() > 0 && !mix.isFullWithSurge() && !mix.isConfirmingSurge()) {
@@ -311,7 +317,21 @@ public class MixService {
 
   private int inviteToMix(Mix mix, boolean liquidity, int maxInvites) {
     Predicate<Map.Entry<String, RegisteredInput>> filterInputMixable =
-        computeFilterInputMixable(mix);
+        entry -> {
+          RegisteredInput registeredInput = entry.getValue();
+          if (registeredInput.isQuarantine()) {
+            return false; // not mixable
+          }
+          try {
+            validateForConfirmInput(mix, registeredInput);
+            return true; // mixable
+          } catch (Exception e) {
+            String dateStr = DateFormat.getDateTimeInstance().format(new Date());
+            registeredInput.setQuarantineReason(dateStr + ": " + e.getMessage());
+            return false; // not mixable
+          }
+        };
+
     InputPool queue =
         (liquidity ? mix.getPool().getLiquidityQueue() : mix.getPool().getMustMixQueue());
     int nbInvited = 0;
@@ -997,23 +1017,6 @@ public class MixService {
     log.info("[" + mix.getLogId() + "] NEW MIX");
     logMixStatus(mix);
     mixLimitsService.manage(mix);
-  }
-
-  private Predicate<Map.Entry<String, RegisteredInput>> computeFilterInputMixable(Mix mix) {
-    return entry -> {
-      RegisteredInput registeredInput = entry.getValue();
-      if (registeredInput.isQuarantine()) {
-        return false; // not mixable
-      }
-      try {
-        validateForConfirmInput(mix, registeredInput);
-        return true; // mixable
-      } catch (Exception e) {
-        String dateStr = DateFormat.getDateTimeInstance().format(new Date());
-        registeredInput.setQuarantineReason(dateStr + ": " + e.getMessage());
-        return false; // not mixable
-      }
-    };
   }
 
   public MixLimitsService __getMixLimitsService() {

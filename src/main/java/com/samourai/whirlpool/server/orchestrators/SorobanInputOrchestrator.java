@@ -3,19 +3,14 @@ package com.samourai.whirlpool.server.orchestrators;
 import com.samourai.javaserver.exceptions.NotifiableException;
 import com.samourai.soroban.client.RpcWallet;
 import com.samourai.soroban.client.rpc.RpcSession;
-import com.samourai.wallet.bip47.rpc.PaymentCode;
 import com.samourai.wallet.util.AbstractOrchestrator;
-import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.protocol.soroban.RegisterInputSorobanMessage;
-import com.samourai.whirlpool.server.beans.InputPool;
 import com.samourai.whirlpool.server.beans.Pool;
 import com.samourai.whirlpool.server.beans.RegisterInputSoroban;
 import com.samourai.whirlpool.server.beans.RegisteredInput;
-import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.services.PoolService;
 import com.samourai.whirlpool.server.services.RegisterInputService;
 import com.samourai.whirlpool.server.services.soroban.SorobanCoordinatorApi;
-import com.samourai.whirlpool.server.utils.Utils;
 import io.reactivex.Single;
 import java.lang.invoke.MethodHandles;
 import java.util.*;
@@ -25,7 +20,7 @@ import org.slf4j.LoggerFactory;
 
 public class SorobanInputOrchestrator extends AbstractOrchestrator {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-  private static final int LOOP_DELAY = 15000;
+  private static final int LOOP_DELAY = 15000; // < registerInputFrequency
 
   private PoolService poolService;
   private SorobanCoordinatorApi sorobanCoordinatorApi;
@@ -33,8 +28,8 @@ public class SorobanInputOrchestrator extends AbstractOrchestrator {
   private RpcSession rpcSession;
   private RpcWallet rpcWallet;
 
-  private InputPool registeredInputs;
-  private Set<String> invalidInputKeys;
+  private Map<String, RegisteredInput> registeredInputs; // by paymentCode
+  private Map<String, Long> rejectedInputs; // rejection time by paymentCode
 
   public SorobanInputOrchestrator(
       PoolService poolService,
@@ -55,7 +50,9 @@ public class SorobanInputOrchestrator extends AbstractOrchestrator {
     int freshInputs = 0;
     int existingInputs = 0;
     int invalidInputs = 0;
-    List<String> seenInputs = new LinkedList<>();
+    if (log.isDebugEnabled()) {
+      log.debug("Checking soroban inputs for " + poolService.getPools().size() + " pools...");
+    }
     for (Pool pool : poolService.getPools()) {
       String poolId = pool.getPoolId();
       try {
@@ -64,15 +61,13 @@ public class SorobanInputOrchestrator extends AbstractOrchestrator {
                 rpcWallet.getEncrypter(),
                 rce -> sorobanCoordinatorApi.getListRegisterInputSorobanByPoolId(rce, poolId));
         for (RegisterInputSoroban registerInputSoroban : registerInputSorobans) {
-          String validationKey = computeValidationKey(registerInputSoroban);
-          RegisterInputSorobanMessage risb = registerInputSoroban.getSorobanMessage();
-          seenInputs.add(Utils.computeInputId(risb.utxoHash, risb.utxoIndex));
+          String pCode = registerInputSoroban.getSorobanPaymentCode().toString();
           try {
             // check consistency
             if (!poolId.equals(registerInputSoroban.getSorobanMessage().poolId)) {
               throw new Exception("poolId mismatch");
             }
-            if (!invalidInputKeys.contains(validationKey)) {
+            if (!this.rejectedInputs.containsKey(pCode)) {
               // validate & register
               RegisteredInput registeredInput = register(registerInputSoroban);
               if (registeredInput != null) {
@@ -84,86 +79,77 @@ public class SorobanInputOrchestrator extends AbstractOrchestrator {
               invalidInputs++;
             }
           } catch (Exception e) {
-            log.warn("+sorobanInvalid: " + validationKey, e);
-            invalidInputKeys.add(validationKey);
+            log.warn("+invalidInput: " + pCode, e);
             invalidInputs++;
-            rejectInput(registerInputSoroban, e);
+            rejectInput(registerInputSoroban, e).subscribe();
           }
         }
       } catch (Exception e) {
         log.error("Failed to list Soroban inputs for poolId=" + poolId, e);
       }
     }
-    int disconnectedInputs = cleanup(seenInputs);
+
+    // clean expired inputs
+    int expiredInputs = cleanup();
     if (log.isDebugEnabled()) {
       log.debug(
           "[SOROBAN] "
-              + seenInputs.size()
-              + " messages, "
               + freshInputs
               + " fresh, "
               + existingInputs
               + " existing, "
               + invalidInputs
               + " invalid, "
-              + disconnectedInputs
-              + " disconnected");
+              + expiredInputs
+              + " expired");
     }
   }
 
   private Single<String> rejectInput(RegisterInputSoroban registerInputSoroban, Exception e)
       throws Exception {
+    // add to rejected inputs
+    String pCode = registerInputSoroban.getSorobanPaymentCode().toString();
+    this.rejectedInputs.put(pCode, System.currentTimeMillis());
+
+    // send reject response
     String message =
         "Input rejected: " + NotifiableException.computeNotifiableException(e).getMessage();
-    return rpcSession
-        .withRpcClientEncrypted(
-            rpcWallet.getEncrypter(),
-            rce -> // reject input
-            sorobanCoordinatorApi.sendError(rce, registerInputSoroban, rpcWallet, message))
-        .doAfterSuccess(
-            rejectPayload -> {
-              // unregister input
-              RegisterInputSorobanMessage risb = registerInputSoroban.getSorobanMessage();
-              unregisterInput(
-                  risb.poolId,
-                  registerInputSoroban.getInitialPayload(),
-                  risb.utxoHash,
-                  risb.utxoIndex);
-            });
+    return rpcSession.withRpcClientEncrypted(
+        rpcWallet.getEncrypter(),
+        rce -> sorobanCoordinatorApi.sendError(rce, registerInputSoroban, rpcWallet, message));
   }
 
-  public void unregisterInput(String poolId, String initialPayload, String utxoHash, long utxoIndex)
-      throws Exception {
-    // remove from Soroban
-    rpcSession.withRpcClient(
-        rpcClient ->
-            sorobanCoordinatorApi.unregisterInput(rpcClient, poolId, initialPayload).subscribe());
-    // remove from local inputs
-    registeredInputs.removeByUtxo(utxoHash, utxoIndex);
-  }
+  private int cleanup() {
+    long registerInputFrequencyMs =
+        sorobanCoordinatorApi.getWhirlpoolProtocolSoroban().getRegisterInputFrequencyMs();
+    long minLastSeen = System.currentTimeMillis() - (registerInputFrequencyMs * 2);
 
-  private int cleanup(Collection<String> seenInputs) {
-    // TODO cleanup invalidInputKeys?
-    long minLastSeen =
-        System.currentTimeMillis() - (WhirlpoolProtocol.getSorobanRegisterInputFrequencyMs() * 2);
-    List<RegisteredInput> disconnectedInputs =
-        registeredInputs._getInputs().stream()
-            .filter(
-                registeredInput ->
-                    // utxo expired
-                    registeredInput.getSorobanLastSeen() < minLastSeen
-                        // utxo unregistered from Soroban
-                        || !seenInputs.contains(
-                            Utils.computeInputId(registeredInput.getOutPoint())))
-            .collect(Collectors.toList());
-    disconnectedInputs.stream().forEach(registeredInput -> onDisconnect(registeredInput));
-    return disconnectedInputs.size();
-  }
+    // cleanup expired registeredInputs
+    Set<RegisteredInput> registeredInputsExpired =
+        registeredInputs.values().stream()
+            .filter(registeredInput -> registeredInput.getSorobanLastSeen() < minLastSeen)
+            .collect(Collectors.toSet()); // required to avoid ConcurrentModificationException
+    int nbExpired = registeredInputsExpired.size();
+    registeredInputsExpired.forEach(
+        registeredInput -> {
+          // cleanup input
+          registeredInputs.remove(registeredInput.getSorobanPaymentCode().toString());
+          // unregister from pool queue
+          try {
+            poolService.unregisterInput(registeredInput);
+          } catch (Exception e) {
+            log.error("", e);
+          }
+        });
 
-  private String computeValidationKey(RegisterInputSoroban registerInputSoroban) {
-    RegisterInputSorobanMessage risb = registerInputSoroban.getSorobanMessage();
-    // all properties necessary to input validation
-    return risb.poolId + ":" + risb.utxoHash + ":" + risb.utxoIndex + ":" + risb.signature;
+    // cleanup expired rejectedInputs
+    Set<Map.Entry<String, Long>> rejectedInputsExpired =
+        rejectedInputs.entrySet().stream()
+            .filter(e -> e.getValue() < minLastSeen)
+            .collect(Collectors.toSet()); // required to avoid ConcurrentModificationException
+    nbExpired += rejectedInputsExpired.size();
+    rejectedInputsExpired.forEach(rejectedInput -> rejectedInputs.remove(rejectedInput.getKey()));
+    return nbExpired;
   }
 
   private RegisteredInput register(RegisterInputSoroban registerInputSoroban) throws Exception {
@@ -172,14 +158,12 @@ public class SorobanInputOrchestrator extends AbstractOrchestrator {
       return null; // ignore HEALTH_CHECK
     }
 
-    // register input once
-    RegisterInputSorobanMessage risb = registerInputSoroban.getSorobanMessage();
-    Optional<RegisteredInput> registeredInputOpt =
-        registeredInputs.findByUtxo(risb.utxoHash, risb.utxoIndex);
-    if (!registeredInputOpt.isPresent()) {
-      // fresh input
-      PaymentCode paymentCode = registerInputSoroban.getSorobanPaymentCode();
-      RegisteredInput registeredInput =
+    String pCode = registerInputSoroban.getSorobanPaymentCode().toString();
+    RegisteredInput registeredInput = registeredInputs.get(pCode);
+    if (registeredInput == null) {
+      // unknown input => add to registered inputs
+      RegisterInputSorobanMessage risb = registerInputSoroban.getSorobanMessage();
+      registeredInput =
           registerInputService.registerInput(
               risb.poolId,
               null,
@@ -189,16 +173,15 @@ public class SorobanInputOrchestrator extends AbstractOrchestrator {
               risb.liquidity,
               null, // we never know if user is using Tor with Soroban
               risb.blockHeight,
-              paymentCode,
+              registerInputSoroban.getSorobanPaymentCode(),
               registerInputSoroban.getInitialPayload(),
               null);
-      registeredInputs.register(registeredInput);
+      registeredInputs.put(pCode, registeredInput);
       if (log.isDebugEnabled()) {
         log.debug("+sorobanInput: " + registeredInput.toString());
       }
       return registeredInput;
     } else {
-      RegisteredInput registeredInput = registeredInputOpt.get();
       // already registered => update last seen
       if (log.isDebugEnabled()) {
         log.debug("+sorobanLastSeen: " + registeredInput.getOutPoint().toString());
@@ -208,22 +191,12 @@ public class SorobanInputOrchestrator extends AbstractOrchestrator {
     return null;
   }
 
-  private void onDisconnect(RegisteredInput registeredInput) {
-    TxOutPoint outPoint = registeredInput.getOutPoint();
-    registeredInputs.removeByUtxo(outPoint.getHash(), outPoint.getIndex());
-    try {
-      poolService.unregisterInput(registeredInput);
-    } catch (Exception e) {
-      log.error("", e);
-    }
-  }
-
   @Override
   protected void resetOrchestrator() {
     super.resetOrchestrator();
 
-    registeredInputs = new InputPool();
-    invalidInputKeys = new LinkedHashSet<>();
+    registeredInputs = new LinkedHashMap<>();
+    rejectedInputs = new LinkedHashMap<>();
   }
 
   @Override
@@ -231,7 +204,7 @@ public class SorobanInputOrchestrator extends AbstractOrchestrator {
     super.stop();
 
     registeredInputs.clear();
-    invalidInputKeys = new LinkedHashSet<>();
+    rejectedInputs.clear();
   }
 
   public void _runOrchestrator() { // for tests

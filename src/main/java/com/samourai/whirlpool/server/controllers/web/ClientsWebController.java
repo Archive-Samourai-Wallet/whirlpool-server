@@ -5,6 +5,7 @@ import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.controllers.web.beans.WhirlpoolDashboardTemplateModel;
 import com.samourai.whirlpool.server.services.PoolService;
 import java.lang.invoke.MethodHandles;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -54,7 +55,22 @@ public class ClientsWebController {
         .flatMap(pool -> pool.getCurrentMix().getConfirmingInputs()._getInputs().stream())
         .forEach(input -> registeredInputs.add(Pair.of("CONFIRMING", input)));
 
+    Collections.sort(
+        registeredInputs, (a, b) -> a.getRight().getSince() < b.getRight().getSince() ? 1 : -1);
+
     model.addAttribute("registeredInputs", registeredInputs);
+    int nbClientsSoroban = 0, nbClientsClassic = 0;
+    for (Pair<String, RegisteredInput> p : registeredInputs) {
+      RegisteredInput registeredInput = p.getRight();
+      if (registeredInput.isSoroban()) {
+        nbClientsSoroban++;
+      } else {
+        nbClientsClassic++;
+      }
+    }
+    model.addAttribute("nbClientsTotal", nbClientsClassic + nbClientsSoroban);
+    model.addAttribute("nbClientsClassic", nbClientsClassic);
+    model.addAttribute("nbClientsSoroban", nbClientsSoroban);
     return "clients";
   }
 }

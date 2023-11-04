@@ -1,8 +1,6 @@
 package com.samourai.whirlpool.server.services.soroban;
 
 import com.samourai.soroban.client.RpcWallet;
-import com.samourai.soroban.client.meeting.SorobanMessageWithSender;
-import com.samourai.soroban.client.rpc.RpcClient;
 import com.samourai.soroban.client.rpc.RpcClientEncrypted;
 import com.samourai.soroban.client.rpc.RpcMode;
 import com.samourai.wallet.bip47.BIP47UtilGeneric;
@@ -10,8 +8,9 @@ import com.samourai.wallet.bip47.rpc.PaymentCode;
 import com.samourai.wallet.bip47.rpc.java.Bip47UtilJava;
 import com.samourai.wallet.util.AsyncUtil;
 import com.samourai.wallet.util.JSONUtils;
+import com.samourai.wallet.util.Util;
 import com.samourai.whirlpool.client.wallet.beans.WhirlpoolNetwork;
-import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
+import com.samourai.whirlpool.protocol.WhirlpoolProtocolSoroban;
 import com.samourai.whirlpool.protocol.rest.CoordinatorInfo;
 import com.samourai.whirlpool.protocol.rest.PoolInfoSoroban;
 import com.samourai.whirlpool.protocol.soroban.ErrorSorobanMessage;
@@ -23,14 +22,11 @@ import com.samourai.whirlpool.server.beans.RegisterInputSoroban;
 import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.exceptions.ServerErrorCode;
-import com.samourai.whirlpool.server.utils.Utils;
 import io.reactivex.Completable;
 import io.reactivex.Single;
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.stream.Collectors;
 import org.bitcoinj.core.NetworkParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,9 +39,12 @@ public class SorobanCoordinatorApi {
   private static final JSONUtils jsonUtil = JSONUtils.getInstance();
   private static final BIP47UtilGeneric bip47Util = Bip47UtilJava.getInstance();
   private WhirlpoolNetwork whirlpoolNetwork;
+  private WhirlpoolProtocolSoroban whirlpoolProtocolSoroban;
 
-  public SorobanCoordinatorApi(WhirlpoolServerConfig serverConfig) {
+  public SorobanCoordinatorApi(
+      WhirlpoolServerConfig serverConfig, WhirlpoolProtocolSoroban whirlpoolProtocolSoroban) {
     this.whirlpoolNetwork = serverConfig.getWhirlpoolNetwork();
+    this.whirlpoolProtocolSoroban = whirlpoolProtocolSoroban;
   }
 
   public Completable registerCoordinator(
@@ -55,7 +54,7 @@ public class SorobanCoordinatorApi {
       String urlOnion,
       Collection<PoolInfoSoroban> poolInfos)
       throws Exception {
-    String directory = WhirlpoolProtocol.getSorobanDirCoordinators(whirlpoolNetwork);
+    String directory = whirlpoolProtocolSoroban.getDirCoordinators(whirlpoolNetwork);
     CoordinatorInfo coordinatorInfo = new CoordinatorInfo(coordinatorId, urlClear, urlOnion);
     RegisterCoordinatorSorobanMessage message =
         new RegisterCoordinatorSorobanMessage(coordinatorInfo, poolInfos);
@@ -77,14 +76,8 @@ public class SorobanCoordinatorApi {
     PaymentCode paymentCodeClient = registerInputSoroban.getSorobanPaymentCode();
     NetworkParameters params = rpcWalletCoordinator.getBip47Wallet().getParams();
     String directory =
-        WhirlpoolProtocol.getSorobanDirRegisterInputResponse(
-            rpcWalletCoordinator,
-            whirlpoolNetwork,
-            paymentCodeClient,
-            registerInputSoroban.getSorobanMessage().utxoHash,
-            registerInputSoroban.getSorobanMessage().utxoIndex,
-            bip47Util,
-            params);
+        whirlpoolProtocolSoroban.getDirRegisterInputResponse(
+            rpcWalletCoordinator, paymentCodeClient, bip47Util, params);
     return rpcClient.sendEncrypted(
         directory, errorSorobanMessage.toPayload(), paymentCodeClient, RpcMode.SHORT);
   }
@@ -104,52 +97,44 @@ public class SorobanCoordinatorApi {
     PaymentCode paymentCodeClient = registeredInput.getSorobanPaymentCode();
     NetworkParameters params = rpcWalletCoordinator.getBip47Wallet().getParams();
     String directory =
-        WhirlpoolProtocol.getSorobanDirRegisterInputResponse(
-            rpcWalletCoordinator,
-            whirlpoolNetwork,
-            paymentCodeClient,
-            registeredInput.getOutPoint().getHash(),
-            registeredInput.getOutPoint().getIndex(),
-            bip47Util,
-            params);
+        whirlpoolProtocolSoroban.getDirRegisterInputResponse(
+            rpcWalletCoordinator, paymentCodeClient, bip47Util, params);
     return rpcClient.sendEncrypted(
         directory, inviteMixSorobanMessage.toPayload(), paymentCodeClient, RpcMode.SHORT);
   }
 
-  public Completable unregisterInput(
-      RpcClient rpcClient, String poolId, String sorobanInitialPayload) throws Exception {
-    String directory = WhirlpoolProtocol.getSorobanDirRegisterInput(whirlpoolNetwork, poolId);
-    return rpcClient.directoryRemove(directory, sorobanInitialPayload);
-  }
-
   public Collection<RegisterInputSoroban> getListRegisterInputSorobanByPoolId(
       RpcClientEncrypted rpcClient, String poolId) throws Exception {
-    String directory = WhirlpoolProtocol.getSorobanDirRegisterInput(whirlpoolNetwork, poolId);
-    Collection<SorobanMessageWithSender> sorobanMessageWithSenders =
-        asyncUtil.blockingGet(rpcClient.listWithSender(directory));
-    Collection<RegisterInputSoroban> results = new LinkedList<>();
-    for (SorobanMessageWithSender sorobanMessageWithSender : sorobanMessageWithSenders) {
-      RegisterInputSorobanMessage sorobanMessage =
-          jsonUtil
-              .getObjectMapper()
-              .readValue(sorobanMessageWithSender.getPayload(), RegisterInputSorobanMessage.class);
-      PaymentCode sorobanPaymentCode = new PaymentCode(sorobanMessageWithSender.getSender());
-      RegisterInputSoroban registerInputSoroban =
-          new RegisterInputSoroban(
-              sorobanMessage, sorobanPaymentCode, sorobanMessageWithSender.getInitialPayload());
-      results.add(registerInputSoroban);
-    }
+    String directory = whirlpoolProtocolSoroban.getDirRegisterInput(whirlpoolNetwork, poolId);
+    // list soroban inputs
+    return asyncUtil.blockingGet(rpcClient.listWithSender(directory)).stream()
+        // keep only one payload per sender
+        .filter(Util.distinctBy(p -> p.getSender()))
+        // parse
+        .map(
+            sorobanMessageWithSender -> {
+              try {
+                RegisterInputSorobanMessage sorobanMessage =
+                    jsonUtil
+                        .getObjectMapper()
+                        .readValue(
+                            sorobanMessageWithSender.getPayload(),
+                            RegisterInputSorobanMessage.class);
+                PaymentCode sorobanPaymentCode =
+                    new PaymentCode(sorobanMessageWithSender.getSender());
+                return new RegisterInputSoroban(
+                    sorobanMessage,
+                    sorobanPaymentCode,
+                    sorobanMessageWithSender.getInitialPayload());
+              } catch (Exception e) {
+                return null;
+              }
+            })
+        .filter(o -> o != null)
+        .collect(Collectors.toList());
+  }
 
-    // filter keep latest message for each utxo
-    Map<String, RegisterInputSoroban> latestMessageByUtxo = new LinkedHashMap<>();
-    for (RegisterInputSoroban ris : results) {
-      RegisterInputSorobanMessage risb = ris.getSorobanMessage();
-      String key = Utils.computeInputId(risb.utxoHash, risb.utxoIndex);
-      RegisterInputSoroban existing = latestMessageByUtxo.get(key);
-      if (existing == null || existing.getSorobanMessage().blockHeight < risb.blockHeight) {
-        latestMessageByUtxo.put(key, ris);
-      }
-    }
-    return latestMessageByUtxo.values();
+  public WhirlpoolProtocolSoroban getWhirlpoolProtocolSoroban() {
+    return whirlpoolProtocolSoroban;
   }
 }

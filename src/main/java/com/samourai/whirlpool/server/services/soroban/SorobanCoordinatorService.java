@@ -5,6 +5,7 @@ import com.samourai.soroban.client.RpcWalletImpl;
 import com.samourai.soroban.client.rpc.RpcSession;
 import com.samourai.wallet.bip47.rpc.BIP47Wallet;
 import com.samourai.wallet.crypto.CryptoUtil;
+import com.samourai.whirlpool.protocol.WhirlpoolProtocolSoroban;
 import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
@@ -62,8 +63,11 @@ public class SorobanCoordinatorService {
     this.rpcSession.setAuthenticationKey(authenticationKey);
 
     // start watching soroban statuses
+    WhirlpoolProtocolSoroban whirlpoolProtocolSoroban =
+        sorobanCoordinatorApi.getWhirlpoolProtocolSoroban();
     sorobanUpStatusOrchestrator =
-        new SorobanUpStatusOrchestrator(whirlpoolServerConfig, rpcSession);
+        new SorobanUpStatusOrchestrator(
+            whirlpoolServerConfig, rpcSession, whirlpoolProtocolSoroban);
     sorobanUpStatusOrchestrator.start(true);
 
     // start publishing pools
@@ -85,27 +89,17 @@ public class SorobanCoordinatorService {
   }
 
   public Single<String> inviteToMix(RegisteredInput registeredInput, Mix mix) throws Exception {
-    return rpcSession
-        .withRpcClientEncrypted(
-            rpcWallet.getEncrypter(),
-            rce ->
-                // invite input
-                sorobanCoordinatorApi.inviteToMix(
-                    rce,
-                    registeredInput,
-                    mix,
-                    whirlpoolServerConfig.getExternalUrlClear(),
-                    whirlpoolServerConfig.getExternalUrlOnion(),
-                    rpcWallet))
-        .doAfterSuccess(
-            invitePayload -> {
-              // unregister input
-              inputOrchestrator.unregisterInput(
-                  registeredInput.getPoolId(),
-                  registeredInput.getSorobanInitialPayload(),
-                  registeredInput.getOutPoint().getHash(),
-                  registeredInput.getOutPoint().getIndex());
-            });
+    return rpcSession.withRpcClientEncrypted(
+        rpcWallet.getEncrypter(),
+        rce ->
+            // invite input
+            sorobanCoordinatorApi.inviteToMix(
+                rce,
+                registeredInput,
+                mix,
+                whirlpoolServerConfig.getExternalUrlClear(),
+                whirlpoolServerConfig.getExternalUrlOnion(),
+                rpcWallet));
   }
 
   public void stop() {

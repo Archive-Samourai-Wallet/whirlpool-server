@@ -37,7 +37,7 @@ public class Mix {
 
   private MixStatus mixStatus;
   private InputPool confirmingInputs;
-  private InputPool inputs;
+  private InputPool confirmedInputs;
 
   private Set<byte[]> bordereaux;
   private Set<String> receiveAddresses;
@@ -67,7 +67,7 @@ public class Mix {
 
     this.mixStatus = MixStatus.CONFIRM_INPUT;
     this.confirmingInputs = new InputPool();
-    this.inputs = new InputPool();
+    this.confirmedInputs = new InputPool();
 
     this.bordereaux = new HashSet<>();
     this.receiveAddresses = new HashSet<>();
@@ -401,12 +401,10 @@ public class Mix {
     return confirmingInput;
   }
 
-  public void cleanConfirmingInputs() {
-    long minConfirming =
-        System.currentTimeMillis() - (2 * WhirlpoolProtocol.getSorobanRegisterInputFrequencyMs());
+  public void cleanConfirmingInputs(long minConfirmingSince) {
     List<RegisteredInput> expiredInputs =
         confirmingInputs._getInputs().stream()
-            .filter(registeredInput -> registeredInput.getConfirmingSince() < minConfirming)
+            .filter(registeredInput -> registeredInput.getConfirmingSince() < minConfirmingSince)
             .collect(Collectors.toList());
     expiredInputs.stream()
         .forEach(
@@ -430,11 +428,11 @@ public class Mix {
   }
 
   public InputPool getInputs() {
-    return inputs;
+    return confirmedInputs;
   }
 
   public int getNbInputs() {
-    return inputs.getSize();
+    return confirmedInputs.getSize();
   }
 
   public int getNbInputsNonSurge() {
@@ -472,11 +470,11 @@ public class Mix {
 
   public synchronized void registerInput(RegisteredInput registeredInput)
       throws IllegalInputException {
-    if (inputs.findByUtxo(registeredInput.getOutPoint()).isPresent()) {
+    if (confirmedInputs.findByUtxo(registeredInput.getOutPoint()).isPresent()) {
       throw new IllegalInputException(
           ServerErrorCode.INPUT_ALREADY_REGISTERED, "input already registered");
     }
-    inputs.register(registeredInput);
+    confirmedInputs.register(registeredInput);
   }
 
   public synchronized void unregisterInputLiquidities(int limit) {
@@ -493,7 +491,7 @@ public class Mix {
             + "] "
             + " unregistering a CONFIRMED input: "
             + confirmedInput.getOutPoint());
-    inputs.removeByUtxo(confirmedInput.getOutPoint());
+    confirmedInputs.removeByUtxo(confirmedInput.getOutPoint());
   }
 
   public String computeInputsHash() {
@@ -609,7 +607,7 @@ public class Mix {
   }
 
   public long computeAmountIn() {
-    return inputs.sumAmount();
+    return confirmedInputs.sumAmount();
   }
 
   public long computeAmountOut() {

@@ -34,7 +34,7 @@
                 <th class="align-middle">
                     <span th:text="${pool.poolId}"/>
                 </th>
-                <td class="align-middle"><span th:text="${@templateUtil.duration(pool.elapsedTime/1000)}"/></td>
+                <td class="align-middle"><span th:text="${@templateUtil.duration(pool.elapsedTime)}"/></td>
                 <td class="align-middle">
                     <span th:text="${pool.mixStatus}"/><br/>
                     <strong th:text="${pool.nbInputs}"/> / <span th:text="${pool.anonymitySetWithSurge}"/> confirmed<br/>

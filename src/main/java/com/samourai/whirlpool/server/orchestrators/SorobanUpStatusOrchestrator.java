@@ -4,7 +4,7 @@ import com.samourai.soroban.client.SorobanServerDex;
 import com.samourai.soroban.client.rpc.RpcSession;
 import com.samourai.wallet.util.AbstractOrchestrator;
 import com.samourai.wallet.util.AsyncUtil;
-import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
+import com.samourai.whirlpool.protocol.WhirlpoolProtocolSoroban;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -20,11 +20,16 @@ public class SorobanUpStatusOrchestrator extends AbstractOrchestrator {
 
   private WhirlpoolServerConfig serverConfig;
   private RpcSession rpcSession;
+  private WhirlpoolProtocolSoroban whirlpoolProtocolSoroban;
 
-  public SorobanUpStatusOrchestrator(WhirlpoolServerConfig serverConfig, RpcSession rpcSession) {
+  public SorobanUpStatusOrchestrator(
+      WhirlpoolServerConfig serverConfig,
+      RpcSession rpcSession,
+      WhirlpoolProtocolSoroban whirlpoolProtocolSoroban) {
     super(LOOP_DELAY, 0, null);
     this.serverConfig = serverConfig;
     this.rpcSession = rpcSession;
+    this.whirlpoolProtocolSoroban = whirlpoolProtocolSoroban;
   }
 
   private Collection<String> getServerUrls() {
@@ -42,7 +47,7 @@ public class SorobanUpStatusOrchestrator extends AbstractOrchestrator {
     if (log.isDebugEnabled()) {
       log.debug("Checking " + serverUrls.size() + " soroban status...");
     }
-    String dir = WhirlpoolProtocol.getSorobanDirCoordinators(serverConfig.getWhirlpoolNetwork());
+    String dir = whirlpoolProtocolSoroban.getDirCoordinators(serverConfig.getWhirlpoolNetwork());
     serverUrls
         .parallelStream()
         .forEach(

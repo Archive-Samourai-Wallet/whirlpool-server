@@ -9,9 +9,13 @@ import com.samourai.wallet.bip47.rpc.secretPoint.ISecretPointFactory;
 import com.samourai.wallet.crypto.CryptoUtil;
 import com.samourai.wallet.hd.HD_WalletFactoryGeneric;
 import com.samourai.wallet.segwit.bech32.Bech32UtilGeneric;
-import com.samourai.wallet.util.*;
+import com.samourai.wallet.util.CryptoTestUtil;
+import com.samourai.wallet.util.FormatsUtilGeneric;
+import com.samourai.wallet.util.MessageSignUtilGeneric;
+import com.samourai.wallet.util.TxUtil;
 import com.samourai.whirlpool.protocol.WhirlpoolEndpoint;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
+import com.samourai.whirlpool.protocol.WhirlpoolProtocolSoroban;
 import com.samourai.whirlpool.protocol.feeOpReturn.FeeOpReturnImplV0;
 import com.samourai.whirlpool.protocol.feeOpReturn.FeeOpReturnImplV1;
 import com.samourai.whirlpool.protocol.util.XorMask;
@@ -119,6 +123,11 @@ public class ServicesConfig extends ServerServicesConfig {
   @Bean
   FeeOpReturnImplV1 feeOpReturnV1(XorMask xorMask) {
     return new FeeOpReturnImplV1(xorMask);
+  }
+
+  @Bean
+  WhirlpoolProtocolSoroban whirlpoolProtocolSoroban() {
+    return new WhirlpoolProtocolSoroban();
   }
 
   @Bean
