@@ -2,7 +2,6 @@ package com.samourai.whirlpool.server.config;
 
 import com.samourai.javaserver.config.ServerConfig;
 import com.samourai.javaserver.exceptions.NotifiableException;
-import com.samourai.wallet.bip47.rpc.PaymentCode;
 import com.samourai.whirlpool.client.wallet.beans.WhirlpoolNetwork;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.server.beans.FailMode;
@@ -49,6 +48,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
   private PoolConfig[] pools;
   private long requestTimeout;
   private SecretWalletConfig signingWallet;
+  private SecretWalletConfig coordinatorWallet;
   private String coordinatorId;
   private String externalUrlClear;
   private String externalUrlOnion;
@@ -220,8 +220,12 @@ public class WhirlpoolServerConfig extends ServerConfig {
     this.signingWallet = signingWallet;
   }
 
-  public PaymentCode computeSigningPaymentCode() throws Exception {
-    return Utils.computeSigningPaymentCode(signingWallet, networkParameters);
+  public SecretWalletConfig getCoordinatorWallet() {
+    return coordinatorWallet;
+  }
+
+  public void setCoordinatorWallet(SecretWalletConfig coordinatorWallet) {
+    this.coordinatorWallet = coordinatorWallet;
   }
 
   public String getCoordinatorId() {

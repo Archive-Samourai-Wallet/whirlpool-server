@@ -1,6 +1,7 @@
 package com.samourai.whirlpool.server.services.soroban;
 
 import com.samourai.soroban.client.RpcWallet;
+import com.samourai.soroban.client.SorobanClient;
 import com.samourai.soroban.client.rpc.RpcClientEncrypted;
 import com.samourai.soroban.client.rpc.RpcMode;
 import com.samourai.wallet.bip47.BIP47UtilGeneric;
@@ -23,7 +24,6 @@ import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.exceptions.ServerErrorCode;
 import io.reactivex.Completable;
-import io.reactivex.Single;
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.stream.Collectors;
@@ -48,20 +48,25 @@ public class SorobanCoordinatorApi {
   }
 
   public Completable registerCoordinator(
-      RpcClientEncrypted rpcClient,
+      SorobanClient sorobanClient,
       String coordinatorId,
+      PaymentCode paymentCode,
+      String paymentCodeSignature,
       String urlClear,
       String urlOnion,
       Collection<PoolInfoSoroban> poolInfos)
       throws Exception {
     String directory = whirlpoolProtocolSoroban.getDirCoordinators(whirlpoolNetwork);
-    CoordinatorInfo coordinatorInfo = new CoordinatorInfo(coordinatorId, urlClear, urlOnion);
+    CoordinatorInfo coordinatorInfo =
+        new CoordinatorInfo(
+            coordinatorId, paymentCode.toString(), paymentCodeSignature, urlClear, urlOnion);
     RegisterCoordinatorSorobanMessage message =
         new RegisterCoordinatorSorobanMessage(coordinatorInfo, poolInfos);
-    return rpcClient.directoryAdd(directory, message.toPayload(), RpcMode.SHORT);
+    String signedPayload = sorobanClient.signWithSender(message.toPayload());
+    return sorobanClient.getRpcClient().directoryAdd(directory, signedPayload, RpcMode.SHORT);
   }
 
-  public Single<String> sendError(
+  public Completable sendError(
       RpcClientEncrypted rpcClient,
       RegisterInputSoroban registerInputSoroban,
       RpcWallet rpcWalletCoordinator,
@@ -82,7 +87,7 @@ public class SorobanCoordinatorApi {
         directory, errorSorobanMessage.toPayload(), paymentCodeClient, RpcMode.SHORT);
   }
 
-  public Single<String> inviteToMix(
+  public Completable inviteToMix(
       RpcClientEncrypted rpcClient,
       RegisteredInput registeredInput,
       Mix mix,

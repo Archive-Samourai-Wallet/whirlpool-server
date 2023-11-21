@@ -2,20 +2,15 @@ package com.samourai.whirlpool.server.utils;
 
 import com.samourai.javaserver.utils.ServerUtils;
 import com.samourai.javawsserver.interceptors.JWSSIpHandshakeInterceptor;
-import com.samourai.wallet.bip47.rpc.BIP47Wallet;
-import com.samourai.wallet.bip47.rpc.PaymentCode;
-import com.samourai.wallet.bip47.rpc.java.Bip47UtilJava;
 import com.samourai.wallet.bipFormat.BIP_FORMAT;
 import com.samourai.wallet.hd.HD_Address;
-import com.samourai.wallet.hd.HD_Wallet;
-import com.samourai.wallet.hd.HD_WalletFactoryGeneric;
 import com.samourai.wallet.segwit.bech32.Bech32UtilGeneric;
 import com.samourai.wallet.util.MessageSignUtilGeneric;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.server.beans.RegisteredInput;
+import com.samourai.whirlpool.server.beans.SecretWalletContext;
 import com.samourai.whirlpool.server.beans.TxOutSignature;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
-import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.services.rpc.JSONRpcClientServiceImpl;
 import com.samourai.whirlpool.server.services.rpc.RpcClientService;
 import java.lang.invoke.MethodHandles;
@@ -171,42 +166,14 @@ public class Utils {
     return txOut.bitcoinSerialize();
   }
 
-  public static BIP47Wallet computeSigningBip47Wallet(
-      WhirlpoolServerConfig.SecretWalletConfig secretWalletConfig, NetworkParameters params)
-      throws Exception {
-    HD_Wallet bip44w = computeSigningBip44Wallet(secretWalletConfig, params);
-    return new BIP47Wallet(bip44w);
-  }
-
-  public static PaymentCode computeSigningPaymentCode(
-      WhirlpoolServerConfig.SecretWalletConfig secretWalletConfig, NetworkParameters params)
-      throws Exception {
-    BIP47Wallet bip47Wallet = computeSigningBip47Wallet(secretWalletConfig, params);
-    return Bip47UtilJava.getInstance().getPaymentCode(bip47Wallet);
-  }
-
-  public static HD_Address computeSigningAddress(
-      WhirlpoolServerConfig.SecretWalletConfig secretWalletConfig, NetworkParameters params)
-      throws Exception {
-    HD_Wallet bip44w = computeSigningBip44Wallet(secretWalletConfig, params);
-    return bip44w.getAddressAt(0, 0, 0);
-  }
-
-  private static HD_Wallet computeSigningBip44Wallet(
-      WhirlpoolServerConfig.SecretWalletConfig secretWalletConfig, NetworkParameters params)
-      throws Exception {
-    return HD_WalletFactoryGeneric.getInstance()
-        .restoreWallet(secretWalletConfig.getWords(), secretWalletConfig.getPassphrase(), params);
-  }
-
   public static TxOutSignature signTransactionOutput(
       String feeAddress,
       long feeValue,
       NetworkParameters params,
-      WhirlpoolServerConfig.SecretWalletConfig secretWalletConfig)
+      SecretWalletContext secretWalletContext)
       throws Exception {
-    HD_Address signingAddress = computeSigningAddress(secretWalletConfig, params);
-    return signTransactionOutput(feeAddress, feeValue, params, signingAddress.getECKey());
+    ECKey signingKey = secretWalletContext.getAddress().getECKey();
+    return signTransactionOutput(feeAddress, feeValue, params, signingKey);
   }
 
   public static TxOutSignature signTransactionOutput(
@@ -219,12 +186,9 @@ public class Utils {
     return new TxOutSignature(signingAddress, preHash.toString(), signature);
   }
 
-  public static String signMessage(
-      WhirlpoolServerConfig.SecretWalletConfig secretWalletConfig,
-      NetworkParameters params,
-      String payload)
+  public static String signMessage(SecretWalletContext secretWalletContext, String payload)
       throws Exception {
-    HD_Address signingAddress = computeSigningAddress(secretWalletConfig, params);
+    HD_Address signingAddress = secretWalletContext.getAddress();
     if (log.isDebugEnabled()) {
       log.debug("signing address: " + signingAddress.getAddressString());
     }

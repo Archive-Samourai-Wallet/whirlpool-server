@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>io.samourai.code.whirlpool</groupId>
 	<artifactId>whirlpool-server</artifactId>
-	<version>0.23.38-dexwp-beta2-SNAPSHOT</version>
+	<version>1.0.0-dexwp2-SNAPSHOT</version>
 	<name>whirlpool-server</name>
 	<properties>
 		<spring-boot.version>2.6.2</spring-boot.version>
@@ -18,7 +18,7 @@
 		<dependency>
 			<groupId>io.samourai.code.whirlpool</groupId>
 			<artifactId>whirlpool-client</artifactId>
-			<version>0.24.3-dexwp-SNAPSHOT</version>
+			<version>1.0.0-dexwp2-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>io.samourai.code.wallet</groupId>
@@ -45,7 +45,7 @@
 		<dependency>
 			<groupId>io.samourai.code.wallet</groupId>
 			<artifactId>extlibj</artifactId>
-			<version>0.0.43-dexwp-SNAPSHOT</version>
+			<version>0.0.43-dexwp2-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

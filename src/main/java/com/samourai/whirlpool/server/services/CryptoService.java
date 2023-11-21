@@ -9,7 +9,6 @@ import java.security.SecureRandom;
 import java.security.spec.RSAPublicKeySpec;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Sha256Hash;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.crypto.engines.RSAEngine;
@@ -72,15 +71,6 @@ public class CryptoService {
 
     signer.update(revealedBordereau, 0, revealedBordereau.length);
     return signer.verifySignature(unblindedSignedBordereau);
-  }
-
-  public boolean isValidTxHash(String txHash) {
-    try {
-      Sha256Hash.wrap(txHash);
-      return true;
-    } catch (Exception e) {
-      return false;
-    }
   }
 
   public NetworkParameters getNetworkParameters() {

@@ -12,6 +12,7 @@ import com.samourai.whirlpool.client.mix.handler.UtxoWithBalance;
 import com.samourai.whirlpool.client.mix.listener.MixFailReason;
 import com.samourai.whirlpool.client.mix.listener.MixStep;
 import com.samourai.whirlpool.client.soroban.SorobanClientApi;
+import com.samourai.whirlpool.client.wallet.data.coordinator.CoordinatorSupplier;
 import com.samourai.whirlpool.client.whirlpool.listener.WhirlpoolClientListener;
 import com.samourai.whirlpool.protocol.beans.Utxo;
 import com.samourai.whirlpool.protocol.rest.PoolInfoSoroban;
@@ -55,13 +56,15 @@ public class SorobanCoordinatorServiceTest extends AbstractIntegrationTest {
     poolInfoOrchestrator._runOrchestrator();
 
     RpcSession rpcSession = rpcClientServiceServer.getRpcSession("test");
-    SorobanClientApi sorobanClientApi = new SorobanClientApi(serverConfig.getWhirlpoolNetwork());
+    SorobanClientApi sorobanClientApi =
+        new SorobanClientApi(serverConfig.getWhirlpoolNetwork(), whirlpoolProtocolSoroban);
 
     // fetch pools from Soroban
     Collection<RegisterCoordinatorSorobanMessage> registerCoordinatorSorobanMessages =
-        rpcSession.withRpcClient(
-            rpcClient ->
-                AsyncUtil.getInstance().blockingGet(sorobanClientApi.fetchCoordinators(rpcClient)));
+        rpcSession.withSorobanClient(
+            sorobanClient ->
+                AsyncUtil.getInstance()
+                    .blockingGet(sorobanClientApi.fetchCoordinators(sorobanClient)));
 
     Assertions.assertEquals(1, registerCoordinatorSorobanMessages.size());
     Collection<PoolInfoSoroban> poolInfoSorobans =
@@ -87,12 +90,14 @@ public class SorobanCoordinatorServiceTest extends AbstractIntegrationTest {
     // initial
     Assertions.assertEquals(0, pool.getLiquidityQueue().getSize());
     Assertions.assertEquals(false, pool.getLiquidityQueue().hasInput(txOutPoint));
+    CoordinatorSupplier coordinatorSupplier = null; // TODO
 
     // register client
     Runnable doRegister =
         () -> {
           MixParams mixParams =
-              whirlpoolClientService.computeMixParams(rpcWallet, pool, utxoWithBalance, ecKey);
+              whirlpoolClientService.computeMixParams(
+                  pool, utxoWithBalance, ecKey, coordinatorSupplier);
           WhirlpoolClientListener listener =
               new WhirlpoolClientListener() {
                 @Override

@@ -2,6 +2,7 @@ package com.samourai.whirlpool.server.services;
 
 import com.samourai.javaserver.exceptions.NotifiableException;
 import com.samourai.wallet.bip47.rpc.PaymentCode;
+import com.samourai.wallet.util.FormatsUtilGeneric;
 import com.samourai.whirlpool.server.beans.Pool;
 import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;
@@ -29,7 +30,7 @@ public class RegisterInputService {
   public static final String ERROR_ALREADY_SPENT = "Waiting for first mix confirmation";
 
   private PoolService poolService;
-  private CryptoService cryptoService;
+  private FormatsUtilGeneric formatsUtil;
   private BlockchainDataService blockchainDataService;
   private InputValidationService inputValidationService;
   private BanService banService;
@@ -39,14 +40,14 @@ public class RegisterInputService {
   @Autowired
   public RegisterInputService(
       PoolService poolService,
-      CryptoService cryptoService,
+      FormatsUtilGeneric formatsUtil,
       BlockchainDataService blockchainDataService,
       InputValidationService inputValidationService,
       BanService banService,
       DbService dbService,
       ExportService exportService) {
     this.poolService = poolService;
-    this.cryptoService = cryptoService;
+    this.formatsUtil = formatsUtil;
     this.blockchainDataService = blockchainDataService;
     this.inputValidationService = inputValidationService;
     this.banService = banService;
@@ -79,7 +80,7 @@ public class RegisterInputService {
     if (HEALTH_CHECK_UTXO.equals(utxoHash)) {
       throw new IllegalInputException(ServerErrorCode.INPUT_REJECTED, HEALTH_CHECK_SUCCESS);
     }
-    if (!cryptoService.isValidTxHash(utxoHash)) {
+    if (!formatsUtil.isValidTxHash(utxoHash)) {
       throw new IllegalInputException(
           ServerErrorCode.INPUT_REJECTED, "Invalid utxoHash: " + utxoHash);
     }

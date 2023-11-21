@@ -131,6 +131,12 @@ public class ServicesConfig extends ServerServicesConfig {
   }
 
   @Bean
+  WhirlpoolServerContext whirlpoolServerContext(WhirlpoolServerConfig serverConfig)
+      throws Exception {
+    return new WhirlpoolServerContext(serverConfig);
+  }
+
+  @Bean
   JWSSConfig jwssConfig() {
     String[] endpoints =
         new String[] {

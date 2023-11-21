@@ -1,11 +1,7 @@
 package com.samourai.whirlpool.server.utils;
 
-import com.samourai.soroban.client.RpcWallet;
-import com.samourai.soroban.client.RpcWalletImpl;
-import com.samourai.wallet.bip47.rpc.BIP47Wallet;
 import com.samourai.wallet.bipWallet.BipWallet;
 import com.samourai.wallet.chain.ChainSupplier;
-import com.samourai.wallet.crypto.CryptoUtil;
 import com.samourai.wallet.hd.BIP_WALLET;
 import com.samourai.wallet.segwit.SegwitAddress;
 import com.samourai.wallet.util.TxUtil;
@@ -13,6 +9,7 @@ import com.samourai.whirlpool.client.WhirlpoolClient;
 import com.samourai.whirlpool.client.mix.MixParams;
 import com.samourai.whirlpool.client.mix.handler.*;
 import com.samourai.whirlpool.client.wallet.beans.IndexRange;
+import com.samourai.whirlpool.client.wallet.data.coordinator.CoordinatorSupplier;
 import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientConfig;
 import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientImpl;
 import com.samourai.whirlpool.protocol.websocket.notifications.MixStatus;
@@ -160,9 +157,7 @@ public class AssertMultiClientManager extends MultiClientManager {
         new PremixHandler(utxo, ecKey, "userPreHash" + input.getHash() + input.getIndex());
     IPostmixHandler postmixHandler = new Bip84PostmixHandler(params, bip84Wallet, IndexRange.EVEN);
     ChainSupplier chainSupplier = blockchainDataService.computeChainSupplier();
-    BIP47Wallet bip47Wallet = new BIP47Wallet(bip84Wallet.getHdWallet());
-    CryptoUtil cryptoUtil = CryptoUtil.getInstanceJava();
-    RpcWallet rpcWallet = new RpcWalletImpl(bip47Wallet, cryptoUtil);
+    CoordinatorSupplier coordinatorSupplier = null; // TODO
     MixParams mixParams =
         new MixParams(
             pool.getPoolId(),
@@ -173,7 +168,7 @@ public class AssertMultiClientManager extends MultiClientManager {
             premixHandler,
             postmixHandler,
             chainSupplier,
-            rpcWallet);
+            coordinatorSupplier);
 
     whirlpoolClient.whirlpool(mixParams, listener);
   }

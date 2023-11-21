@@ -1,7 +1,6 @@
 package com.samourai.whirlpool.server.controllers.rest;
 
 import com.google.common.collect.ImmutableMap;
-import com.samourai.wallet.util.MessageSignUtilGeneric;
 import com.samourai.wallet.util.RandomUtil;
 import com.samourai.whirlpool.protocol.WhirlpoolEndpoint;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
@@ -14,6 +13,7 @@ import com.samourai.whirlpool.server.beans.PoolFee;
 import com.samourai.whirlpool.server.beans.TxOutSignature;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
+import com.samourai.whirlpool.server.config.WhirlpoolServerContext;
 import com.samourai.whirlpool.server.services.*;
 import com.samourai.whirlpool.server.utils.Utils;
 import com.samourai.xmanager.client.XManagerClient;
@@ -43,8 +43,8 @@ public class Tx0Controller extends AbstractRestController {
   private FeePayloadService feePayloadService;
   private ExportService exportService;
   private WhirlpoolServerConfig serverConfig;
+  private WhirlpoolServerContext serverContext;
   private XManagerClient xManagerClient;
-  private MessageSignUtilGeneric messageSignUtil = MessageSignUtilGeneric.getInstance();
 
   @Autowired
   public Tx0Controller(
@@ -55,6 +55,7 @@ public class Tx0Controller extends AbstractRestController {
       FeePayloadService feePayloadService,
       ExportService exportService,
       WhirlpoolServerConfig serverConfig,
+      WhirlpoolServerContext serverContext,
       XManagerClient xManagerClient) {
     this.poolService = poolService;
     this.partnerService = partnerService;
@@ -63,6 +64,7 @@ public class Tx0Controller extends AbstractRestController {
     this.feePayloadService = feePayloadService;
     this.exportService = exportService;
     this.serverConfig = serverConfig;
+    this.serverContext = serverContext;
     this.xManagerClient = xManagerClient;
   }
 
@@ -240,7 +242,7 @@ public class Tx0Controller extends AbstractRestController {
             feeAddress,
             feeValue,
             serverConfig.getNetworkParameters(),
-            serverConfig.getSigningWallet());
+            serverContext.getSigningWallet());
     if (log.isDebugEnabled()) {
       log.debug("feeAddress=" + feeAddress + ", feeValue=" + feeValue + ", " + txOutSignature);
     }

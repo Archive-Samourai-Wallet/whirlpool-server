@@ -72,7 +72,7 @@ public class TestUtils {
   }
 
   public BIP47WalletAndHDWallet generateWallet() throws Exception {
-    byte seed[] = cryptoTestUtil.generateSeed();
+    byte seed[] = hdWalletFactory.generateSeed(12);
     return generateWallet(seed, "test");
   }
 

@@ -4,8 +4,8 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 
 import com.samourai.wallet.util.PrivKeyReader;
 import com.samourai.whirlpool.server.beans.RegisteredInput;
+import com.samourai.whirlpool.server.beans.SecretWalletContext;
 import com.samourai.whirlpool.server.beans.TxOutSignature;
-import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.integration.AbstractIntegrationTest;
 import java.lang.invoke.MethodHandles;
 import org.bitcoinj.core.ECKey;
@@ -80,7 +80,7 @@ public class UtilsTest extends AbstractIntegrationTest {
             "TB1QHH2PDL203J27ACMFDPHRLHE3UHL7F7W5NXVYTT",
             42500,
             params,
-            serverConfig.getSigningWallet());
+            serverContext.getSigningWallet());
     Assertions.assertEquals("mi42XN9J3eLdZae4tjQnJnVkCcNDRuAtz4", tos.signingAddress);
     Assertions.assertEquals(
         "41ac962525d867004e034ce22327c8ea5f5c57ea96e39502339c146fc306556c", tos.preHash);
@@ -92,11 +92,11 @@ public class UtilsTest extends AbstractIntegrationTest {
   @Test
   public void signMessage() throws Exception {
     String message = "foo";
-    WhirlpoolServerConfig.SecretWalletConfig signingWallet = serverConfig.getSigningWallet();
-    String signingAddress = Utils.computeSigningAddress(signingWallet, params).getAddressString();
+    SecretWalletContext signingWallet = serverContext.getSigningWallet();
+    String signingAddress = signingWallet.getAddressString();
     Assertions.assertEquals("mi42XN9J3eLdZae4tjQnJnVkCcNDRuAtz4", signingAddress);
 
-    String signature = Utils.signMessage(signingWallet, params, message);
+    String signature = Utils.signMessage(signingWallet, message);
     Assertions.assertEquals(
         "IOPYuUGGRACTiF8miDxEcVukQeORxK8wTo9tZc26R7hqSW11gwG8Zs32w4Q4pRtf3kV7bBfdItbXJaCA8mR9sEs=",
         signature);
@@ -108,8 +108,8 @@ public class UtilsTest extends AbstractIntegrationTest {
   @Test
   public void computeSigningAddress() throws Exception {
     NetworkParameters params = TestNet3Params.get();
-    WhirlpoolServerConfig.SecretWalletConfig signingWallet = serverConfig.getSigningWallet();
-    String signingAddress = Utils.computeSigningAddress(signingWallet, params).getAddressString();
+    SecretWalletContext signingWallet = serverContext.getSigningWallet();
+    String signingAddress = signingWallet.getAddressString();
     Assertions.assertEquals("mi42XN9J3eLdZae4tjQnJnVkCcNDRuAtz4", signingAddress);
   }
 }

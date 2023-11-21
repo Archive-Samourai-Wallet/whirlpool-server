@@ -4,7 +4,7 @@ import com.samourai.dex.config.DexConfigProvider;
 import com.samourai.dex.config.DexConfigResponse;
 import com.samourai.dex.config.SamouraiConfig;
 import com.samourai.wallet.util.JSONUtils;
-import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
+import com.samourai.whirlpool.server.config.WhirlpoolServerContext;
 import com.samourai.whirlpool.server.utils.Utils;
 import java.lang.invoke.MethodHandles;
 import org.slf4j.Logger;
@@ -19,12 +19,12 @@ public class DexConfigController extends AbstractRestController {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   public static final String ENDPOINT_DEXCONFIG = DexConfigProvider.ENDPOINT_DEXCONFIG;
 
-  private WhirlpoolServerConfig serverConfig;
+  private WhirlpoolServerContext serverContext;
   private DexConfigResponse dexConfigResponse;
 
   @Autowired
-  public DexConfigController(WhirlpoolServerConfig serverConfig) throws Exception {
-    this.serverConfig = serverConfig;
+  public DexConfigController(WhirlpoolServerContext serverContext) throws Exception {
+    this.serverContext = serverContext;
   }
 
   @RequestMapping(value = ENDPOINT_DEXCONFIG, method = RequestMethod.GET)
@@ -33,11 +33,7 @@ public class DexConfigController extends AbstractRestController {
       SamouraiConfig samouraiConfig = new SamouraiConfig();
       String samouraiConfigJson =
           JSONUtils.getInstance().getObjectMapper().writeValueAsString(samouraiConfig);
-      String signature =
-          Utils.signMessage(
-              serverConfig.getSigningWallet(),
-              serverConfig.getNetworkParameters(),
-              samouraiConfigJson);
+      String signature = Utils.signMessage(serverContext.getSigningWallet(), samouraiConfigJson);
       dexConfigResponse = new DexConfigResponse(samouraiConfigJson, signature);
     }
     return dexConfigResponse;

@@ -5,7 +5,6 @@ import com.samourai.http.client.IHttpClient;
 import com.samourai.http.client.IHttpClientService;
 import com.samourai.javaserver.utils.ServerUtils;
 import com.samourai.soroban.client.RpcWallet;
-import com.samourai.soroban.client.RpcWalletImpl;
 import com.samourai.soroban.client.wallet.SorobanWalletService;
 import com.samourai.wallet.api.backend.BackendServer;
 import com.samourai.wallet.bip47.rpc.BIP47Account;
@@ -30,6 +29,7 @@ import com.samourai.whirlpool.client.wallet.data.dataSource.DataSourceFactory;
 import com.samourai.whirlpool.client.wallet.data.dataSource.DojoDataSourceFactory;
 import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientConfig;
 import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientImpl;
+import com.samourai.whirlpool.protocol.WhirlpoolProtocolSoroban;
 import com.samourai.whirlpool.protocol.util.XorMask;
 import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.beans.Pool;
@@ -37,6 +37,7 @@ import com.samourai.whirlpool.server.beans.PoolMinerFee;
 import com.samourai.whirlpool.server.beans.rpc.RpcTransaction;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
+import com.samourai.whirlpool.server.config.WhirlpoolServerContext;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import com.samourai.whirlpool.server.services.*;
 import com.samourai.whirlpool.server.services.rpc.MockRpcClientServiceImpl;
@@ -72,6 +73,8 @@ public abstract class AbstractIntegrationTest {
   @LocalServerPort protected int port;
 
   @Autowired protected WhirlpoolServerConfig serverConfig;
+
+  @Autowired protected WhirlpoolServerContext serverContext;
 
   @Autowired protected CryptoService cryptoService;
 
@@ -138,6 +141,10 @@ public abstract class AbstractIntegrationTest {
 
   protected NetworkParameters params;
 
+  protected WhirlpoolProtocolSoroban whirlpoolProtocolSoroban = new WhirlpoolProtocolSoroban();
+
+  protected RpcWallet rpcWallet;
+
   @BeforeEach
   public void setUp() throws Exception {
     // enable debug
@@ -157,6 +164,12 @@ public abstract class AbstractIntegrationTest {
 
     configurePools(serverConfig.getMinerFees(), serverConfig.getPools());
     cacheService._reset();
+
+    HD_Wallet hdw84 =
+        walletFactory.restoreWallet(
+            MOCK_SEED_WORDS, MOCK_SEED_PASSPHRASE, serverConfig.getNetworkParameters());
+    BIP47Wallet bip47Wallet = new BIP47Wallet(hdw84);
+    rpcWallet = rpcClientServiceServer.getRpcWallet(bip47Wallet);
   }
 
   protected void configurePools(
@@ -282,14 +295,6 @@ public abstract class AbstractIntegrationTest {
 
   public WhirlpoolClient createClient() {
     return new WhirlpoolClientImpl(whirlpoolClientConfig());
-  }
-
-  protected RpcWallet rpcWallet() throws Exception {
-    HD_Wallet hdw84 =
-        walletFactory.restoreWallet(
-            MOCK_SEED_WORDS, MOCK_SEED_PASSPHRASE, serverConfig.getNetworkParameters());
-    BIP47Wallet bip47Wallet = new BIP47Wallet(hdw84);
-    return new RpcWalletImpl(bip47Wallet, cryptoUtil);
   }
 
   public TxOutPoint createAndMockTxOutPoint(

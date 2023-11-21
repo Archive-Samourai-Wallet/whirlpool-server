@@ -1,11 +1,11 @@
 package com.samourai.whirlpool.server.orchestrators;
 
-import com.samourai.soroban.client.RpcWallet;
 import com.samourai.soroban.client.rpc.RpcSession;
 import com.samourai.wallet.util.AbstractOrchestrator;
 import com.samourai.wallet.util.AsyncUtil;
 import com.samourai.whirlpool.protocol.rest.PoolInfoSoroban;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
+import com.samourai.whirlpool.server.config.WhirlpoolServerContext;
 import com.samourai.whirlpool.server.services.MinerFeeService;
 import com.samourai.whirlpool.server.services.PoolService;
 import com.samourai.whirlpool.server.services.soroban.SorobanCoordinatorApi;
@@ -19,26 +19,26 @@ public class SorobanCoordinatorOrchestrator extends AbstractOrchestrator {
   private static final int LOOP_DELAY = 30000;
 
   private WhirlpoolServerConfig serverConfig;
+  private WhirlpoolServerContext serverContext;
   private PoolService poolService;
   private MinerFeeService minerFeeService;
   private SorobanCoordinatorApi sorobanCoordinatorApi;
   private RpcSession rpcSession;
-  private RpcWallet rpcWallet;
 
   public SorobanCoordinatorOrchestrator(
       WhirlpoolServerConfig serverConfig,
+      WhirlpoolServerContext serverContext,
       PoolService poolService,
       MinerFeeService minerFeeService,
       SorobanCoordinatorApi sorobanCoordinatorApi,
-      RpcSession rpcSession,
-      RpcWallet rpcWallet) {
+      RpcSession rpcSession) {
     super(LOOP_DELAY, 0, null);
     this.serverConfig = serverConfig;
+    this.serverContext = serverContext;
     this.poolService = poolService;
     this.minerFeeService = minerFeeService;
     this.sorobanCoordinatorApi = sorobanCoordinatorApi;
     this.rpcSession = rpcSession;
-    this.rpcWallet = rpcWallet;
   }
 
   @Override
@@ -53,12 +53,13 @@ public class SorobanCoordinatorOrchestrator extends AbstractOrchestrator {
       }
       AsyncUtil.getInstance()
           .blockingAwait(
-              rpcSession.withRpcClientEncrypted(
-                  rpcWallet.getEncrypter(),
-                  rce ->
+              rpcSession.withSorobanClient(
+                  sorobanClient ->
                       sorobanCoordinatorApi.registerCoordinator(
-                          rce,
+                          sorobanClient,
                           serverConfig.getCoordinatorId(),
+                          serverContext.getCoordinatorWallet().getPaymentCode(),
+                          serverContext.getCoordinatorWalletPaymentCodeSignature(),
                           serverConfig.getExternalUrlClear(),
                           serverConfig.getExternalUrlOnion(),
                           poolInfosSoroban)));

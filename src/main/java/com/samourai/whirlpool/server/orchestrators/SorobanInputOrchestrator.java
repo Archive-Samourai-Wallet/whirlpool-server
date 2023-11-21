@@ -11,9 +11,12 @@ import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.services.PoolService;
 import com.samourai.whirlpool.server.services.RegisterInputService;
 import com.samourai.whirlpool.server.services.soroban.SorobanCoordinatorApi;
-import io.reactivex.Single;
+import io.reactivex.Completable;
 import java.lang.invoke.MethodHandles;
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,7 +61,6 @@ public class SorobanInputOrchestrator extends AbstractOrchestrator {
       try {
         Collection<RegisterInputSoroban> registerInputSorobans =
             rpcSession.withRpcClientEncrypted(
-                rpcWallet.getEncrypter(),
                 rce -> sorobanCoordinatorApi.getListRegisterInputSorobanByPoolId(rce, poolId));
         for (RegisterInputSoroban registerInputSoroban : registerInputSorobans) {
           String pCode = registerInputSoroban.getSorobanPaymentCode().toString();
@@ -105,7 +107,7 @@ public class SorobanInputOrchestrator extends AbstractOrchestrator {
     }
   }
 
-  private Single<String> rejectInput(RegisterInputSoroban registerInputSoroban, Exception e)
+  private Completable rejectInput(RegisterInputSoroban registerInputSoroban, Exception e)
       throws Exception {
     // add to rejected inputs
     String pCode = registerInputSoroban.getSorobanPaymentCode().toString();
@@ -115,7 +117,6 @@ public class SorobanInputOrchestrator extends AbstractOrchestrator {
     String message =
         "Input rejected: " + NotifiableException.computeNotifiableException(e).getMessage();
     return rpcSession.withRpcClientEncrypted(
-        rpcWallet.getEncrypter(),
         rce -> sorobanCoordinatorApi.sendError(rce, registerInputSoroban, rpcWallet, message));
   }
 
