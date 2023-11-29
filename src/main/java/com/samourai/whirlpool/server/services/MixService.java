@@ -863,12 +863,7 @@ public class MixService {
       log.info("Ignoring goFail(): mix already failed");
       return;
     }
-
-    // clear failed mix outputs
     log.warn("Mix failed: " + failReason.name() + (failInfo != null ? ", " + failInfo : ""));
-    for (String mixOutput : mix.getReceiveAddresses()) {
-      dbService.deleteMixOutput(mixOutput);
-    }
 
     mix.setFailReason(failReason);
     mix.setFailInfo(failInfo);
