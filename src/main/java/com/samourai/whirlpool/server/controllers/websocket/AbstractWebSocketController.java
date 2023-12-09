@@ -2,10 +2,10 @@ package com.samourai.whirlpool.server.controllers.websocket;
 
 import com.google.common.collect.ImmutableMap;
 import com.samourai.javaserver.exceptions.NotifiableException;
-import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
+import com.samourai.whirlpool.protocol.WhirlpoolErrorCode;
+import com.samourai.whirlpool.protocol.v0.WhirlpoolProtocolV0;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
-import com.samourai.whirlpool.server.exceptions.ServerErrorCode;
 import com.samourai.whirlpool.server.services.ExportService;
 import com.samourai.whirlpool.server.services.RegisterInputService;
 import com.samourai.whirlpool.server.services.WSMessageService;
@@ -35,12 +35,12 @@ public abstract class AbstractWebSocketController {
 
   protected void validateHeaders(StompHeaderAccessor headers) throws Exception {
     String clientProtocolVersion =
-        headers.getFirstNativeHeader(WhirlpoolProtocol.HEADER_PROTOCOL_VERSION);
-    if (!WhirlpoolProtocol.PROTOCOL_VERSION.equals(clientProtocolVersion)) {
+        headers.getFirstNativeHeader(WhirlpoolProtocolV0.HEADER_PROTOCOL_VERSION);
+    if (!WhirlpoolProtocolV0.PROTOCOL_VERSION.equals(clientProtocolVersion)) {
       throw new IllegalInputException(
-          ServerErrorCode.VERSION_MISMATCH,
+          WhirlpoolErrorCode.VERSION_MISMATCH,
           "Version mismatch: server="
-              + WhirlpoolProtocol.PROTOCOL_VERSION
+              + WhirlpoolProtocolV0.PROTOCOL_VERSION
               + ", client="
               + (clientProtocolVersion != null ? clientProtocolVersion : "unknown"));
     }

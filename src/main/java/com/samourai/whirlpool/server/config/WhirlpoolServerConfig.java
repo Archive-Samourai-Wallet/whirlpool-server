@@ -3,9 +3,8 @@ package com.samourai.whirlpool.server.config;
 import com.samourai.javaserver.config.ServerConfig;
 import com.samourai.javaserver.exceptions.NotifiableException;
 import com.samourai.whirlpool.client.wallet.beans.WhirlpoolNetwork;
-import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
+import com.samourai.whirlpool.protocol.WhirlpoolErrorCode;
 import com.samourai.whirlpool.server.beans.FailMode;
-import com.samourai.whirlpool.server.exceptions.ServerErrorCode;
 import com.samourai.whirlpool.server.services.ScodeService;
 import com.samourai.whirlpool.server.utils.Utils;
 import com.samourai.xmanager.protocol.XManagerService;
@@ -972,7 +971,6 @@ public class WhirlpoolServerConfig extends ServerConfig {
     configInfo.put(
         "rpcClient",
         rpcClient.getHost() + ":" + rpcClient.getPort() + "," + networkParameters.getId());
-    configInfo.put("protocolVersion", WhirlpoolProtocol.PROTOCOL_VERSION);
 
     int nbSeedWordsV0 = samouraiFees.getSecretWalletV0().getWords().split(" ").length;
     int nbSeedWords = samouraiFees.getSecretWallet().getWords().split(" ").length;
@@ -1047,7 +1045,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
     // fail mode?
     if (failMode.equals(value)) {
       throw new NotifiableException(
-          ServerErrorCode.INPUT_REJECTED, "serverConfig.failMode=" + failMode);
+          WhirlpoolErrorCode.INPUT_REJECTED, "serverConfig.failMode=" + failMode);
     }
   }
 }

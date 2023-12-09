@@ -20,6 +20,18 @@
 			<artifactId>whirlpool-client</artifactId>
 			<version>1.0.0-dexwp2-SNAPSHOT</version>
 		</dependency>
+		<!-- old protocol for old clients over websocket -->
+		<dependency>
+			<groupId>io.samourai.code.whirlpool</groupId>
+			<artifactId>whirlpool-protocol-v0</artifactId>
+			<version>0.23.11-SNAPSHOT</version>
+			<exclusions>
+				<exclusion>
+					<groupId>io.samourai.code.wallet</groupId>
+					<artifactId>extlibj</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
 		<dependency>
 			<groupId>io.samourai.code.wallet</groupId>
 			<artifactId>java-websocket-server</artifactId>
@@ -46,6 +58,11 @@
 			<groupId>io.samourai.code.wallet</groupId>
 			<artifactId>extlibj</artifactId>
 			<version>0.0.43-dexwp2-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>io.samourai.code.wallet</groupId>
+			<artifactId>xmanager-protocol</artifactId>
+			<version>1.0.10</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

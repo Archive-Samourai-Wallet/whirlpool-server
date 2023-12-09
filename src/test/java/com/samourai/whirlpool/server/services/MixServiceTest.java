@@ -2,9 +2,9 @@ package com.samourai.whirlpool.server.services;
 
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
-import com.samourai.whirlpool.protocol.websocket.notifications.MixStatus;
 import com.samourai.whirlpool.server.beans.FailReason;
 import com.samourai.whirlpool.server.beans.Mix;
+import com.samourai.whirlpool.server.beans.MixStatus;
 import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.exceptions.QueueInputException;
@@ -69,9 +69,8 @@ public class MixServiceTest extends AbstractIntegrationTest {
             false,
             generateOutPoint(mustMixValue),
             false,
-            null,
-            null,
-            "userHash1"));
+            "userHash1",
+            null));
     Assertions.assertFalse(mix.hasMinMustMixAndFeeReached());
     Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(1, mix.getNbInputsMustMix());
@@ -90,9 +89,8 @@ public class MixServiceTest extends AbstractIntegrationTest {
             false,
             generateOutPoint(mustMixValue),
             false,
-            null,
-            null,
-            "userHash2"));
+            "userHash2",
+            null));
     Assertions.assertTrue(mix.hasMinMustMixAndFeeReached());
     Assertions.assertTrue(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(2, mix.getNbInputsMustMix());
@@ -152,9 +150,8 @@ public class MixServiceTest extends AbstractIntegrationTest {
             true,
             generateOutPoint(mustMixValue),
             false,
-            null,
-            null,
-            "userHashL1"));
+            "userHashL1",
+            null));
     Assertions.assertFalse(mix.hasMinMustMixAndFeeReached());
     Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(0, mix.getNbInputsMustMix());
@@ -173,9 +170,8 @@ public class MixServiceTest extends AbstractIntegrationTest {
             false,
             generateOutPoint(mustMixValue),
             false,
-            null,
-            null,
-            "userHashM1"));
+            "userHashM1",
+            null));
     Assertions.assertFalse(mix.hasMinMustMixAndFeeReached());
     Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(1, mix.getNbInputsMustMix());
@@ -195,9 +191,8 @@ public class MixServiceTest extends AbstractIntegrationTest {
             true,
             generateOutPoint(mustMixValue),
             false,
-            null,
-            null,
-            "userHashL1"));
+            "userHashL1",
+            null));
     Assertions.assertTrue(mix.hasMinMustMixAndFeeReached());
     Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(2, mix.getNbInputsMustMix());
@@ -216,9 +211,8 @@ public class MixServiceTest extends AbstractIntegrationTest {
             true,
             generateOutPoint(mustMixValue),
             false,
-            null,
-            null,
-            "userHashL2"));
+            "userHashL2",
+            null));
     Assertions.assertTrue(mix.hasMinMustMixAndFeeReached());
     Assertions.assertTrue(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(2, mix.getNbInputsMustMix());
@@ -264,9 +258,8 @@ public class MixServiceTest extends AbstractIntegrationTest {
             false,
             generateOutPoint(mustMixValue),
             false,
-            null,
-            null,
-            "userHashM1"));
+            "userHashM1",
+            null));
     Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(1, mix.getNbInputsMustMix());
     Assertions.assertEquals(0, mix.getNbInputsLiquidities());
@@ -284,9 +277,8 @@ public class MixServiceTest extends AbstractIntegrationTest {
             false,
             generateOutPoint(mustMixValue),
             false,
-            null,
-            null,
-            "userHashM2"));
+            "userHashM2",
+            null));
     Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(2, mix.getNbInputsMustMix());
     Assertions.assertEquals(0, mix.getNbInputsLiquidities());
@@ -304,9 +296,8 @@ public class MixServiceTest extends AbstractIntegrationTest {
             true,
             generateOutPoint(mustMixValue),
             false,
-            null,
-            null,
-            "userHashL1"));
+            "userHashL1",
+            null));
     Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(2, mix.getNbInputsMustMix());
     Assertions.assertEquals(1, mix.getNbInputsLiquidities());
@@ -324,9 +315,8 @@ public class MixServiceTest extends AbstractIntegrationTest {
             true,
             generateOutPoint(mustMixValue),
             false,
-            null,
-            null,
-            "userHashL2"));
+            "userHashL2",
+            null));
     Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(2, mix.getNbInputsMustMix());
     Assertions.assertEquals(2, mix.getNbInputsLiquidities());
@@ -344,9 +334,8 @@ public class MixServiceTest extends AbstractIntegrationTest {
             true,
             generateOutPoint(mustMixValue),
             false,
-            null,
-            null,
-            "userHashL3"));
+            "userHashL3",
+            null));
     Assertions.assertTrue(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(2, mix.getNbInputsMustMix());
     Assertions.assertEquals(3, mix.getNbInputsLiquidities());
@@ -364,9 +353,8 @@ public class MixServiceTest extends AbstractIntegrationTest {
             true,
             generateOutPoint(mustMixValue),
             false,
-            null,
-            null,
-            "userHashL4"));
+            "userHashL4",
+            null));
     Assertions.assertTrue(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(2, mix.getNbInputsMustMix());
     Assertions.assertEquals(4, mix.getNbInputsLiquidities());
@@ -384,9 +372,8 @@ public class MixServiceTest extends AbstractIntegrationTest {
             true,
             generateOutPoint(mustMixValue),
             false,
-            null,
-            null,
-            "userHashL5"));
+            "userHashL5",
+            null));
     Assertions.assertTrue(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(2, mix.getNbInputsMustMix());
     Assertions.assertEquals(5, mix.getNbInputsLiquidities());
@@ -433,9 +420,8 @@ public class MixServiceTest extends AbstractIntegrationTest {
             false,
             generateOutPoint(mustMixValue),
             false,
-            null,
-            null,
-            "userHashM1"));
+            "userHashM1",
+            null));
     Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(1, mix.getNbInputsMustMix());
     Assertions.assertEquals(0, mix.getNbInputsLiquidities());
@@ -453,9 +439,8 @@ public class MixServiceTest extends AbstractIntegrationTest {
             false,
             generateOutPoint(mustMixValue),
             false,
-            null,
-            null,
-            "userHashM2"));
+            "userHashM2",
+            null));
     Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(2, mix.getNbInputsMustMix());
     Assertions.assertEquals(0, mix.getNbInputsLiquidities());
@@ -473,9 +458,8 @@ public class MixServiceTest extends AbstractIntegrationTest {
             true,
             generateOutPoint(mustMixValue),
             false,
-            null,
-            null,
-            "userHashL1"));
+            "userHashL1",
+            null));
     Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(2, mix.getNbInputsMustMix());
     Assertions.assertEquals(1, mix.getNbInputsLiquidities());
@@ -493,9 +477,8 @@ public class MixServiceTest extends AbstractIntegrationTest {
             true,
             generateOutPoint(mustMixValue),
             false,
-            null,
-            null,
-            "userHashL2"));
+            "userHashL2",
+            null));
     Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(2, mix.getNbInputsMustMix());
     Assertions.assertEquals(2, mix.getNbInputsLiquidities());
@@ -513,9 +496,8 @@ public class MixServiceTest extends AbstractIntegrationTest {
             true,
             generateOutPoint(mustMixValue),
             false,
-            null,
-            null,
-            "userHashL3"));
+            "userHashL3",
+            null));
     Assertions.assertTrue(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(2, mix.getNbInputsMustMix());
     Assertions.assertEquals(3, mix.getNbInputsLiquidities());
@@ -533,9 +515,8 @@ public class MixServiceTest extends AbstractIntegrationTest {
             true,
             generateOutPoint(mustMixValue),
             false,
-            null,
-            null,
-            "userHashL4"));
+            "userHashL4",
+            null));
     Assertions.assertTrue(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(2, mix.getNbInputsMustMix());
     Assertions.assertEquals(4, mix.getNbInputsLiquidities());
@@ -553,9 +534,8 @@ public class MixServiceTest extends AbstractIntegrationTest {
             true,
             generateOutPoint(mustMixValue),
             false,
-            null,
-            null,
-            "userHashL5"));
+            "userHashL5",
+            null));
     Assertions.assertTrue(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(2, mix.getNbInputsMustMix());
     Assertions.assertEquals(5, mix.getNbInputsLiquidities());
@@ -602,9 +582,8 @@ public class MixServiceTest extends AbstractIntegrationTest {
             false,
             generateOutPoint(mustMixValue),
             false,
-            null,
-            null,
-            "mustMix1"));
+            "mustMix1",
+            null));
     Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(1, mix.getNbInputsMustMix());
     Assertions.assertEquals(0, mix.getNbInputsLiquidities());
@@ -624,9 +603,8 @@ public class MixServiceTest extends AbstractIntegrationTest {
             false,
             generateOutPoint(mustMixValue),
             false,
-            null,
-            null,
-            "mustMix2"));
+            "mustMix2",
+            null));
     Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(2, mix.getNbInputsMustMix());
     Assertions.assertEquals(0, mix.getNbInputsLiquidities());
@@ -644,9 +622,8 @@ public class MixServiceTest extends AbstractIntegrationTest {
             true,
             generateOutPoint(mustMixValue),
             false,
-            null,
-            null,
-            "liquidity1"));
+            "liquidity1",
+            null));
     Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(2, mix.getNbInputsMustMix());
     Assertions.assertEquals(1, mix.getNbInputsLiquidities());
@@ -664,9 +641,8 @@ public class MixServiceTest extends AbstractIntegrationTest {
             true,
             generateOutPoint(mustMixValue),
             false,
-            null,
-            null,
-            "liquidity2"));
+            "liquidity2",
+            null));
     Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(2, mix.getNbInputsMustMix());
     Assertions.assertEquals(2, mix.getNbInputsLiquidities());
@@ -684,9 +660,8 @@ public class MixServiceTest extends AbstractIntegrationTest {
             true,
             generateOutPoint(mustMixValue),
             false,
-            null,
-            null,
-            "liquidity3"));
+            "liquidity3",
+            null));
     Assertions.assertTrue(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(2, mix.getNbInputsMustMix());
     Assertions.assertEquals(3, mix.getNbInputsLiquidities());
@@ -704,9 +679,8 @@ public class MixServiceTest extends AbstractIntegrationTest {
             true,
             generateOutPoint(mustMixValue),
             false,
-            null,
-            null,
-            "liquidity4"));
+            "liquidity4",
+            null));
     Assertions.assertTrue(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(2, mix.getNbInputsMustMix());
     Assertions.assertEquals(4, mix.getNbInputsLiquidities());
@@ -740,9 +714,8 @@ public class MixServiceTest extends AbstractIntegrationTest {
             false,
             generateOutPoint(mustMixValue),
             false,
-            null,
-            null,
-            "mustMix2"));
+            "mustMix2",
+            null));
     Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(2, mix.getNbInputsMustMix());
     Assertions.assertEquals(1, mix.getNbInputsLiquidities());
@@ -760,9 +733,8 @@ public class MixServiceTest extends AbstractIntegrationTest {
             true,
             generateOutPoint(mustMixValue),
             false,
-            null,
-            null,
-            "liquidity11"));
+            "liquidity11",
+            null));
     Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(2, mix.getNbInputsMustMix());
     Assertions.assertEquals(2, mix.getNbInputsLiquidities());
@@ -780,9 +752,8 @@ public class MixServiceTest extends AbstractIntegrationTest {
             true,
             generateOutPoint(mustMixValue),
             false,
-            null,
-            null,
-            "liquidity22"));
+            "liquidity22",
+            null));
     Assertions.assertTrue(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(2, mix.getNbInputsMustMix());
     Assertions.assertEquals(3, mix.getNbInputsLiquidities());
@@ -800,9 +771,8 @@ public class MixServiceTest extends AbstractIntegrationTest {
             true,
             generateOutPoint(mustMixValue),
             false,
-            null,
-            null,
-            "liquidity33"));
+            "liquidity33",
+            null));
     Assertions.assertTrue(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(2, mix.getNbInputsMustMix());
     Assertions.assertEquals(4, mix.getNbInputsLiquidities());
@@ -820,9 +790,8 @@ public class MixServiceTest extends AbstractIntegrationTest {
             true,
             generateOutPoint(mustMixValue),
             false,
-            null,
-            null,
-            "liquidity44"));
+            "liquidity44",
+            null));
     Assertions.assertTrue(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(2, mix.getNbInputsMustMix());
     Assertions.assertEquals(5, mix.getNbInputsLiquidities());
@@ -874,9 +843,8 @@ public class MixServiceTest extends AbstractIntegrationTest {
             false,
             generateOutPoint(mustMixValue),
             false,
-            null,
-            null,
-            "userHash1");
+            "userHash1",
+            null);
     mix.registerInput(mustMix1);
     Assertions.assertFalse(spyMixService.isConfirmInputReady(mix));
     checkAccepts(true, true, mix);
@@ -889,9 +857,8 @@ public class MixServiceTest extends AbstractIntegrationTest {
             false,
             generateOutPoint(mustMixValue),
             false,
-            null,
-            null,
-            "userHash2");
+            "userHash2",
+            null);
     mix.registerInput(mustMix2);
     Assertions.assertTrue(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(2, mix.getNbInputs());
@@ -918,9 +885,8 @@ public class MixServiceTest extends AbstractIntegrationTest {
             false,
             generateOutPoint(mustMixValue),
             false,
-            null,
-            null,
-            "userHash3");
+            "userHash3",
+            null);
     mix.registerInput(mustMix3);
     Assertions.assertTrue(spyMixService.isConfirmInputReady(mix));
     Assertions.assertEquals(2, mix.getNbInputs());
@@ -967,7 +933,6 @@ public class MixServiceTest extends AbstractIntegrationTest {
               generateOutPoint(mix.getPool().computePremixBalanceMax(false)),
               false,
               null,
-              null,
               null);
       mix.hasAvailableSlotFor(input);
       if (!mustMix) {
@@ -994,7 +959,6 @@ public class MixServiceTest extends AbstractIntegrationTest {
               true,
               generateOutPoint(mix.getPool().computePremixBalanceMin(true)),
               false,
-              null,
               null,
               null);
       mix.hasAvailableSlotFor(input);

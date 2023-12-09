@@ -3,9 +3,9 @@ package com.samourai.whirlpool.server.services;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import com.samourai.wallet.segwit.SegwitAddress;
-import com.samourai.whirlpool.protocol.websocket.notifications.MixStatus;
 import com.samourai.whirlpool.server.beans.InputPool;
 import com.samourai.whirlpool.server.beans.Mix;
+import com.samourai.whirlpool.server.beans.MixStatus;
 import com.samourai.whirlpool.server.beans.Pool;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
@@ -74,7 +74,6 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
           liquidity,
           false,
           blockchainDataService.getBlockHeight(),
-          null,
           null,
           null);
       waitMixLimitsService(mix);
@@ -197,7 +196,6 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
                   false,
                   blockchainDataService.getBlockHeight(),
                   null,
-                  null,
                   null);
             });
     Assertions.assertEquals("Pool not found", e.getMessage());
@@ -245,7 +243,6 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
             false,
             blockchainDataService.getBlockHeight(),
             null,
-            null,
             null);
 
         // VERIFY
@@ -283,7 +280,6 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
                   false,
                   false,
                   blockchainDataService.getBlockHeight(),
-                  null,
                   null,
                   null);
             });
@@ -323,7 +319,6 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
                   false,
                   blockchainDataService.getBlockHeight(),
                   null,
-                  null,
                   null);
             });
     Assertions.assertEquals("Invalid signature", e.getMessage());
@@ -358,7 +353,6 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
         false,
         blockchainDataService.getBlockHeight(),
         null,
-        null,
         null);
     waitMixLimitsService(mix);
     testUtils.assertPoolEmpty(pool);
@@ -373,7 +367,6 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
         false,
         false,
         blockchainDataService.getBlockHeight(),
-        null,
         null,
         null); // AlreadyRegisteredInputException thrown in background
     waitMixLimitsService(mix);
@@ -409,7 +402,6 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
                   false,
                   false,
                   blockchainDataService.getBlockHeight(),
-                  null,
                   null,
                   null);
             });
@@ -448,7 +440,6 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
         false,
         blockchainDataService.getBlockHeight(),
         null,
-        null,
         null);
     waitMixLimitsService(mix);
 
@@ -484,7 +475,6 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
                   false,
                   false,
                   blockchainDataService.getBlockHeight(),
-                  null,
                   null,
                   null);
             });

@@ -9,6 +9,8 @@ import com.samourai.soroban.client.wallet.SorobanWalletService;
 import com.samourai.wallet.api.backend.BackendServer;
 import com.samourai.wallet.bip47.rpc.BIP47Account;
 import com.samourai.wallet.bip47.rpc.BIP47Wallet;
+import com.samourai.wallet.bip47.rpc.Bip47Partner;
+import com.samourai.wallet.bip47.rpc.PaymentCode;
 import com.samourai.wallet.bip47.rpc.java.Bip47UtilJava;
 import com.samourai.wallet.bip47.rpc.java.SecretPointFactoryJava;
 import com.samourai.wallet.bipFormat.BIP_FORMAT;
@@ -29,11 +31,14 @@ import com.samourai.whirlpool.client.wallet.data.dataSource.DataSourceFactory;
 import com.samourai.whirlpool.client.wallet.data.dataSource.DojoDataSourceFactory;
 import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientConfig;
 import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientImpl;
-import com.samourai.whirlpool.protocol.WhirlpoolProtocolSoroban;
+import com.samourai.whirlpool.protocol.SorobanProtocolWhirlpool;
+import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
+import com.samourai.whirlpool.protocol.soroban.api.WhirlpoolApiCoordinator;
 import com.samourai.whirlpool.protocol.util.XorMask;
 import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.beans.Pool;
 import com.samourai.whirlpool.server.beans.PoolMinerFee;
+import com.samourai.whirlpool.server.beans.SorobanInput;
 import com.samourai.whirlpool.server.beans.rpc.RpcTransaction;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
@@ -42,7 +47,6 @@ import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import com.samourai.whirlpool.server.services.*;
 import com.samourai.whirlpool.server.services.rpc.MockRpcClientServiceImpl;
 import com.samourai.whirlpool.server.services.rpc.RpcClientServiceServer;
-import com.samourai.whirlpool.server.services.soroban.SorobanCoordinatorApi;
 import com.samourai.whirlpool.server.services.soroban.SorobanCoordinatorService;
 import com.samourai.whirlpool.server.utils.AssertMultiClientManager;
 import com.samourai.whirlpool.server.utils.TestUtils;
@@ -69,6 +73,8 @@ public abstract class AbstractIntegrationTest {
 
   private static final String MOCK_SEED_WORDS = "all all all all all all all all all all all all";
   private static final String MOCK_SEED_PASSPHRASE = "all";
+
+  protected static final long FEES_VALID = 975000;
 
   @LocalServerPort protected int port;
 
@@ -124,14 +130,15 @@ public abstract class AbstractIntegrationTest {
 
   @Autowired protected MinerFeeService minerFeeService;
 
-  @Autowired protected SorobanCoordinatorApi sorobanCoordinatorApi;
+  @Autowired protected WhirlpoolApiCoordinator whirlpoolApiCoordinator;
 
   @Autowired protected FeePayloadService feePayloadService;
-  @Autowired protected PushService pushService;
   @Autowired protected XorMask xorMask;
   @Autowired protected CryptoUtil cryptoUtil;
   @Autowired protected JavaHttpClientService httpClientService;
   @Autowired protected RpcClientServiceServer rpcClientServiceServer;
+
+  @Autowired protected SorobanProtocolWhirlpool sorobanProtocolWhirlpool;
 
   protected MessageSignUtilGeneric messageSignUtil = MessageSignUtilGeneric.getInstance();
 
@@ -140,8 +147,6 @@ public abstract class AbstractIntegrationTest {
   protected AssertMultiClientManager multiClientManager;
 
   protected NetworkParameters params;
-
-  protected WhirlpoolProtocolSoroban whirlpoolProtocolSoroban = new WhirlpoolProtocolSoroban();
 
   protected RpcWallet rpcWallet;
 
@@ -285,7 +290,8 @@ public abstract class AbstractIntegrationTest {
             rpcClientService,
             blockchainDataService,
             whirlpoolClientConfig(),
-            params);
+            params,
+            rpcWallet);
     return multiClientManager;
   }
 
@@ -359,7 +365,6 @@ public abstract class AbstractIntegrationTest {
             multiUsageHttpClientService,
             rpcClientServiceServer,
             null,
-            null,
             bip47Util,
             WhirlpoolNetwork.TESTNET,
             false,
@@ -419,5 +424,15 @@ public abstract class AbstractIntegrationTest {
             params, transaction, new byte[] {(byte) txCounter, (byte) (txCounter++ >> 8)});
     transaction.addInput(transactionInput);
     return transactionOutput;
+  }
+
+  protected SorobanInput generateSorobanInput() throws Exception {
+    PaymentCode paymentCode = testUtils.generatePaymentCode();
+    Bip47Partner client = rpcWallet.getBip47Partner(paymentCode, true);
+    return new SorobanInput(client, String.valueOf(System.currentTimeMillis()));
+  }
+
+  protected String tx64FromTxHex(String txHex) {
+    return WhirlpoolProtocol.encodeBytes(org.bitcoinj.core.Utils.HEX.decode(txHex));
   }
 }

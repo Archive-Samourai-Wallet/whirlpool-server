@@ -1,21 +1,17 @@
 package com.samourai.whirlpool.server.beans;
 
-import com.samourai.wallet.bip47.rpc.PaymentCode;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
-import com.samourai.whirlpool.server.utils.Utils;
 import org.apache.commons.lang3.BooleanUtils;
 
 public class RegisteredInput {
   private String poolId;
-  private String username; // null for Soroban clients until confirmed
+  private String username; // Sender for Soroban clients
   private TxOutPoint outPoint;
   private boolean liquidity;
   private Boolean tor; // null for Soroban clients until confirmed
   private long since;
-  private PaymentCode sorobanPaymentCode; // null for non-Soroban clients
-  private Long sorobanLastSeen; // last seen time on Soroban
-  private String sorobanInitialPayload; // encrypted registerInput payload on Soroban
   private String lastUserHash; // unknown until confirmInput attempt
+  private SorobanInput sorobanInput; // null for non-Soroban clients
   private Long confirmingSince; // null until confirming
   private String quarantineReason; // only set when on "quarantine" for current mix
 
@@ -25,22 +21,16 @@ public class RegisteredInput {
       boolean liquidity,
       TxOutPoint outPoint,
       Boolean tor,
-      PaymentCode sorobanPaymentCode,
-      String sorobanInitialPayload,
-      String lastUserHash) {
+      String lastUserHash,
+      SorobanInput sorobanInput) {
     this.poolId = poolId;
     this.username = username;
     this.liquidity = liquidity;
     this.outPoint = outPoint;
     this.tor = tor;
     this.since = System.currentTimeMillis();
-    this.sorobanPaymentCode = sorobanPaymentCode;
-    this.sorobanLastSeen = null;
-    if (sorobanPaymentCode != null) {
-      setSorobanLastSeen();
-    }
-    this.sorobanInitialPayload = sorobanInitialPayload;
     this.lastUserHash = lastUserHash;
+    this.sorobanInput = sorobanInput;
     this.confirmingSince = null;
     this.quarantineReason = null;
   }
@@ -78,23 +68,7 @@ public class RegisteredInput {
   }
 
   public boolean isSoroban() {
-    return sorobanPaymentCode != null;
-  }
-
-  public PaymentCode getSorobanPaymentCode() {
-    return sorobanPaymentCode;
-  }
-
-  public Long getSorobanLastSeen() {
-    return sorobanLastSeen;
-  }
-
-  public void setSorobanLastSeen() {
-    this.sorobanLastSeen = System.currentTimeMillis();
-  }
-
-  public String getSorobanInitialPayload() {
-    return sorobanInitialPayload;
+    return sorobanInput != null;
   }
 
   public String getLastUserHash() {
@@ -103,6 +77,14 @@ public class RegisteredInput {
 
   public void setLastUserHash(String lastUserHash) {
     this.lastUserHash = lastUserHash;
+  }
+
+  public SorobanInput getSorobanInput() {
+    return sorobanInput;
+  }
+
+  public void setSorobanInput(SorobanInput sorobanInput) {
+    this.sorobanInput = sorobanInput;
   }
 
   public Long getConfirmingSince() {
@@ -143,13 +125,6 @@ public class RegisteredInput {
         + BooleanUtils.toStringTrueFalse(tor)
         + ", since="
         + since
-        + ", sorobanPaymentCode="
-        + (sorobanPaymentCode != null
-            ? Utils.obfuscateString(sorobanPaymentCode.toString(), 3)
-            : "null")
-        + (sorobanLastSeen != null ? sorobanLastSeen : "null")
-        + ", sorobanInitialPayload="
-        + (sorobanInitialPayload != null ? Utils.obfuscateString(sorobanInitialPayload, 3) : "null")
         + ", lastUserHash="
         + (lastUserHash != null ? lastUserHash : "null")
         + ", confirmingSince="

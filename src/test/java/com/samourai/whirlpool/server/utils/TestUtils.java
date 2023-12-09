@@ -130,7 +130,7 @@ public class TestUtils {
       String poolId, String utxoHash, long utxoIndex, boolean liquidity) {
     TxOutPoint outPoint = new TxOutPoint(utxoHash, utxoIndex, 1234, 99, null, "fakeReceiveAddress");
     return new RegisteredInput(
-        poolId, "foo", liquidity, outPoint, false, null, null, "userHash" + utxoHash + utxoIndex);
+        poolId, "foo", liquidity, outPoint, false, "userHash" + utxoHash + utxoIndex, null);
   }
 
   public UnspentOutput computeUnspentOutput(String hash, int index, long value, String toAddress)

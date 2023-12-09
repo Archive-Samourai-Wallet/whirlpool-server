@@ -50,4 +50,9 @@ public class SecretWalletContext {
   public String getAddressString() {
     return addressString;
   }
+
+  @Override
+  public String toString() {
+    return "paymentCode=" + paymentCode + ", addressString='" + addressString + '\'';
+  }
 }

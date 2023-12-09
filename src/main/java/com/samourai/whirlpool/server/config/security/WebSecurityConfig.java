@@ -2,7 +2,7 @@ package com.samourai.whirlpool.server.config.security;
 
 import com.samourai.javaserver.config.ServerServicesConfig;
 import com.samourai.javawsserver.config.JWSSConfig;
-import com.samourai.whirlpool.protocol.WhirlpoolEndpoint;
+import com.samourai.whirlpool.protocol.v0.WhirlpoolEndpointV0;
 import com.samourai.whirlpool.server.controllers.rest.DexConfigController;
 import com.samourai.whirlpool.server.controllers.rest.SystemController;
 import com.samourai.whirlpool.server.controllers.web.*;
@@ -39,13 +39,13 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
   private static final String[] REST_MIX_ENDPOINTS =
       new String[] {
-        WhirlpoolEndpoint.REST_POOLS,
-        WhirlpoolEndpoint.REST_CHECK_OUTPUT,
-        WhirlpoolEndpoint.REST_REGISTER_OUTPUT,
-        WhirlpoolEndpoint.REST_TX0_DATA_V0,
-        WhirlpoolEndpoint.REST_TX0_DATA_V1,
-        WhirlpoolEndpoint.REST_TX0_PUSH,
-        WhirlpoolEndpoint.REST_PREFIX + "tx0Notify", // @deprecated
+        WhirlpoolEndpointV0.REST_POOLS,
+        WhirlpoolEndpointV0.REST_CHECK_OUTPUT,
+        WhirlpoolEndpointV0.REST_REGISTER_OUTPUT,
+        WhirlpoolEndpointV0.REST_TX0_DATA_V0,
+        WhirlpoolEndpointV0.REST_TX0_DATA_V1,
+        WhirlpoolEndpointV0.REST_TX0_PUSH,
+        WhirlpoolEndpointV0.REST_PREFIX + "tx0Notify", // @deprecated
         SystemController.ENDPOINT_HEALTH,
         DexConfigController.ENDPOINT_DEXCONFIG
       };
@@ -59,7 +59,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
   @Override
   protected void configure(HttpSecurity http) throws Exception {
-    String WS_CONNECT_XHR = WhirlpoolEndpoint.WS_CONNECT + "/**";
+    String WS_CONNECT_XHR = WhirlpoolEndpointV0.WS_CONNECT + "/**";
 
     // disable csrf for our endpoints
     http.csrf()

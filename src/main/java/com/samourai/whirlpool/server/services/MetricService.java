@@ -1,7 +1,7 @@
 package com.samourai.whirlpool.server.services;
 
-import com.samourai.whirlpool.protocol.websocket.notifications.MixStatus;
 import com.samourai.whirlpool.server.beans.*;
+import com.samourai.whirlpool.server.beans.MixStatus;
 import com.samourai.whirlpool.server.beans.export.MixCsv;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Tag;

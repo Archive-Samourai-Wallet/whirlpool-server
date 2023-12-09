@@ -1,8 +1,8 @@
 package com.samourai.whirlpool.server.persistence.to;
 
-import com.samourai.whirlpool.protocol.websocket.notifications.MixStatus;
 import com.samourai.whirlpool.server.beans.FailReason;
 import com.samourai.whirlpool.server.beans.Mix;
+import com.samourai.whirlpool.server.beans.MixStatus;
 import com.samourai.whirlpool.server.persistence.to.shared.EntityCreatedUpdatedTO;
 import javax.persistence.*;
 

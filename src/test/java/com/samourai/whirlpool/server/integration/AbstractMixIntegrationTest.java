@@ -1,9 +1,9 @@
 package com.samourai.whirlpool.server.integration;
 
-import com.samourai.wallet.bip47.rpc.PaymentCode;
 import com.samourai.wallet.segwit.SegwitAddress;
 import com.samourai.whirlpool.client.utils.ClientUtils;
 import com.samourai.whirlpool.server.beans.Mix;
+import com.samourai.whirlpool.server.beans.SorobanInput;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.services.*;
 import java.lang.invoke.MethodHandles;
@@ -28,7 +28,7 @@ public abstract class AbstractMixIntegrationTest extends AbstractIntegrationTest
       String username,
       int confirmations,
       boolean liquidity,
-      PaymentCode sorobanPaymentCodeOrNull)
+      SorobanInput sorobanInputOrNull)
       throws Exception {
     String poolId = mix.getPool().getPoolId();
 
@@ -51,8 +51,7 @@ public abstract class AbstractMixIntegrationTest extends AbstractIntegrationTest
         liquidity,
         false,
         blockchainDataService.getBlockHeight(),
-        sorobanPaymentCodeOrNull,
-        null,
+        sorobanInputOrNull,
         null);
     waitMixLimitsService(mix);
     return txOutPoint;
@@ -72,13 +71,13 @@ public abstract class AbstractMixIntegrationTest extends AbstractIntegrationTest
       boolean liquidity,
       RSABlindingParameters blindingParams,
       byte[] bordereau,
-      PaymentCode sorobanPaymentCodeOrNull)
+      SorobanInput sorobanInputOrNull)
       throws Exception {
     int nbConfirming = mix.getNbConfirmingInputs();
 
     // REGISTER_INPUT
     TxOutPoint txOutPoint =
-        registerInput(mix, username, confirmations, liquidity, sorobanPaymentCodeOrNull);
+        registerInput(mix, username, confirmations, liquidity, sorobanInputOrNull);
 
     boolean queued = (mix.getNbConfirmingInputs() == nbConfirming);
     if (queued) {
@@ -111,7 +110,7 @@ public abstract class AbstractMixIntegrationTest extends AbstractIntegrationTest
 
     // CONFIRM_INPUT
     String mixId = mix.getMixId();
-    confirmInputService.confirmInputOrQueuePool(
+    confirmInputService.confirmInput(
         mixId, username, blindedBordereau, "userHash" + username, utxoHash, utxoIndex);
 
     // get a valid signed blinded bordereau

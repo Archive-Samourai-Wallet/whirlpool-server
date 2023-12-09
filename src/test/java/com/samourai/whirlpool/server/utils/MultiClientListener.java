@@ -4,7 +4,7 @@ import com.samourai.whirlpool.client.mix.listener.MixFailReason;
 import com.samourai.whirlpool.client.mix.listener.MixStep;
 import com.samourai.whirlpool.client.whirlpool.listener.WhirlpoolClientListener;
 import com.samourai.whirlpool.protocol.beans.Utxo;
-import com.samourai.whirlpool.protocol.websocket.notifications.MixStatus;
+import com.samourai.whirlpool.server.beans.MixStatus;
 
 public class MultiClientListener implements WhirlpoolClientListener {
   // indice 0 is always null as currentMix starts from 1

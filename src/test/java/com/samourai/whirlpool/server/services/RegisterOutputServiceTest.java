@@ -2,10 +2,10 @@ package com.samourai.whirlpool.server.services;
 
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
-import com.samourai.wallet.bip47.rpc.PaymentCode;
 import com.samourai.whirlpool.client.utils.ClientUtils;
-import com.samourai.whirlpool.protocol.websocket.notifications.MixStatus;
 import com.samourai.whirlpool.server.beans.Mix;
+import com.samourai.whirlpool.server.beans.MixStatus;
+import com.samourai.whirlpool.server.beans.SorobanInput;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import com.samourai.whirlpool.server.integration.AbstractMixIntegrationTest;
@@ -65,7 +65,6 @@ public class RegisterOutputServiceTest extends AbstractMixIntegrationTest {
     Mix mix = __getCurrentMix();
     String username = "testusername";
     String receiveAddress = testUtils.generateSegwitAddress().getBech32AsString();
-    PaymentCode paymentCode = testUtils.generatePaymentCode();
 
     // blind bordereau
     byte[] bordereau = ClientUtils.generateBordereau();
@@ -74,9 +73,10 @@ public class RegisterOutputServiceTest extends AbstractMixIntegrationTest {
         clientCryptoService.computeBlindingParams(serverPublicKey);
 
     // get a valid signed blinded bordereau
+    SorobanInput sorobanInput = generateSorobanInput();
     byte[] signedBlindedBordereau =
         registerInputAndConfirmInput(
-            mix, username, 999, false, blindingParams, bordereau, paymentCode);
+            mix, username, 999, false, blindingParams, bordereau, sorobanInput);
 
     // go REGISTER_OUTPUT
     mix.setMixStatusAndTime(MixStatus.REGISTER_OUTPUT);

@@ -1,7 +1,7 @@
 package com.samourai.whirlpool.server.utils;
 
 import com.samourai.whirlpool.client.WhirlpoolClient;
-import com.samourai.whirlpool.protocol.websocket.notifications.MixStatus;
+import com.samourai.whirlpool.server.beans.MixStatus;
 import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;

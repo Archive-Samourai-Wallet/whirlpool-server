@@ -4,21 +4,16 @@ import com.samourai.http.client.HttpUsage;
 import com.samourai.http.client.IHttpClient;
 import com.samourai.http.client.IHttpClientService;
 import com.samourai.soroban.client.rpc.RpcSession;
-import com.samourai.stomp.client.IStompClientService;
-import com.samourai.stomp.client.JettyStompClientService;
 import com.samourai.tor.client.TorClientService;
 import com.samourai.wallet.bip47.rpc.java.Bip47UtilJava;
 import com.samourai.wallet.chain.ChainSupplier;
 import com.samourai.wallet.crypto.CryptoUtil;
 import com.samourai.whirlpool.client.mix.MixParams;
 import com.samourai.whirlpool.client.mix.handler.*;
-import com.samourai.whirlpool.client.soroban.SorobanClientApi;
-import com.samourai.whirlpool.client.utils.ClientUtils;
 import com.samourai.whirlpool.client.wallet.beans.IndexRange;
 import com.samourai.whirlpool.client.wallet.data.coordinator.CoordinatorSupplier;
 import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientConfig;
-import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
-import com.samourai.whirlpool.protocol.WhirlpoolProtocolSoroban;
+import com.samourai.whirlpool.protocol.SorobanProtocolWhirlpool;
 import com.samourai.whirlpool.server.beans.Pool;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.services.rpc.RpcClientServiceServer;
@@ -36,7 +31,7 @@ public class WhirlpoolClientService {
   private WhirlpoolServerConfig serverConfig;
   private BlockchainDataService blockchainDataService;
   private RpcClientServiceServer rpcClientServiceServer;
-  private WhirlpoolProtocolSoroban whirlpoolProtocolSoroban;
+  private SorobanProtocolWhirlpool sorobanProtocolWhirlpool;
   private CryptoUtil cryptoUtil;
 
   @Autowired
@@ -45,13 +40,13 @@ public class WhirlpoolClientService {
       WhirlpoolServerConfig serverConfig,
       BlockchainDataService blockchainDataService,
       RpcClientServiceServer rpcClientServiceServer,
-      WhirlpoolProtocolSoroban whirlpoolProtocolSoroban,
+      SorobanProtocolWhirlpool sorobanProtocolWhirlpool,
       CryptoUtil cryptoUtil) {
     this.httpClientService = httpClientService;
     this.serverConfig = serverConfig;
     this.blockchainDataService = blockchainDataService;
     this.rpcClientServiceServer = rpcClientServiceServer;
-    this.whirlpoolProtocolSoroban = whirlpoolProtocolSoroban;
+    this.sorobanProtocolWhirlpool = sorobanProtocolWhirlpool;
     this.cryptoUtil = cryptoUtil;
   }
 
@@ -61,9 +56,6 @@ public class WhirlpoolClientService {
           @Override
           public void changeIdentity() {}
         };
-    IStompClientService stompClientService =
-        new JettyStompClientService(
-            httpClientService, WhirlpoolProtocol.HEADER_MESSAGE_TYPE, ClientUtils.USER_AGENT);
     IHttpClientService multiUsageHttpClientService =
         new IHttpClientService() {
           @Override
@@ -80,10 +72,8 @@ public class WhirlpoolClientService {
     try {
       return new WhirlpoolClientConfig(
           multiUsageHttpClientService,
-          stompClientService,
           torClientService,
           rpcClientServiceServer,
-          new SorobanClientApi(serverConfig.getWhirlpoolNetwork(), whirlpoolProtocolSoroban),
           Bip47UtilJava.getInstance(),
           cryptoUtil,
           null,
@@ -120,7 +110,7 @@ public class WhirlpoolClientService {
           }
         };
     ChainSupplier chainSupplier = blockchainDataService.computeChainSupplier();
-    RpcSession rpcSession = rpcClientServiceServer.generateRpcSession();
+    RpcSession rpcSession = rpcClientServiceServer.generateRpcWallet().createRpcSession();
     MixParams mixParams =
         new MixParams(
             pool.getPoolId(),

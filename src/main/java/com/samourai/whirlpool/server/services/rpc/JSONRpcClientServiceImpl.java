@@ -1,13 +1,10 @@
 package com.samourai.whirlpool.server.services.rpc;
 
 import com.samourai.javaserver.utils.ServerUtils;
-import com.samourai.wallet.util.TxUtil;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
-import com.samourai.whirlpool.server.exceptions.BroadcastException;
 import java.lang.invoke.MethodHandles;
 import java.net.URL;
 import java.util.Optional;
-import org.bitcoinj.core.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -112,7 +109,7 @@ public class JSONRpcClientServiceImpl implements RpcClientService {
     return false;
   }
 
-  @Override
+  /*@Override
   public void broadcastTransaction(Transaction tx) throws BroadcastException {
     String txid = tx.getHashAsString();
     if (whirlpoolServerConfig.getRpcClient().isMockTxBroadcast()) {
@@ -126,7 +123,7 @@ public class JSONRpcClientServiceImpl implements RpcClientService {
     } catch (Exception e) {
       throw BroadcastException.computeBroadcastException(e);
     }
-  }
+  }*/
 
   @Override
   public int getBlockHeight() throws Exception {

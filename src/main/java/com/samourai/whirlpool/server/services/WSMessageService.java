@@ -2,7 +2,7 @@ package com.samourai.whirlpool.server.services;
 
 import com.samourai.javawsserver.config.JWSSConfig;
 import com.samourai.javawsserver.services.JWSSMessageService;
-import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
+import com.samourai.whirlpool.protocol.v0.WhirlpoolProtocolV0;
 import com.samourai.whirlpool.protocol.websocket.messages.ErrorResponse;
 import java.lang.invoke.MethodHandles;
 import java.util.HashMap;
@@ -17,11 +17,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class WSMessageService extends JWSSMessageService {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-  private WhirlpoolProtocol whirlpoolProtocol;
+  private WhirlpoolProtocolV0 whirlpoolProtocol;
 
   @Autowired
   public WSMessageService(
-      WhirlpoolProtocol whirlpoolProtocol,
+      WhirlpoolProtocolV0 whirlpoolProtocol,
       SimpMessagingTemplate messagingTemplate,
       TaskExecutor taskExecutor,
       JWSSConfig config) {
@@ -40,7 +40,7 @@ public class WSMessageService extends JWSSMessageService {
   protected Map<String, Object> computeHeaders(Object payload) {
     Map<String, Object> headers = new HashMap<>();
     headers.put(whirlpoolProtocol.HEADER_MESSAGE_TYPE, payload.getClass().getName());
-    headers.put(whirlpoolProtocol.HEADER_PROTOCOL_VERSION, WhirlpoolProtocol.PROTOCOL_VERSION);
+    headers.put(whirlpoolProtocol.HEADER_PROTOCOL_VERSION, WhirlpoolProtocolV0.PROTOCOL_VERSION);
     return headers;
   }
 }

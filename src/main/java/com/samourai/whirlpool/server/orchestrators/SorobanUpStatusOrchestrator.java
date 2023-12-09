@@ -4,7 +4,7 @@ import com.samourai.soroban.client.SorobanServerDex;
 import com.samourai.soroban.client.rpc.RpcSession;
 import com.samourai.wallet.util.AbstractOrchestrator;
 import com.samourai.wallet.util.AsyncUtil;
-import com.samourai.whirlpool.protocol.WhirlpoolProtocolSoroban;
+import com.samourai.whirlpool.protocol.SorobanProtocolWhirlpool;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -20,16 +20,16 @@ public class SorobanUpStatusOrchestrator extends AbstractOrchestrator {
 
   private WhirlpoolServerConfig serverConfig;
   private RpcSession rpcSession;
-  private WhirlpoolProtocolSoroban whirlpoolProtocolSoroban;
+  private SorobanProtocolWhirlpool sorobanProtocolWhirlpool;
 
   public SorobanUpStatusOrchestrator(
       WhirlpoolServerConfig serverConfig,
       RpcSession rpcSession,
-      WhirlpoolProtocolSoroban whirlpoolProtocolSoroban) {
+      SorobanProtocolWhirlpool sorobanProtocolWhirlpool) {
     super(LOOP_DELAY, 0, null);
     this.serverConfig = serverConfig;
     this.rpcSession = rpcSession;
-    this.whirlpoolProtocolSoroban = whirlpoolProtocolSoroban;
+    this.sorobanProtocolWhirlpool = sorobanProtocolWhirlpool;
   }
 
   private Collection<String> getServerUrls() {
@@ -47,7 +47,7 @@ public class SorobanUpStatusOrchestrator extends AbstractOrchestrator {
     if (log.isDebugEnabled()) {
       log.debug("Checking " + serverUrls.size() + " soroban status...");
     }
-    String dir = whirlpoolProtocolSoroban.getDirCoordinators(serverConfig.getWhirlpoolNetwork());
+    String dir = sorobanProtocolWhirlpool.getDirCoordinators();
     serverUrls
         .parallelStream()
         .forEach(
@@ -57,6 +57,7 @@ public class SorobanUpStatusOrchestrator extends AbstractOrchestrator {
                     asyncUtil.blockingGet(
                         rpcSession.withRpcClient(
                             rpcClient -> rpcClient.directoryValues(dir), serverUrl));
+                // TODO check my last update time
                 if (entries.length == 0) {
                   throw new Exception("Soroban server seems unsynchronized");
                 }

@@ -1,12 +1,12 @@
 package com.samourai.whirlpool.server.beans;
 
+import com.samourai.wallet.bip47.rpc.PaymentCode;
+import com.samourai.whirlpool.protocol.WhirlpoolErrorCode;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.protocol.beans.Utxo;
-import com.samourai.whirlpool.protocol.websocket.notifications.MixStatus;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import com.samourai.whirlpool.server.exceptions.QueueInputException;
-import com.samourai.whirlpool.server.exceptions.ServerErrorCode;
 import com.samourai.whirlpool.server.persistence.to.MixTO;
 import com.samourai.whirlpool.server.services.CryptoService;
 import java.lang.invoke.MethodHandles;
@@ -370,31 +370,27 @@ public class Mix {
   }
 
   public synchronized Optional<RegisteredInput> removeConfirmingInputByUsername(String username) {
-    Optional<RegisteredInput> confirmingInput = confirmingInputs.removeByUsername(username);
-    if (confirmingInput.isPresent()) {
-      if (log.isTraceEnabled()) {
-        log.trace("[" + getLogId() + "] " + username + " unregistered from confirming inputs");
-      }
-      confirmingInput.get().setConfirmingSince(null);
-    }
-    return confirmingInput;
+    return removeConfirmingInputBy(confirmingInputs.removeByUsername(username));
   }
 
   public synchronized Optional<RegisteredInput> removeConfirmingInputByUtxo(
       String utxoHash, long utxoIndex) {
-    Optional<RegisteredInput> confirmingInput = confirmingInputs.removeByUtxo(utxoHash, utxoIndex);
+    return removeConfirmingInputBy(confirmingInputs.removeByUtxo(utxoHash, utxoIndex));
+  }
+
+  public synchronized Optional<RegisteredInput> removeConfirmingInputBySender(PaymentCode sender) {
+    return removeConfirmingInputBy(confirmingInputs.removeBySorobanSender(sender));
+  }
+
+  protected Optional<RegisteredInput> removeConfirmingInputBy(
+      Optional<RegisteredInput> confirmingInput) {
     if (confirmingInput.isPresent()) {
-      if (log.isDebugEnabled()) {
-        if (log.isTraceEnabled()) {
-          log.trace(
-              "["
-                  + getLogId()
-                  + "] "
-                  + utxoHash
-                  + ":"
-                  + utxoIndex
-                  + " unregistered from confirming inputs");
-        }
+      if (log.isTraceEnabled()) {
+        log.trace(
+            "["
+                + getLogId()
+                + "] unregistered confirming input: "
+                + confirmingInput.get().toString());
       }
       confirmingInput.get().setConfirmingSince(null);
     }
@@ -472,7 +468,7 @@ public class Mix {
       throws IllegalInputException {
     if (confirmedInputs.findByUtxo(registeredInput.getOutPoint()).isPresent()) {
       throw new IllegalInputException(
-          ServerErrorCode.INPUT_ALREADY_REGISTERED, "input already registered");
+          WhirlpoolErrorCode.INPUT_ALREADY_REGISTERED, "input already registered");
     }
     confirmedInputs.register(registeredInput);
   }
@@ -538,23 +534,23 @@ public class Mix {
     return bordereaux.contains(bordereau);
   }
 
-  public boolean hasRevealedOutputUsername(String username) {
-    return revealedReceiveAddressesByUsername.containsKey(username);
+  public boolean hasRevealedOutput(RegisteredInput registeredInput) {
+    return revealedReceiveAddressesByUsername.containsKey(registeredInput.getUsername());
   }
 
   public boolean hasRevealedReceiveAddress(String receiveAddress) {
     return revealedReceiveAddressesByUsername.containsValue(receiveAddress);
   }
 
-  public void addRevealedOutput(String username, String receiveAddress) {
-    revealedReceiveAddressesByUsername.put(username, receiveAddress);
+  public void addRevealedOutput(RegisteredInput registeredInput, String receiveAddress) {
+    revealedReceiveAddressesByUsername.put(registeredInput.getUsername(), receiveAddress);
   }
 
   public List<RegisteredInput> getInputsNotRevealedOutput() {
     return getInputs()
         ._getInputs()
         .parallelStream()
-        .filter(input -> !hasRevealedOutputUsername(input.getUsername()))
+        .filter(input -> !hasRevealedOutput(input))
         .collect(Collectors.toList());
   }
 
@@ -566,19 +562,19 @@ public class Mix {
     return signed.size();
   }
 
-  public boolean getSignedByUsername(String username) {
-    return signed.containsKey(username);
+  public boolean isSigned(RegisteredInput registeredInput) {
+    return signed.containsKey(registeredInput.getUsername());
   }
 
-  public void setSignedByUsername(String username) {
-    signed.put(username, true);
+  public void setSigned(RegisteredInput registeredInput) {
+    signed.put(registeredInput.getUsername(), true);
   }
 
   public List<RegisteredInput> getInputsNotSigned() {
     return getInputs()
         ._getInputs()
         .parallelStream()
-        .filter(input -> !getSignedByUsername(input.getUsername()))
+        .filter(input -> !isSigned(input))
         .collect(Collectors.toList());
   }
 

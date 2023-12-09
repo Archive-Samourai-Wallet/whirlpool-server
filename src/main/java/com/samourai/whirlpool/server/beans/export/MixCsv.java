@@ -1,8 +1,8 @@
 package com.samourai.whirlpool.server.beans.export;
 
 import com.opencsv.bean.CsvBindByPosition;
-import com.samourai.whirlpool.protocol.websocket.notifications.MixStatus;
 import com.samourai.whirlpool.server.beans.FailReason;
+import com.samourai.whirlpool.server.beans.MixStatus;
 import com.samourai.whirlpool.server.persistence.to.MixTO;
 import java.sql.Timestamp;
 import javax.persistence.EnumType;

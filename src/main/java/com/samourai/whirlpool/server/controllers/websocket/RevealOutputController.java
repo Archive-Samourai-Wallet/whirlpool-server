@@ -1,9 +1,9 @@
 package com.samourai.whirlpool.server.controllers.websocket;
 
-import com.samourai.whirlpool.protocol.WhirlpoolEndpoint;
+import com.samourai.whirlpool.protocol.v0.WhirlpoolEndpointV0;
 import com.samourai.whirlpool.protocol.websocket.messages.RevealOutputRequest;
 import com.samourai.whirlpool.server.services.ExportService;
-import com.samourai.whirlpool.server.services.MixService;
+import com.samourai.whirlpool.server.services.RevealOutputService;
 import com.samourai.whirlpool.server.services.WSMessageService;
 import java.lang.invoke.MethodHandles;
 import java.security.Principal;
@@ -21,29 +21,25 @@ import org.springframework.stereotype.Controller;
 public class RevealOutputController extends AbstractWebSocketController {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  private MixService mixService;
+  private RevealOutputService revealOutputService;
 
   @Autowired
   public RevealOutputController(
-      WSMessageService WSMessageService, ExportService exportService, MixService mixService) {
+      WSMessageService WSMessageService,
+      ExportService exportService,
+      RevealOutputService revealOutputService) {
     super(WSMessageService, exportService);
-    this.mixService = mixService;
+    this.revealOutputService = revealOutputService;
   }
 
-  @MessageMapping(WhirlpoolEndpoint.WS_REVEAL_OUTPUT)
+  @MessageMapping(WhirlpoolEndpointV0.WS_REVEAL_OUTPUT)
   public void revealOutput(
       @Payload RevealOutputRequest payload, Principal principal, StompHeaderAccessor headers)
       throws Exception {
     validateHeaders(headers);
 
     String username = principal.getName();
-    if (log.isDebugEnabled()) {
-      log.debug(
-          "(<) [" + payload.mixId + "] " + headers.getDestination() + ", username=" + username);
-    }
-
-    // register output
-    mixService.revealOutput(payload.mixId, username, payload.receiveAddress);
+    revealOutputService.revealOutput_webSocket(payload.mixId, payload.receiveAddress, username);
   }
 
   @MessageExceptionHandler

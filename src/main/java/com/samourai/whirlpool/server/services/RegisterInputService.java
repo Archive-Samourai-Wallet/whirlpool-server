@@ -1,16 +1,16 @@
 package com.samourai.whirlpool.server.services;
 
 import com.samourai.javaserver.exceptions.NotifiableException;
-import com.samourai.wallet.bip47.rpc.PaymentCode;
 import com.samourai.wallet.util.FormatsUtilGeneric;
+import com.samourai.whirlpool.protocol.WhirlpoolErrorCode;
 import com.samourai.whirlpool.server.beans.Pool;
 import com.samourai.whirlpool.server.beans.RegisteredInput;
+import com.samourai.whirlpool.server.beans.SorobanInput;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;
 import com.samourai.whirlpool.server.beans.rpc.RpcTransaction;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.exceptions.BannedInputException;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
-import com.samourai.whirlpool.server.exceptions.ServerErrorCode;
 import com.samourai.whirlpool.server.persistence.to.BanTO;
 import java.lang.invoke.MethodHandles;
 import java.util.LinkedHashMap;
@@ -57,15 +57,14 @@ public class RegisterInputService {
 
   public RegisteredInput registerInput(
       String poolId,
-      String usernameOrNull, // NULL for Soroban
+      String username,
       String signature,
       String utxoHash,
       long utxoIndex,
       boolean liquidity,
       Boolean tor,
       int blockHeight,
-      PaymentCode sorobanPaymentCodeOrNull,
-      String sorobanInitialPayloadOrNull,
+      SorobanInput sorobanInputOrNull,
       Map<String, String> clientDetails)
       throws NotifiableException {
 
@@ -73,20 +72,20 @@ public class RegisterInputService {
     if (blockHeight > 0) { // check disabled for protocol < 0.23.9
       if (!blockchainDataService.checkBlockHeight(blockHeight)) {
         throw new IllegalInputException(
-            ServerErrorCode.INVALID_BLOCK_HEIGHT, "Invalid blockHeight: " + blockHeight);
+            WhirlpoolErrorCode.INVALID_BLOCK_HEIGHT, "Invalid blockHeight: " + blockHeight);
       }
     }
 
     if (HEALTH_CHECK_UTXO.equals(utxoHash)) {
-      throw new IllegalInputException(ServerErrorCode.INPUT_REJECTED, HEALTH_CHECK_SUCCESS);
+      throw new IllegalInputException(WhirlpoolErrorCode.INPUT_REJECTED, HEALTH_CHECK_SUCCESS);
     }
     if (!formatsUtil.isValidTxHash(utxoHash)) {
       throw new IllegalInputException(
-          ServerErrorCode.INPUT_REJECTED, "Invalid utxoHash: " + utxoHash);
+          WhirlpoolErrorCode.INPUT_REJECTED, "Invalid utxoHash: " + utxoHash);
     }
     if (utxoIndex < 0) {
       throw new IllegalInputException(
-          ServerErrorCode.INPUT_REJECTED, "Invalid utxoIndex: " + utxoIndex);
+          WhirlpoolErrorCode.INPUT_REJECTED, "Invalid utxoIndex: " + utxoIndex);
     }
 
     // verify UTXO not banned
@@ -105,7 +104,7 @@ public class RegisterInputService {
       // fetch outPoint
       IllegalInputException notFoundException =
           new IllegalInputException(
-              ServerErrorCode.INPUT_REJECTED, "UTXO not found: " + utxoHash + "-" + utxoIndex);
+              WhirlpoolErrorCode.INPUT_REJECTED, "UTXO not found: " + utxoHash + "-" + utxoIndex);
       RpcTransaction rpcTransaction =
           blockchainDataService.getRpcTransaction(utxoHash).orElseThrow(() -> notFoundException);
       TxOutPoint txOutPoint =
@@ -121,7 +120,7 @@ public class RegisterInputService {
         // spent input being resubmitted by client = spending tx is missing in mempool backing CLI
         // we assume it's a mix tx which was removed from CLI mempool due to mempool congestion
         throw new IllegalInputException(
-            ServerErrorCode.INPUT_REJECTED, RegisterInputService.ERROR_ALREADY_SPENT);
+            WhirlpoolErrorCode.INPUT_REJECTED, RegisterInputService.ERROR_ALREADY_SPENT);
       }
 
       // check tx0Whitelist
@@ -138,20 +137,13 @@ public class RegisterInputService {
       // register input to pool
       RegisteredInput registeredInput =
           poolService.registerInput(
-              poolId,
-              usernameOrNull,
-              liquidity,
-              txOutPoint,
-              tor,
-              sorobanPaymentCodeOrNull,
-              sorobanInitialPayloadOrNull,
-              null);
+              poolId, username, liquidity, txOutPoint, tor, sorobanInputOrNull, null);
 
       // log activity
       if (clientDetails == null) {
         clientDetails = new LinkedHashMap<>();
       }
-      clientDetails.put("soroban", sorobanPaymentCodeOrNull != null ? "true" : "false");
+      clientDetails.put("soroban", sorobanInputOrNull != null ? "true" : "false");
       ActivityCsv activityCsv =
           new ActivityCsv("REGISTER_INPUT", poolId, registeredInput, null, clientDetails);
       exportService.exportActivity(activityCsv);

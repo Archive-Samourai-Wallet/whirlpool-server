@@ -1,5 +1,6 @@
 package com.samourai.whirlpool.server.beans;
 
+import com.samourai.wallet.bip47.rpc.PaymentCode;
 import com.samourai.wallet.util.RandomUtil;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.utils.Utils;
@@ -40,6 +41,21 @@ public class InputPool {
   public Optional<RegisteredInput> findByUtxo(String utxoHash, long utxoIndex) {
     String key = Utils.computeInputId(utxoHash, utxoIndex);
     return Optional.ofNullable(inputsById.get(key));
+  }
+
+  public Optional<RegisteredInput> findBySorobanSender(PaymentCode sender) {
+    String pCode = sender.toString();
+    return inputsById.values().stream()
+        .filter(
+            confirmedInput ->
+                confirmedInput.getSorobanInput() != null
+                    && confirmedInput
+                        .getSorobanInput()
+                        .getBip47Partner()
+                        .getPaymentCodePartner()
+                        .toString()
+                        .equals(pCode))
+        .findFirst();
   }
 
   public Optional<RegisteredInput> findByAddress(String address) {
@@ -87,16 +103,18 @@ public class InputPool {
   }
 
   public synchronized Optional<RegisteredInput> removeByUsername(String username) {
-    Optional<RegisteredInput> input = findByUsername(username);
-    if (input.isPresent()) {
-      String inputId = Utils.computeInputId(input.get().getOutPoint());
-      inputsById.remove(inputId);
-    }
-    return input;
+    return removeBy(findByUsername(username));
   }
 
   public synchronized Optional<RegisteredInput> removeByUtxo(String utxoHash, long utxoIndex) {
-    Optional<RegisteredInput> input = findByUtxo(utxoHash, utxoIndex);
+    return removeBy(findByUtxo(utxoHash, utxoIndex));
+  }
+
+  public synchronized Optional<RegisteredInput> removeBySorobanSender(PaymentCode sender) {
+    return removeBy(findBySorobanSender(sender));
+  }
+
+  protected Optional<RegisteredInput> removeBy(Optional<RegisteredInput> input) {
     if (input.isPresent()) {
       String inputId = Utils.computeInputId(input.get().getOutPoint());
       inputsById.remove(inputId);
@@ -147,8 +165,15 @@ public class InputPool {
   }
 
   public int getSizeBySoroban(boolean soroban) {
-    return (int)
-        inputsById.values().parallelStream().filter(input -> soroban == input.isSoroban()).count();
+    return getListBySoroban(soroban).size();
+  }
+
+  public Collection<RegisteredInput> getListBySoroban(boolean soroban) {
+    return inputsById
+        .values()
+        .parallelStream()
+        .filter(input -> soroban == input.isSoroban())
+        .collect(Collectors.toList());
   }
 
   public int getSizeByLiquidity(boolean liquidity) {

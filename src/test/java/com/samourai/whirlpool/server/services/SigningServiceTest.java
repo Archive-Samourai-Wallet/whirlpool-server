@@ -7,8 +7,8 @@ import com.samourai.wallet.util.TxUtil;
 import com.samourai.whirlpool.client.mix.handler.PremixHandler;
 import com.samourai.whirlpool.client.mix.handler.UtxoWithBalance;
 import com.samourai.whirlpool.client.utils.ClientUtils;
-import com.samourai.whirlpool.protocol.websocket.notifications.MixStatus;
 import com.samourai.whirlpool.server.beans.Mix;
+import com.samourai.whirlpool.server.beans.MixStatus;
 import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
@@ -118,9 +118,8 @@ public class SigningServiceTest extends AbstractIntegrationTest {
             false,
             firstTxOutPoint,
             false,
-            null,
-            null,
-            "userHash1"));
+            "userHash1",
+            null));
     mix.registerOutput(testUtils.generateSegwitAddress().getBech32AsString(), bordereau);
 
     // prepare input
@@ -201,7 +200,6 @@ public class SigningServiceTest extends AbstractIntegrationTest {
         false,
         blockchainDataService.getBlockHeight(),
         null,
-        null,
         null);
     waitMixLimitsService(mix);
 
@@ -214,7 +212,7 @@ public class SigningServiceTest extends AbstractIntegrationTest {
     byte[] blindedBordereau = clientCryptoService.blind(bordereau, blindingParams);
     byte[] signedBlindedBordereau =
         confirmInputService
-            .confirmInputOrQueuePool(
+            .confirmInput(
                 mixId,
                 username,
                 blindedBordereau,

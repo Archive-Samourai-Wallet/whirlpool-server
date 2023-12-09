@@ -1,14 +1,15 @@
 package com.samourai.whirlpool.server.orchestrators;
 
-import com.samourai.soroban.client.rpc.RpcSession;
 import com.samourai.wallet.util.AbstractOrchestrator;
 import com.samourai.wallet.util.AsyncUtil;
-import com.samourai.whirlpool.protocol.rest.PoolInfoSoroban;
+import com.samourai.whirlpool.protocol.soroban.RegisterCoordinatorMessage;
+import com.samourai.whirlpool.protocol.soroban.api.WhirlpoolApiCoordinator;
+import com.samourai.whirlpool.protocol.soroban.beans.CoordinatorInfo;
+import com.samourai.whirlpool.protocol.soroban.beans.PoolInfo;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.config.WhirlpoolServerContext;
 import com.samourai.whirlpool.server.services.MinerFeeService;
 import com.samourai.whirlpool.server.services.PoolService;
-import com.samourai.whirlpool.server.services.soroban.SorobanCoordinatorApi;
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import org.slf4j.Logger;
@@ -22,23 +23,21 @@ public class SorobanCoordinatorOrchestrator extends AbstractOrchestrator {
   private WhirlpoolServerContext serverContext;
   private PoolService poolService;
   private MinerFeeService minerFeeService;
-  private SorobanCoordinatorApi sorobanCoordinatorApi;
-  private RpcSession rpcSession;
+  private WhirlpoolApiCoordinator whirlpoolApiCoordinator;
 
   public SorobanCoordinatorOrchestrator(
       WhirlpoolServerConfig serverConfig,
       WhirlpoolServerContext serverContext,
       PoolService poolService,
       MinerFeeService minerFeeService,
-      SorobanCoordinatorApi sorobanCoordinatorApi,
-      RpcSession rpcSession) {
+      WhirlpoolApiCoordinator whirlpoolApiCoordinator) {
+
     super(LOOP_DELAY, 0, null);
     this.serverConfig = serverConfig;
     this.serverContext = serverContext;
     this.poolService = poolService;
     this.minerFeeService = minerFeeService;
-    this.sorobanCoordinatorApi = sorobanCoordinatorApi;
-    this.rpcSession = rpcSession;
+    this.whirlpoolApiCoordinator = whirlpoolApiCoordinator;
   }
 
   @Override
@@ -46,23 +45,22 @@ public class SorobanCoordinatorOrchestrator extends AbstractOrchestrator {
     try {
       // register coordinator
       long mixFeePerB = minerFeeService.getMixFeePerB();
-      Collection<PoolInfoSoroban> poolInfosSoroban =
-          poolService.computePoolInfosSoroban(mixFeePerB);
+      Collection<PoolInfo> poolInfosSoroban = poolService.computePoolInfosSoroban(mixFeePerB);
       if (log.isDebugEnabled()) {
         log.debug("registering coordinator: " + poolInfosSoroban.size() + " pools");
       }
+      CoordinatorInfo coordinatorInfo =
+          new CoordinatorInfo(
+              serverConfig.getCoordinatorId(),
+              serverContext.getCoordinatorWallet().getPaymentCode().toString(),
+              serverContext.getCoordinatorWalletPaymentCodeSignature());
+      RegisterCoordinatorMessage registerCoordinatorMessage =
+          new RegisterCoordinatorMessage(coordinatorInfo, poolInfosSoroban);
+      if (log.isDebugEnabled()) {
+        log.debug("RegisterCoordinatorMessage = " + registerCoordinatorMessage.toPayload());
+      }
       AsyncUtil.getInstance()
-          .blockingAwait(
-              rpcSession.withSorobanClient(
-                  sorobanClient ->
-                      sorobanCoordinatorApi.registerCoordinator(
-                          sorobanClient,
-                          serverConfig.getCoordinatorId(),
-                          serverContext.getCoordinatorWallet().getPaymentCode(),
-                          serverContext.getCoordinatorWalletPaymentCodeSignature(),
-                          serverConfig.getExternalUrlClear(),
-                          serverConfig.getExternalUrlOnion(),
-                          poolInfosSoroban)));
+          .blockingAwait(whirlpoolApiCoordinator.registerCoordinator(registerCoordinatorMessage));
     } catch (Exception e) {
       log.error("Failed to register Soroban pools", e);
     }

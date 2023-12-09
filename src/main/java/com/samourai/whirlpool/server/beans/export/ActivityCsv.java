@@ -135,7 +135,7 @@ public class ActivityCsv {
     this.clientDetails = clientDetails != null ? clientDetails.toString() : null;
   }
 
-  private Map<String, String> computeClientDetails(HttpServletRequest request) {
+  public static Map<String, String> computeClientDetails(HttpServletRequest request) {
     if (request == null) {
       return null;
     }

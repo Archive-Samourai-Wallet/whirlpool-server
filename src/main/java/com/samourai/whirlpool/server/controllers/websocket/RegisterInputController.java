@@ -1,6 +1,6 @@
 package com.samourai.whirlpool.server.controllers.websocket;
 
-import com.samourai.whirlpool.protocol.WhirlpoolEndpoint;
+import com.samourai.whirlpool.protocol.v0.WhirlpoolEndpointV0;
 import com.samourai.whirlpool.protocol.websocket.messages.RegisterInputRequest;
 import com.samourai.whirlpool.server.beans.FailMode;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
@@ -40,7 +40,7 @@ public class RegisterInputController extends AbstractWebSocketController {
   }
 
   /** Register inputs for non-soroban clients */
-  @MessageMapping(WhirlpoolEndpoint.WS_REGISTER_INPUT)
+  @MessageMapping(WhirlpoolEndpointV0.WS_REGISTER_INPUT)
   @Deprecated
   public void registerInput(
       @Payload RegisterInputRequest payload,
@@ -80,7 +80,6 @@ public class RegisterInputController extends AbstractWebSocketController {
           payload.liquidity,
           tor,
           payload.blockHeight,
-          null,
           null,
           computeClientDetails(messageHeaderAccessor));
     } catch (AlreadyRegisteredInputException e) {

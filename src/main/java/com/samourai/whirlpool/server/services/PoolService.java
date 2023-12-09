@@ -2,16 +2,13 @@ package com.samourai.whirlpool.server.services;
 
 import com.google.common.collect.ImmutableMap;
 import com.samourai.javaserver.exceptions.NotifiableException;
-import com.samourai.wallet.bip47.rpc.PaymentCode;
-import com.samourai.whirlpool.protocol.rest.PoolInfo;
-import com.samourai.whirlpool.protocol.rest.PoolInfoSoroban;
-import com.samourai.whirlpool.protocol.websocket.messages.SubscribePoolResponse;
+import com.samourai.whirlpool.protocol.WhirlpoolErrorCode;
+import com.samourai.whirlpool.protocol.soroban.beans.PoolInfo;
 import com.samourai.whirlpool.server.beans.*;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
-import com.samourai.whirlpool.server.exceptions.ServerErrorCode;
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.Comparator;
@@ -97,42 +94,12 @@ public class PoolService {
     return pools.values();
   }
 
-  public Collection<PoolInfo> computePoolInfos() {
-    return getPools()
-        .parallelStream()
-        .map(
-            pool -> {
-              Mix currentMix = pool.getCurrentMix();
-              int nbRegistered =
-                  currentMix.getNbConfirmingInputs()
-                      + pool.getMustMixQueue().getSize()
-                      + pool.getLiquidityQueue().getSize();
-              int nbConfirmed = currentMix.getNbInputs();
-              return new PoolInfo(
-                  pool.getPoolId(),
-                  pool.getDenomination(),
-                  pool.getPoolFee().getFeeValue(),
-                  pool.computeMustMixBalanceMin(),
-                  pool.computeMustMixBalanceCap(),
-                  pool.computeMustMixBalanceMax(),
-                  pool.getAnonymitySet(),
-                  pool.getMinMustMix(),
-                  pool.getTx0MaxOutputs(),
-                  nbRegistered,
-                  pool.getAnonymitySet(),
-                  currentMix.getMixStatus(),
-                  currentMix.getElapsedTime(),
-                  nbConfirmed);
-            })
-        .collect(Collectors.toList());
-  }
-
-  public Collection<PoolInfoSoroban> computePoolInfosSoroban(long feePerB) {
+  public Collection<PoolInfo> computePoolInfosSoroban(long feePerB) {
     return getPools()
         .parallelStream()
         .map(
             pool ->
-                new PoolInfoSoroban(
+                new PoolInfo(
                     pool.getPoolId(),
                     pool.getDenomination(),
                     pool.getPoolFee().getFeeValue(),
@@ -156,32 +123,18 @@ public class PoolService {
   public Pool getPool(String poolId) throws IllegalInputException {
     Pool pool = pools.get(poolId);
     if (pool == null) {
-      throw new IllegalInputException(ServerErrorCode.INVALID_ARGUMENT, "Pool not found");
+      throw new IllegalInputException(WhirlpoolErrorCode.INVALID_ARGUMENT, "Pool not found");
     }
     return pool;
   }
 
-  public SubscribePoolResponse computeSubscribePoolResponse(String poolId)
-      throws IllegalInputException {
-    Pool pool = getPool(poolId);
-    SubscribePoolResponse poolStatusNotification =
-        new SubscribePoolResponse(
-            cryptoService.getNetworkParameters().getPaymentProtocolId(),
-            pool.getDenomination(),
-            pool.computeMustMixBalanceMin(),
-            pool.computeMustMixBalanceCap(),
-            pool.computeMustMixBalanceMax());
-    return poolStatusNotification;
-  }
-
   public RegisteredInput registerInput(
       String poolId,
-      String usernameOrNull, // null for Soroban
+      String username,
       boolean liquidity,
       TxOutPoint txOutPoint,
       Boolean tor,
-      PaymentCode sorobanPaymentCodeOrNull,
-      String sorobanInitialPayloadOrNull,
+      SorobanInput sorobanInputOrNull,
       String lastUserHash)
       throws NotifiableException {
     Pool pool = getPool(poolId);
@@ -192,7 +145,7 @@ public class PoolService {
       long balanceMin = pool.computePremixBalanceMin(liquidity);
       long balanceMax = pool.computePremixBalanceMax(liquidity);
       throw new IllegalInputException(
-          ServerErrorCode.INPUT_REJECTED,
+          WhirlpoolErrorCode.INPUT_REJECTED,
           "Invalid input balance (expected: "
               + balanceMin
               + "-"
@@ -204,18 +157,11 @@ public class PoolService {
 
     RegisteredInput registeredInput =
         new RegisteredInput(
-            poolId,
-            usernameOrNull,
-            liquidity,
-            txOutPoint,
-            tor,
-            sorobanPaymentCodeOrNull,
-            sorobanInitialPayloadOrNull,
-            lastUserHash);
+            poolId, username, liquidity, txOutPoint, tor, lastUserHash, sorobanInputOrNull);
 
     // verify confirmations
     if (!isUtxoConfirmed(txOutPoint, liquidity)) {
-      throw new IllegalInputException(ServerErrorCode.INPUT_REJECTED, "Input is not confirmed");
+      throw new IllegalInputException(WhirlpoolErrorCode.INPUT_REJECTED, "Input is not confirmed");
     }
 
     // queue input

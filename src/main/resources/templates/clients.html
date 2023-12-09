@@ -63,12 +63,12 @@
                     </td>
                     <td class="align-middle">
                         <span th:if="${input.right.isSoroban() && !input.left.equals('MIXING')}">
-                            <span th:text="${@templateUtil.durationFromNow(input.right.sorobanLastSeen)}"/>
+                            <span th:text="${@templateUtil.durationFromNow(input.right.sorobanInput.sorobanLastSeen)}"/>
                         </span>
                         <span th:if="${!input.right.isSoroban() || input.left.equals('MIXING')}">connected</span>
                     </td>
                     <td class="align-middle">
-                        <small th:text="${input.right.username!=null?input.right.username:'-'}"/><br/>
+                        <small th:text="${input.right.username}"/><br/>
                         <small th:text="${input.right.lastUserHash!=null?input.right.lastUserHash:'-'}"/>
                     </td>
                 </tr>

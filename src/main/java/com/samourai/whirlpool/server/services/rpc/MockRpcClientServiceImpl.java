@@ -54,13 +54,14 @@ public class MockRpcClientServiceImpl implements RpcClientService {
     return true;
   }
 
+  /*
   @Override
   public void broadcastTransaction(Transaction tx) {
     // mock result TX to simulate broadcast
     String txid = tx.getHashAsString();
     log.warn("NOT broadcasting tx (mock-tx-broadcast=1): " + txid);
     mock(txid, TxUtil.getInstance().getTxHex(tx), MOCK_TX_CONFIRMATIONS);
-  }
+  }*/
 
   @Override
   public Optional<RpcRawTransactionResponse> getRawTransaction(String txid)

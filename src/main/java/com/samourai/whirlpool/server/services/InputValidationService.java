@@ -2,6 +2,7 @@ package com.samourai.whirlpool.server.services;
 
 import com.samourai.javaserver.exceptions.NotifiableException;
 import com.samourai.wallet.util.MessageSignUtilGeneric;
+import com.samourai.whirlpool.protocol.WhirlpoolErrorCode;
 import com.samourai.whirlpool.server.beans.Pool;
 import com.samourai.whirlpool.server.beans.PoolFee;
 import com.samourai.whirlpool.server.beans.Tx0Validation;
@@ -9,7 +10,6 @@ import com.samourai.whirlpool.server.beans.rpc.RpcTransaction;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
-import com.samourai.whirlpool.server.exceptions.ServerErrorCode;
 import com.samourai.whirlpool.server.services.fee.WhirlpoolFeeData;
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -60,11 +60,12 @@ public class InputValidationService {
         checkInputProvenance(tx.getTx(), tx.getTxTime(), pool.getPoolFee(), hasMixTxid);
     if (!isLiquidity && liquidity) {
       throw new IllegalInputException(
-          ServerErrorCode.INPUT_REJECTED, "Input rejected: joined as liquidity but is a mustMix");
+          WhirlpoolErrorCode.INPUT_REJECTED,
+          "Input rejected: joined as liquidity but is a mustMix");
     }
     if (isLiquidity && !liquidity) {
       throw new IllegalInputException(
-          ServerErrorCode.INPUT_REJECTED,
+          WhirlpoolErrorCode.INPUT_REJECTED,
           "Input rejected: joined as mustMix but is as a liquidity");
     }
     return; // valid
@@ -85,7 +86,7 @@ public class InputValidationService {
       if (!hasMixTxid) { // not a whirlpool tx
         log.error("Input rejected (not a premix or whirlpool input)", e);
         throw new IllegalInputException(
-            ServerErrorCode.INPUT_REJECTED, "Input rejected (not a premix or whirlpool input)");
+            WhirlpoolErrorCode.INPUT_REJECTED, "Input rejected (not a premix or whirlpool input)");
       }
       return true; // liquidity
     }
@@ -110,7 +111,7 @@ public class InputValidationService {
               + feeData
               + "})");
       throw new IllegalInputException(
-          ServerErrorCode.INPUT_REJECTED,
+          WhirlpoolErrorCode.INPUT_REJECTED,
           "Input rejected (invalid fee for tx0="
               + tx.getHashAsString()
               + ", x="
@@ -128,7 +129,7 @@ public class InputValidationService {
       } catch (Exception e) {
         log.error("Input rejected (invalid cascading for tx0=" + tx.getHashAsString() + ")", e);
         throw new IllegalInputException(
-            ServerErrorCode.INPUT_REJECTED,
+            WhirlpoolErrorCode.INPUT_REJECTED,
             "Input rejected (invalid cascading for tx0=" + tx.getHashAsString() + ")");
       }
     }
@@ -202,7 +203,7 @@ public class InputValidationService {
               + signature
               + ", address="
               + txOutPoint.getToAddress());
-      throw new IllegalInputException(ServerErrorCode.INVALID_ARGUMENT, "Invalid signature");
+      throw new IllegalInputException(WhirlpoolErrorCode.INVALID_ARGUMENT, "Invalid signature");
     }
 
     ECKey pubkey = messageSignUtil.signedMessageToKey(message, signature);
@@ -214,7 +215,7 @@ public class InputValidationService {
               + message
               + ", signature="
               + signature);
-      throw new IllegalInputException(ServerErrorCode.INVALID_ARGUMENT, "Invalid signature");
+      throw new IllegalInputException(WhirlpoolErrorCode.INVALID_ARGUMENT, "Invalid signature");
     }
     return pubkey;
   }

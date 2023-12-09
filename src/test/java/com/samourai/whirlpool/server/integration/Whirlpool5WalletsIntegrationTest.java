@@ -5,8 +5,8 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 import com.samourai.wallet.bipWallet.BipWallet;
 import com.samourai.wallet.hd.BIP_WALLET;
 import com.samourai.wallet.segwit.SegwitAddress;
-import com.samourai.whirlpool.protocol.websocket.notifications.MixStatus;
 import com.samourai.whirlpool.server.beans.Mix;
+import com.samourai.whirlpool.server.beans.MixStatus;
 import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.integration.manual.ManualMixer;
 import com.samourai.whirlpool.server.integration.manual.ManualPremixer;

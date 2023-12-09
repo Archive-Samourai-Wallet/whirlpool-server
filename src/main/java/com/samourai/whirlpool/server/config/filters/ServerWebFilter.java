@@ -1,18 +1,13 @@
 package com.samourai.whirlpool.server.config.filters;
 
-import com.samourai.whirlpool.protocol.WhirlpoolEndpoint;
-import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
+import com.samourai.whirlpool.protocol.v0.WhirlpoolEndpointV0;
+import com.samourai.whirlpool.protocol.v0.WhirlpoolProtocolV0;
 import java.io.IOException;
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import javax.servlet.*;
 import javax.servlet.annotation.WebFilter;
 import javax.servlet.http.HttpServletResponse;
 
-@WebFilter(WhirlpoolEndpoint.REST_PREFIX + "*")
+@WebFilter(WhirlpoolEndpointV0.REST_PREFIX + "*")
 public class ServerWebFilter implements Filter {
 
   @Override
@@ -20,7 +15,7 @@ public class ServerWebFilter implements Filter {
       throws IOException, ServletException {
     HttpServletResponse httpServletResponse = (HttpServletResponse) response;
     httpServletResponse.setHeader(
-        WhirlpoolProtocol.HEADER_PROTOCOL_VERSION, WhirlpoolProtocol.PROTOCOL_VERSION);
+        WhirlpoolProtocolV0.HEADER_PROTOCOL_VERSION, WhirlpoolProtocolV0.PROTOCOL_VERSION);
     chain.doFilter(request, response);
   }
 

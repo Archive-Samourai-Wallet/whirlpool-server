@@ -1,6 +1,6 @@
 package com.samourai.whirlpool.server.persistence.repositories;
 
-import com.samourai.whirlpool.protocol.websocket.notifications.MixStatus;
+import com.samourai.whirlpool.server.beans.MixStatus;
 import com.samourai.whirlpool.server.persistence.to.MixTO;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
