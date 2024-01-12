@@ -144,23 +144,25 @@ public class Tx0ValidationService {
     if (feeData == null) {
       throw new Exception("feeData is null");
     }
+
+    // find partner
+    Partner partner = partnerService.getByPayload(feeData.getPartnerPayload());
+    XManagerService xmService = partner.getXmService();
+
     // validate feePayload
     WhirlpoolServerConfig.ScodeSamouraiFeeConfig scodeConfig =
         validateScodePayload(feeData.getScodePayload(), tx0Time);
     int feePercent = (scodeConfig != null ? scodeConfig.getFeeValuePercent() : 100);
     if (feePercent == 0) {
       // valid - no fee
-      return new Tx0Validation(tx0, feeData, poolFee, scodeConfig, feePercent, null);
+      return new Tx0Validation(tx0, feeData, poolFee, scodeConfig, feePercent, null, partner);
     }
-    // find partner
-    Partner partner = partnerService.getByPayload(feeData.getPartnerPayload());
-    XManagerService xmService = partner.getXmService();
 
     // validate for feeIndice with feePercent
     TransactionOutput feeOutput =
         findValidFeeOutput(tx0, tx0Time, feeData.getFeeIndice(), poolFee, feePercent, xmService);
     return new Tx0Validation(
-        tx0, feeData, poolFee, scodeConfig, feePercent, feeOutput); // valid - fee paid
+        tx0, feeData, poolFee, scodeConfig, feePercent, feeOutput, partner); // valid - fee paid
   }
 
   protected TransactionOutput findValidFeeOutput(

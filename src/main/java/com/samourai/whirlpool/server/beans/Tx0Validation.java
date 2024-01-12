@@ -5,6 +5,7 @@ import com.samourai.whirlpool.server.services.fee.WhirlpoolFeeData;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionOutput;
 
@@ -15,6 +16,7 @@ public class Tx0Validation {
   private WhirlpoolServerConfig.ScodeSamouraiFeeConfig scodeConfig;
   private int feePercent;
   private TransactionOutput feeOutput;
+  private Partner partner;
 
   public Tx0Validation(
       Transaction tx,
@@ -22,13 +24,15 @@ public class Tx0Validation {
       PoolFee poolFee,
       WhirlpoolServerConfig.ScodeSamouraiFeeConfig scodeConfig,
       int feePercent,
-      TransactionOutput feeOutput) {
+      TransactionOutput feeOutput,
+      Partner partner) {
     this.tx = tx;
     this.feeData = feeData;
     this.poolFee = poolFee;
     this.scodeConfig = scodeConfig;
     this.feePercent = feePercent;
     this.feeOutput = feeOutput;
+    this.partner = partner;
   }
 
   public Collection<Integer> findStrictModeVouts() throws Exception {
@@ -43,6 +47,15 @@ public class Tx0Validation {
       }
     }
     return strictModeVouts;
+  }
+
+  public Collection<TransactionOutput> findPremixOutputs(Pool pool) {
+    return tx.getOutputs().stream()
+        .filter(
+            txOut ->
+                txOut.getValue().value >= pool.computeMustMixBalanceMin()
+                    && txOut.getValue().value <= pool.computeMustMixBalanceCap())
+        .collect(Collectors.toList());
   }
 
   public Transaction getTx() {
@@ -67,5 +80,9 @@ public class Tx0Validation {
 
   public TransactionOutput getFeeOutput() {
     return feeOutput;
+  }
+
+  public Partner getPartner() {
+    return partner;
   }
 }

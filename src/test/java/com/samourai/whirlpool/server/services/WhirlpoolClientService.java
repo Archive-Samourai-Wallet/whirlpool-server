@@ -7,6 +7,7 @@ import com.samourai.soroban.client.rpc.RpcSession;
 import com.samourai.tor.client.TorClientService;
 import com.samourai.wallet.bip47.rpc.java.Bip47UtilJava;
 import com.samourai.wallet.chain.ChainSupplier;
+import com.samourai.wallet.client.indexHandler.IIndexHandler;
 import com.samourai.wallet.crypto.CryptoUtil;
 import com.samourai.whirlpool.client.mix.MixParams;
 import com.samourai.whirlpool.client.mix.handler.*;
@@ -77,7 +78,7 @@ public class WhirlpoolClientService {
           Bip47UtilJava.getInstance(),
           cryptoUtil,
           null,
-          serverConfig.getWhirlpoolNetwork(), // TODO String serverUrl = "http://127.0.0.1:" + port;
+          serverConfig.getWhirlpoolNetwork(),
           IndexRange.FULL,
           false);
     } catch (Exception e) {
@@ -94,7 +95,12 @@ public class WhirlpoolClientService {
     IPostmixHandler postmixHandler =
         new IPostmixHandler() {
           @Override
-          public MixDestination computeDestination() throws Exception {
+          public MixDestination computeDestinationNext() throws Exception {
+            return null;
+          }
+
+          @Override
+          public MixDestination computeDestination(int index) throws Exception {
             return null;
           }
 
@@ -105,7 +111,7 @@ public class WhirlpoolClientService {
           public void onMixFail() {}
 
           @Override
-          public MixDestination getDestination() {
+          public IIndexHandler getIndexHandler() {
             return null;
           }
         };

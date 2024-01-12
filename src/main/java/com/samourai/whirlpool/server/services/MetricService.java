@@ -1,7 +1,8 @@
 package com.samourai.whirlpool.server.services;
 
-import com.samourai.whirlpool.server.beans.*;
 import com.samourai.whirlpool.server.beans.MixStatus;
+import com.samourai.whirlpool.server.beans.Pool;
+import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.beans.export.MixCsv;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Tag;
@@ -45,6 +46,10 @@ public class MetricService {
   private static final String GAUGE_POOL_MIXING_MUSTMIX = "whirlpool_pool_mixing_mustmix";
   private static final String GAUGE_POOL_MIXING_LIQUIDITY = "whirlpool_pool_mixing_liquidity";
 
+  private static final String COUNTER_TX0_TOTAL = "whirlpool_tx0_total";
+  private static final String SUMMARY_TX0_PREMIX_COUNT = "whirlpool_tx0_premix_count";
+  private static final String SUMMARY_TX0_PREMIX_VOLUME = "whirlpool_tx0_premix_volume";
+
   public MetricService() {}
 
   public void onMixResult(MixCsv mix, Collection<RegisteredInput> inputs) {
@@ -86,6 +91,31 @@ public class MetricService {
 
   public void onBan(RegisteredInput input) {
     Metrics.counter(COUNTER_BAN_TOTAL, "poolId", input.getPoolId()).increment();
+  }
+
+  public void onTx0(
+      String poolId,
+      int premixCount,
+      long premixVolume,
+      int opReturnVersion,
+      int feePayloadVersion,
+      int scodeDiscountPercent,
+      String partnerId) {
+    Metrics.counter(
+            COUNTER_TX0_TOTAL,
+            "poolId",
+            poolId,
+            "opReturnVersion",
+            Integer.toString(opReturnVersion),
+            "feePayloadVersion",
+            Integer.toString(feePayloadVersion),
+            "scodeDiscountPercent",
+            Integer.toString(scodeDiscountPercent),
+            "partnerId",
+            partnerId)
+        .increment();
+    Metrics.summary(SUMMARY_TX0_PREMIX_COUNT, "poolId", poolId).record(premixCount);
+    Metrics.summary(SUMMARY_TX0_PREMIX_VOLUME, "poolId", poolId).record(premixVolume);
   }
 
   public void manage(Pool pool) {

@@ -28,7 +28,7 @@
                 <tr th:each="ban : ${page.content}">
                     <td class="created"><span th:text="${#dates.format(ban.created, 'dd-MMM-yyyy HH:mm:ss')}"/></td>
                     <td class="identifier"><a th:href="${urlExplorer + ban.identifier}" target="_blank"><span th:text="${ban.identifier}"/></a></td>
-                    <td class="duration"><span th:text="${ban.duration!=null ? @templateUtil.duration(ban.duration, false) : 'permanent'}"/></td>
+                    <td class="duration"><span th:text="${ban.duration!=null ? @templateUtil.duration(ban.duration) : 'permanent'}"/></td>
                     <td class="expiration"><span th:text="${ban.expiration!=null ? #dates.format(ban.expiration, 'dd-MMM-yyyy HH:mm:ss') : 'permanent'}"/></td>
                     <td class="response"><span th:text="${ban.computeBanMessage()}"/></td>
                     <td class="notes"><span th:text="${ban.notes!=null ? ban.notes : '-'}"/> </td>

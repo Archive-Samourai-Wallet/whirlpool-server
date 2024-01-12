@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionOutput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,6 +49,7 @@ public class Tx0Service {
   private WhirlpoolServerContext serverContext;
   private XManagerClient xManagerClient;
   private BackendService backendService;
+  private MetricService metricService;
 
   @Autowired
   public Tx0Service(
@@ -60,7 +62,8 @@ public class Tx0Service {
       WhirlpoolServerConfig serverConfig,
       WhirlpoolServerContext serverContext,
       XManagerClient xManagerClient,
-      BackendService backendService) {
+      BackendService backendService,
+      MetricService metricService) {
     this.poolService = poolService;
     this.partnerService = partnerService;
     this.tx0ValidationService = tx0ValidationService;
@@ -71,6 +74,7 @@ public class Tx0Service {
     this.serverContext = serverContext;
     this.xManagerClient = xManagerClient;
     this.backendService = backendService;
+    this.metricService = metricService;
   }
 
   public Tx0DataResponse tx0Data(
@@ -394,20 +398,46 @@ public class Tx0Service {
       log.debug("pushTx0 success: " + txid);
     }
 
-    // TODO validate & metric
-    /*
-    // run tx0 analyzis in another thread
-    taskService.runOnce(1, () -> {
-      try {
-        // verify tx0
-        RpcTransaction rpcTransaction =
-                blockchainDataService.getRpcTransaction(payload.txid).orElseThrow(() -> notFoundException);
-        metricService.onTx0(payload, payload.poolId);
-      } catch (Exception e) {
-        log.error("tx0Notify failed", e);
+    // metric
+    try {
+      // TX0 minerFee not available here: tx.getFee() is null because input values are unknown
+      Collection<TransactionOutput> premixOutputs = tx0Validation.findPremixOutputs(pool);
+      int premixCount = premixOutputs.size();
+      long premixVolume = premixOutputs.stream().mapToLong(o -> o.getValue().value).sum();
+      int opReturnVersion = tx0Validation.getFeeData().getOpReturnVersion();
+      int feePayloadVersion = tx0Validation.getFeeData().getFeePayloadVersion();
+      String partner = tx0Validation.getPartner().getId();
+      int scodeDiscountPercent = 0;
+      WhirlpoolServerConfig.ScodeSamouraiFeeConfig scodeConfig = tx0Validation.getScodeConfig();
+      if (scodeConfig != null) {
+        scodeDiscountPercent = 100 - scodeConfig.getFeeValuePercent();
       }
-    });
-    */
+      if (log.isDebugEnabled()) {
+        log.debug(
+            "Tx0: "
+                + txid
+                + ": "
+                + premixCount
+                + " premixs, partner="
+                + partner
+                + ", scodeDiscountPercent="
+                + scodeDiscountPercent
+                + ", opReturnVersion="
+                + opReturnVersion
+                + ", feePayloadVersion="
+                + feePayloadVersion);
+      }
+      metricService.onTx0(
+          pool.getPoolId(),
+          premixCount,
+          premixVolume,
+          opReturnVersion,
+          feePayloadVersion,
+          scodeDiscountPercent,
+          partner);
+    } catch (Exception e) {
+      log.error("", e);
+    }
 
     return new PushTxSuccessResponse(txid);
   }
