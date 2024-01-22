@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 
 public class SorobanCoordinatorOrchestrator extends AbstractOrchestrator {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-  private static final int LOOP_DELAY = 30000;
+  public static final int LOOP_DELAY = 30000; // 30s
 
   private WhirlpoolServerConfig serverConfig;
   private WhirlpoolServerContext serverContext;

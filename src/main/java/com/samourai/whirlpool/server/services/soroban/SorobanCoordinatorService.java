@@ -45,7 +45,8 @@ public class SorobanCoordinatorService {
     // start watching soroban statuses
     RpcSession rpcSession = serverContext.getRpcSession();
     sorobanUpStatusOrchestrator =
-        new SorobanUpStatusOrchestrator(serverConfig, rpcSession, sorobanProtocolWhirlpool);
+        new SorobanUpStatusOrchestrator(
+            serverConfig, serverContext, rpcSession, sorobanProtocolWhirlpool);
     sorobanUpStatusOrchestrator.start(true);
 
     // start publishing pools
