@@ -1,5 +1,7 @@
 package com.samourai.whirlpool.server.controllers.web;
 
+import com.samourai.whirlpool.server.beans.Mix;
+import com.samourai.whirlpool.server.beans.Pool;
 import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.controllers.web.beans.WhirlpoolDashboardTemplateModel;
@@ -45,11 +47,12 @@ public class ClientsWebController {
                         .map(input -> Pair.of("QUEUED", input)))
             .collect(Collectors.toList());
 
-    poolService.getPools().stream()
-        .flatMap(pool -> pool.getCurrentMix().getInputs()._getInputs().stream())
-        .forEach(
-            input ->
-                registeredInputs.add(Pair.of("MIXING", input))); // 'MIXING' used in clients.html
+    for (Pool pool : poolService.getPools()) {
+      Mix mix = pool.getCurrentMix();
+      for (RegisteredInput input : mix.getInputs()._getInputs()) {
+        registeredInputs.add(Pair.of(mix.getMixStatus().name(), input));
+      }
+    }
 
     poolService.getPools().stream()
         .flatMap(pool -> pool.getCurrentMix().getConfirmingInputs()._getInputs().stream())

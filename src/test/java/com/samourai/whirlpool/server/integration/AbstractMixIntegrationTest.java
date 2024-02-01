@@ -110,8 +110,8 @@ public abstract class AbstractMixIntegrationTest extends AbstractIntegrationTest
 
     // CONFIRM_INPUT
     String mixId = mix.getMixId();
-    confirmInputService.confirmInput(
-        mixId, username, blindedBordereau, "userHash" + username, utxoHash, utxoIndex);
+    confirmInputService.confirmInput_webSocket(
+        mixId, blindedBordereau, "userHash" + username, username);
 
     // get a valid signed blinded bordereau
     byte[] signedBlindedBordereau =

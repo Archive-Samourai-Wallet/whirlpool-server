@@ -117,7 +117,7 @@ public class RegisterOutputService {
           WhirlpoolErrorCode.INPUT_ALREADY_REGISTERED, "output already registered as input");
     }
 
-    log.info("[" + mix.getLogId() + "] registered output: " + receiveAddress);
+    log.info("REGISTERED_OUTPUT " + mix.getMixId() + " " + receiveAddress);
     mix.registerOutput(receiveAddress, bordereau);
 
     mixService.onRegisterOutput(mix);

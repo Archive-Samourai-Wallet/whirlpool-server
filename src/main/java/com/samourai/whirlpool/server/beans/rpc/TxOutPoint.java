@@ -52,7 +52,7 @@ public class TxOutPoint {
   }
 
   public String toKey() {
-    return Utils.computeInputId(this);
+    return Utils.computeOutpointId(this);
   }
 
   public Utxo toUtxo() {

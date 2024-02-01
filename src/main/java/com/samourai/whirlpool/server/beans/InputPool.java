@@ -14,6 +14,8 @@ import org.slf4j.LoggerFactory;
 
 public class InputPool {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final int SOROBAN_INPUT_EXPIRATION = 120000; // 2min
+
   private Map<String, RegisteredInput> inputsById;
 
   public InputPool() {
@@ -22,7 +24,7 @@ public class InputPool {
 
   public void register(RegisteredInput registeredInput) {
     // overwrite if it was already registered
-    String inputId = Utils.computeInputId(registeredInput.getOutPoint());
+    String inputId = Utils.computeInputId(registeredInput);
     inputsById.put(inputId, registeredInput);
   }
 
@@ -34,27 +36,41 @@ public class InputPool {
         .findFirst();
   }
 
-  public Optional<RegisteredInput> findByUtxo(TxOutPoint outPoint) {
-    return findByUtxo(outPoint.getHash(), outPoint.getIndex());
+  public boolean hasInput(RegisteredInput registeredInput) {
+    return find(registeredInput).isPresent();
   }
 
-  public Optional<RegisteredInput> findByUtxo(String utxoHash, long utxoIndex) {
-    String key = Utils.computeInputId(utxoHash, utxoIndex);
-    return Optional.ofNullable(inputsById.get(key));
+  public Optional<RegisteredInput> find(String utxoHash, long utxoIndex, String username) {
+    String inputId = Utils.computeInputId(utxoHash, utxoIndex, username);
+    return Optional.ofNullable(inputsById.get(inputId));
+  }
+
+  public Optional<RegisteredInput> find(RegisteredInput registeredInput) {
+    String inputId = Utils.computeInputId(registeredInput);
+    return Optional.ofNullable(inputsById.get(inputId));
+  }
+
+  public Optional<RegisteredInput> findByOutPoint(TxOutPoint outPoint) {
+    return findByOutPoint(outPoint.getHash(), outPoint.getIndex());
+  }
+
+  public Optional<RegisteredInput> findByOutPoint(String utxoHash, long utxoIndex) {
+    String outpointId = Utils.computeOutpointId(utxoHash, utxoIndex);
+    return inputsById.values().stream()
+        .filter(confirmedInput -> outpointId.equals(confirmedInput.getOutPoint().toKey()))
+        .findFirst();
+  }
+
+  public boolean hasOutPoint(TxOutPoint outPoint) {
+    return findByOutPoint(outPoint).isPresent();
   }
 
   public Optional<RegisteredInput> findBySorobanSender(PaymentCode sender) {
-    String pCode = sender.toString();
     return inputsById.values().stream()
         .filter(
             confirmedInput ->
                 confirmedInput.getSorobanInput() != null
-                    && confirmedInput
-                        .getSorobanInput()
-                        .getBip47Partner()
-                        .getPaymentCodePartner()
-                        .toString()
-                        .equals(pCode))
+                    && confirmedInput.getSorobanInput().getSender().equals(sender))
         .findFirst();
   }
 
@@ -106,8 +122,8 @@ public class InputPool {
     return removeBy(findByUsername(username));
   }
 
-  public synchronized Optional<RegisteredInput> removeByUtxo(String utxoHash, long utxoIndex) {
-    return removeBy(findByUtxo(utxoHash, utxoIndex));
+  public synchronized Optional<RegisteredInput> remove(RegisteredInput registeredInput) {
+    return removeBy(find(registeredInput));
   }
 
   public synchronized Optional<RegisteredInput> removeBySorobanSender(PaymentCode sender) {
@@ -116,14 +132,10 @@ public class InputPool {
 
   protected Optional<RegisteredInput> removeBy(Optional<RegisteredInput> input) {
     if (input.isPresent()) {
-      String inputId = Utils.computeInputId(input.get().getOutPoint());
+      String inputId = Utils.computeInputId(input.get());
       inputsById.remove(inputId);
     }
     return input;
-  }
-
-  public synchronized Optional<RegisteredInput> removeByUtxo(TxOutPoint txOut) {
-    return removeByUtxo(txOut.getHash(), txOut.getIndex());
   }
 
   public synchronized Collection<RegisteredInput> clear() {
@@ -142,10 +154,6 @@ public class InputPool {
   }
 
   // ------------
-
-  public boolean hasInput(TxOutPoint outPoint) {
-    return findByUtxo(outPoint.getHash(), outPoint.getIndex()).isPresent();
-  }
 
   public boolean hasInputs() {
     return !inputsById.isEmpty();
@@ -176,6 +184,13 @@ public class InputPool {
         .collect(Collectors.toList());
   }
 
+  public Collection<SorobanInput> getListSorobanInputs() {
+    return getListBySoroban(true)
+        .parallelStream()
+        .map(confirmedInput -> confirmedInput.getSorobanInput())
+        .collect(Collectors.toList());
+  }
+
   public int getSizeByLiquidity(boolean liquidity) {
     return getListByLiquidity(liquidity).size();
   }
@@ -194,5 +209,33 @@ public class InputPool {
 
   public Collection<RegisteredInput> _getInputs() {
     return inputsById.values();
+  }
+
+  public Collection<RegisteredInput> getListSorobanInputsExpired(long minLastSeen) {
+    return getListBySoroban(true).stream()
+        .filter(
+            registeredInput -> registeredInput.getSorobanInput().getSorobanLastSeen() < minLastSeen)
+        .collect(Collectors.toList());
+  }
+
+  public void expireSorobanInputs() {
+    long minLastSeen = System.currentTimeMillis() - SOROBAN_INPUT_EXPIRATION;
+
+    // cleanup expired registeredInputs
+    Collection<RegisteredInput> registeredInputsExpired = getListSorobanInputsExpired(minLastSeen);
+    int nbExpired = registeredInputsExpired.size();
+    if (nbExpired > 0) {
+      if (log.isDebugEnabled()) {
+        log.debug("EXPIRE_SOROBAN_INPUT " + nbExpired + " inputs expired");
+      }
+    }
+    registeredInputsExpired.forEach(
+        registeredInput -> {
+          if (log.isDebugEnabled()) {
+            log.debug(
+                "[" + registeredInput.getPoolId() + "] -queue: " + registeredInput.toString());
+          }
+          remove(registeredInput);
+        });
   }
 }

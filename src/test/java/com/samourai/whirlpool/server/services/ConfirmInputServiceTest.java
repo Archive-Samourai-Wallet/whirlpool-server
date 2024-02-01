@@ -2,14 +2,14 @@ package com.samourai.whirlpool.server.services;
 
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
+import com.samourai.wallet.bip47.rpc.PaymentCode;
 import com.samourai.wallet.segwit.SegwitAddress;
 import com.samourai.whirlpool.client.utils.ClientUtils;
-import com.samourai.whirlpool.server.beans.Mix;
-import com.samourai.whirlpool.server.beans.MixStatus;
-import com.samourai.whirlpool.server.beans.Pool;
-import com.samourai.whirlpool.server.beans.SorobanInput;
+import com.samourai.whirlpool.protocol.WhirlpoolErrorCode;
+import com.samourai.whirlpool.server.beans.*;
 import com.samourai.whirlpool.server.beans.rpc.RpcTransaction;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
+import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import com.samourai.whirlpool.server.integration.AbstractMixIntegrationTest;
 import java.lang.invoke.MethodHandles;
 import java.util.LinkedHashMap;
@@ -41,7 +41,6 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
     String receiveAddress = testUtils.generateSegwitAddress().getBech32AsString();
 
     // REGISTER_INPUT
-    TxOutPoint outPoint = registerInput(mix, username, 999, false, null);
     testUtils.assertMix(0, 1, mix); // mustMix confirming
 
     // blind bordereau
@@ -50,8 +49,7 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
     byte[] blindedBordereau = clientCryptoService.blind(bordereau, blindingParams);
 
     // CONFIRM_INPUT
-    confirmInputService.confirmInput(
-        mixId, username, blindedBordereau, "userHash", outPoint.getHash(), outPoint.getIndex());
+    confirmInputService.confirmInput_webSocket(mixId, blindedBordereau, "userHash", username);
 
     // get a valid signed blinded bordereau
     byte[] signedBlindedBordereau =
@@ -91,8 +89,15 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
     byte[] blindedBordereau = clientCryptoService.blind(bordereau, blindingParams);
 
     // CONFIRM_INPUT
-    confirmInputService.confirmInput(
-        mixId, username, blindedBordereau, "userHash", outPoint.getHash(), outPoint.getIndex());
+    PaymentCode sender = sorobanInput.getSender();
+    RegisteredInput registeredInput =
+        mix.removeConfirmingInputBySender(sender)
+            .orElseThrow(
+                () ->
+                    new IllegalInputException(
+                        WhirlpoolErrorCode.SERVER_ERROR,
+                        "Confirming input not found: sender=" + sender.toString()));
+    confirmInputService.confirmInput(mix, registeredInput, blindedBordereau, "userHash");
 
     // get a valid signed blinded bordereau
     byte[] signedBlindedBordereau =
@@ -180,20 +185,8 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
     byte[] blindedBordereau = clientCryptoService.blind(bordereau, blindingParams);
 
     // CONFIRM_INPUT
-    confirmInputService.confirmInput(
-        mixId,
-        "user1",
-        blindedBordereau,
-        "userHash1",
-        txOutPoint1.getHash(),
-        txOutPoint1.getIndex());
-    confirmInputService.confirmInput(
-        mixId,
-        "user2",
-        blindedBordereau,
-        "userHash2",
-        txOutPoint2.getHash(),
-        txOutPoint2.getIndex());
+    confirmInputService.confirmInput_webSocket(mixId, blindedBordereau, "userHash1", "user1");
+    confirmInputService.confirmInput_webSocket(mixId, blindedBordereau, "userHash2", "user2");
 
     // VERIFY
     testUtils.assertMix(1, 0, mix); // 1 mustMix confirmed
@@ -264,20 +257,9 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
     byte[] blindedBordereau = clientCryptoService.blind(bordereau, blindingParams);
 
     // CONFIRM_INPUT
-    confirmInputService.confirmInput(
-        mixId,
-        "user1",
-        blindedBordereau,
-        "userHash1",
-        txOutPoint1.getHash(),
-        txOutPoint1.getIndex());
-    confirmInputService.confirmInput(
-        mixId,
-        "user2",
-        blindedBordereau,
-        "userHash1",
-        txOutPoint2.getHash(),
-        txOutPoint2.getIndex()); // same userHash
+    confirmInputService.confirmInput_webSocket(mixId, blindedBordereau, "userHash1", "user1");
+    confirmInputService.confirmInput_webSocket(
+        mixId, blindedBordereau, "userHash1", "user2"); // same userHash
     waitMixLimitsService(mix);
 
     // VERIFY

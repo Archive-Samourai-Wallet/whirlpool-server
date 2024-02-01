@@ -2,12 +2,12 @@ package com.samourai.whirlpool.server.orchestrators;
 
 import com.samourai.wallet.util.AbstractOrchestrator;
 import com.samourai.wallet.util.AsyncUtil;
-import com.samourai.whirlpool.protocol.soroban.RegisterCoordinatorMessage;
-import com.samourai.whirlpool.protocol.soroban.api.WhirlpoolApiCoordinator;
-import com.samourai.whirlpool.protocol.soroban.beans.CoordinatorInfo;
-import com.samourai.whirlpool.protocol.soroban.beans.PoolInfo;
+import com.samourai.whirlpool.protocol.soroban.WhirlpoolApiCoordinator;
+import com.samourai.whirlpool.protocol.soroban.payload.coordinators.CoordinatorInfo;
+import com.samourai.whirlpool.protocol.soroban.payload.coordinators.CoordinatorMessage;
+import com.samourai.whirlpool.protocol.soroban.payload.coordinators.PoolInfo;
+import com.samourai.whirlpool.protocol.soroban.payload.coordinators.SorobanInfo;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
-import com.samourai.whirlpool.server.config.WhirlpoolServerContext;
 import com.samourai.whirlpool.server.services.MinerFeeService;
 import com.samourai.whirlpool.server.services.PoolService;
 import java.lang.invoke.MethodHandles;
@@ -17,24 +17,24 @@ import org.slf4j.LoggerFactory;
 
 public class SorobanCoordinatorOrchestrator extends AbstractOrchestrator {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-  public static final int LOOP_DELAY = 30000; // 30s
+  private static final long COORDINATOR_PRIORITY = 10; // TODO
+  public static final int REGISTER_COORDINATOR_FREQUENCY_MS =
+      60000; // getEndpointCoordinator.getExpirationMs()/3
+  public static final int START_DELAY_MS = 5000; // wait server successfully started
 
   private WhirlpoolServerConfig serverConfig;
-  private WhirlpoolServerContext serverContext;
   private PoolService poolService;
   private MinerFeeService minerFeeService;
   private WhirlpoolApiCoordinator whirlpoolApiCoordinator;
 
   public SorobanCoordinatorOrchestrator(
       WhirlpoolServerConfig serverConfig,
-      WhirlpoolServerContext serverContext,
       PoolService poolService,
       MinerFeeService minerFeeService,
       WhirlpoolApiCoordinator whirlpoolApiCoordinator) {
 
-    super(LOOP_DELAY, 0, null);
+    super(REGISTER_COORDINATOR_FREQUENCY_MS, START_DELAY_MS, null);
     this.serverConfig = serverConfig;
-    this.serverContext = serverContext;
     this.poolService = poolService;
     this.minerFeeService = minerFeeService;
     this.whirlpoolApiCoordinator = whirlpoolApiCoordinator;
@@ -50,17 +50,18 @@ public class SorobanCoordinatorOrchestrator extends AbstractOrchestrator {
         log.debug("registering coordinator: " + poolInfosSoroban.size() + " pools");
       }
       CoordinatorInfo coordinatorInfo =
-          new CoordinatorInfo(
-              serverConfig.getCoordinatorId(),
-              serverContext.getCoordinatorWallet().getPaymentCode().toString(),
-              serverContext.getCoordinatorWalletPaymentCodeSignature());
-      RegisterCoordinatorMessage registerCoordinatorMessage =
-          new RegisterCoordinatorMessage(coordinatorInfo, poolInfosSoroban);
+          new CoordinatorInfo(serverConfig.getCoordinatorName(), COORDINATOR_PRIORITY);
+      SorobanInfo sorobanInfo =
+          new SorobanInfo(
+              whirlpoolApiCoordinator.getRpcSession().getServerUrlsUp(false),
+              whirlpoolApiCoordinator.getRpcSession().getServerUrlsUp(true));
+      CoordinatorMessage coordinatorMessage =
+          new CoordinatorMessage(coordinatorInfo, poolInfosSoroban, sorobanInfo);
       if (log.isDebugEnabled()) {
-        log.debug("RegisterCoordinatorMessage = " + registerCoordinatorMessage.toPayload());
+        log.debug("CoordinatorMessage = " + coordinatorMessage.toPayload());
       }
       AsyncUtil.getInstance()
-          .blockingAwait(whirlpoolApiCoordinator.registerCoordinator(registerCoordinatorMessage));
+          .blockingAwait(whirlpoolApiCoordinator.coordinatorsRegister(coordinatorMessage));
     } catch (Exception e) {
       log.error("Failed to register Soroban pools", e);
     }

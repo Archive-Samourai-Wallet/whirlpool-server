@@ -3,13 +3,13 @@ package com.samourai.whirlpool.server;
 import com.samourai.javaserver.config.ServerConfig;
 import com.samourai.javaserver.run.ServerApplication;
 import com.samourai.javaserver.utils.LogbackUtils;
-import com.samourai.javaserver.utils.ServerUtils;
 import com.samourai.wallet.api.backend.MinerFee;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.services.BackendService;
 import com.samourai.whirlpool.server.services.ExportService;
 import com.samourai.whirlpool.server.services.MinerFeeService;
+import com.samourai.whirlpool.server.services.MixSorobanService;
 import com.samourai.whirlpool.server.services.rpc.RpcClientService;
 import com.samourai.whirlpool.server.services.soroban.SorobanCoordinatorService;
 import com.samourai.whirlpool.server.utils.Utils;
@@ -30,8 +30,6 @@ import org.springframework.boot.web.servlet.ServletComponentScan;
 public class Application extends ServerApplication {
   private static final Logger log = LoggerFactory.getLogger(Application.class);
 
-  @Autowired private ServerUtils serverUtils;
-
   @Autowired private RpcClientService rpcClientService;
 
   @Autowired private ExportService exportService;
@@ -45,6 +43,9 @@ public class Application extends ServerApplication {
   @Autowired private MinerFeeService minerFeeService;
 
   @Autowired private SorobanCoordinatorService sorobanCoordinatorService;
+
+  // required to launch on startup
+  @Autowired private MixSorobanService mixSorobanService;
 
   public static void main(String[] args) {
     SpringApplication.run(Application.class, args);
@@ -69,6 +70,18 @@ public class Application extends ServerApplication {
     // log activity
     ActivityCsv activityCsv = new ActivityCsv("STARTUP", null, null, null, null, null);
     exportService.exportActivity(activityCsv);
+
+    /*
+    // force specific soroban node
+    NetworkParameters params = serverConfig.getNetworkParameters();
+    SorobanServerDex sorobanServerDex = SorobanServerDex.get(params);
+    Collection<String> serverUrlsClear =
+        Arrays.asList(sorobanServerDex.getServerUrls(false).iterator().next());
+    Collection<String> serverUrlsOnion =
+        Arrays.asList(sorobanServerDex.getServerUrls(true).iterator().next());
+
+    sorobanServerDex.setServerUrlsClear(serverUrlsClear);
+    sorobanServerDex.setServerUrlsOnion(serverUrlsOnion);*/
 
     // server starting...
   }

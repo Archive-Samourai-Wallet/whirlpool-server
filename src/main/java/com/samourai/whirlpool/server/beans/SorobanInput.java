@@ -1,36 +1,21 @@
 package com.samourai.whirlpool.server.beans;
 
-import com.samourai.wallet.bip47.rpc.Bip47Partner;
-import com.samourai.whirlpool.server.utils.Utils;
+import com.samourai.soroban.client.endpoint.meta.typed.SorobanEndpointTyped;
+import com.samourai.wallet.bip47.rpc.PaymentCode;
 
 public class SorobanInput {
-  private Bip47Partner bip47Partner;
+  private PaymentCode sender;
   private Long sorobanLastSeen; // last seen time on Soroban
-  private String requestId; // set from registerInputRequest
-  private int requestNonce;
+  private SorobanEndpointTyped endpointRegisterInputReply; // for RegisterInputResponse
 
-  public SorobanInput(Bip47Partner bip47Partner, String requestId) {
-    this.bip47Partner = bip47Partner;
-    this.requestId = requestId;
-    this.requestNonce = 0;
+  public SorobanInput(PaymentCode sender, SorobanEndpointTyped endpointRegisterInputReply) {
+    this.sender = sender;
     setSorobanLastSeen();
+    this.endpointRegisterInputReply = endpointRegisterInputReply;
   }
 
-  public Bip47Partner getBip47Partner() {
-    return bip47Partner;
-  }
-
-  public String getRequestId() {
-    return requestId;
-  }
-
-  public void setRequestId(String requestId) {
-    this.requestId = requestId;
-    this.requestNonce = 0;
-  }
-
-  public int getRequestNonceAndIncrement() {
-    return requestNonce++;
+  public PaymentCode getSender() {
+    return sender;
   }
 
   public Long getSorobanLastSeen() {
@@ -41,11 +26,12 @@ public class SorobanInput {
     this.sorobanLastSeen = System.currentTimeMillis();
   }
 
+  public SorobanEndpointTyped getEndpointRegisterInputReply() {
+    return endpointRegisterInputReply;
+  }
+
   @Override
   public String toString() {
-    return "bip47Partner="
-        + Utils.obfuscateString(bip47Partner.getPaymentCodePartner().toString(), 3)
-        + ", sorobanLastSeen="
-        + sorobanLastSeen;
+    return "sender=" + sender.toString() + ", sorobanLastSeen=" + sorobanLastSeen;
   }
 }

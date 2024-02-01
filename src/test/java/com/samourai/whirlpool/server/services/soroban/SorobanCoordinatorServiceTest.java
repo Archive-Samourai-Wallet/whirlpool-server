@@ -10,8 +10,8 @@ import com.samourai.whirlpool.client.tx0.Tx0PreviewService;
 import com.samourai.whirlpool.client.wallet.data.coordinator.ExpirableCoordinatorSupplier;
 import com.samourai.whirlpool.client.wallet.data.minerFee.MockMinerFeeSupplier;
 import com.samourai.whirlpool.client.whirlpool.beans.Coordinator;
-import com.samourai.whirlpool.protocol.soroban.api.WhirlpoolApiClient;
-import com.samourai.whirlpool.server.controllers.soroban.RegisterInputControllerSoroban;
+import com.samourai.whirlpool.protocol.soroban.WhirlpoolApiClient;
+import com.samourai.whirlpool.server.controllers.soroban.RegisterInputPerPoolControllerSoroban;
 import com.samourai.whirlpool.server.integration.AbstractIntegrationTest;
 import com.samourai.whirlpool.server.orchestrators.SorobanCoordinatorOrchestrator;
 import java.lang.invoke.MethodHandles;
@@ -30,7 +30,7 @@ public class SorobanCoordinatorServiceTest extends AbstractIntegrationTest {
 
   private SorobanCoordinatorOrchestrator poolInfoOrchestrator;
 
-  @Autowired private RegisterInputControllerSoroban registerInputControllerSoroban;
+  @Autowired private RegisterInputPerPoolControllerSoroban registerInputPerPoolControllerSoroban;
 
   @BeforeEach
   @Override
@@ -47,8 +47,7 @@ public class SorobanCoordinatorServiceTest extends AbstractIntegrationTest {
     poolInfoOrchestrator._runOrchestrator();
 
     RpcSession rpcSession = rpcClientServiceServer.generateRpcWallet().createRpcSession();
-    WhirlpoolApiClient whirlpoolApiClient =
-        new WhirlpoolApiClient(rpcSession, sorobanProtocolWhirlpool);
+    WhirlpoolApiClient whirlpoolApiClient = new WhirlpoolApiClient(rpcSession, sorobanAppWhirlpool);
 
     // fetch pools from Soroban
     MockMinerFeeSupplier minerFeeSupplier = new MockMinerFeeSupplier();
@@ -58,16 +57,16 @@ public class SorobanCoordinatorServiceTest extends AbstractIntegrationTest {
         new MockTx0PreviewService(minerFeeSupplier, tx0PreviewServiceConfig);
     ExpirableCoordinatorSupplier coordinatorSupplier =
         new ExpirableCoordinatorSupplier(
-            30000, whirlpoolApiClient, serverConfig.getWhirlpoolNetwork(), tx0PreviewService);
+            30000, whirlpoolApiClient, tx0PreviewService, computeWhirlpoolWalletConfig());
     coordinatorSupplier.load();
     Collection<Coordinator> coordinators = coordinatorSupplier.getCoordinators();
 
     Assertions.assertEquals(1, coordinators.size());
     Coordinator coordinator = coordinators.iterator().next();
-    Assertions.assertEquals(serverConfig.getCoordinatorId(), coordinator.getCoordinatorId());
+    Assertions.assertEquals(serverConfig.getCoordinatorName(), coordinator.getName());
     Assertions.assertEquals(
         serverContext.getCoordinatorWallet().getPaymentCode().toString(),
-        coordinator.getPaymentCode().toString());
+        coordinator.getSender().toString());
     Assertions.assertArrayEquals(
         poolService.getPools().stream().map(p -> p.getPoolId()).sorted().toArray(),
         coordinator.getPoolIds().stream().sorted().toArray());

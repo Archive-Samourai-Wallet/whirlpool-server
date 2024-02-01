@@ -3,7 +3,7 @@ package com.samourai.whirlpool.server.services;
 import com.google.common.collect.ImmutableMap;
 import com.samourai.javaserver.exceptions.NotifiableException;
 import com.samourai.whirlpool.protocol.WhirlpoolErrorCode;
-import com.samourai.whirlpool.protocol.soroban.beans.PoolInfo;
+import com.samourai.whirlpool.protocol.soroban.payload.coordinators.PoolInfo;
 import com.samourai.whirlpool.server.beans.*;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
@@ -167,26 +167,18 @@ public class PoolService {
     // queue input
     getPoolQueue(registeredInput).register(registeredInput);
     if (log.isDebugEnabled()) {
-      log.debug("[" + registeredInput.getPoolId() + "] +queue: " + registeredInput.toString());
+      log.debug("+INPUT_QUEUE " + registeredInput.getPoolId() + " " + registeredInput.toString());
     }
     return registeredInput;
   }
 
-  public void unregisterInput(RegisteredInput registeredInput) throws NotifiableException {
-    InputPool queue = getPoolQueue(registeredInput);
-
-    if (log.isDebugEnabled()) {
-      log.debug("[" + registeredInput.getPoolId() + "] -queue: " + registeredInput.toString());
-    }
-
-    // queue input
-    queue.removeByUtxo(
-        registeredInput.getOutPoint().getHash(), registeredInput.getOutPoint().getIndex());
+  private InputPool getPoolQueue(RegisteredInput registeredInput) throws NotifiableException {
+    return getPoolQueue(registeredInput.getPoolId(), registeredInput.isLiquidity());
   }
 
-  private InputPool getPoolQueue(RegisteredInput registeredInput) throws NotifiableException {
-    Pool pool = getPool(registeredInput.getPoolId());
-    if (registeredInput.isLiquidity()) {
+  public InputPool getPoolQueue(String poolId, boolean liquidity) throws NotifiableException {
+    Pool pool = getPool(poolId);
+    if (liquidity) {
       // liquidity
       return pool.getLiquidityQueue();
     }
@@ -260,6 +252,11 @@ public class PoolService {
         exportService.exportActivity(activityCsv);
       }
     }
+  }
+
+  public void expireSorobanInputs(Pool pool) {
+    pool.getMustMixQueue().expireSorobanInputs();
+    pool.getLiquidityQueue().expireSorobanInputs();
   }
 
   public int getNbInputs() {

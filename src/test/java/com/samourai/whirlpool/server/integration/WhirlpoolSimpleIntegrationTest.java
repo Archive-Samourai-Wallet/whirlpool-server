@@ -47,7 +47,7 @@ public class WhirlpoolSimpleIntegrationTest extends AbstractIntegrationTest {
     BIP47Wallet bip47OutputWallet = testUtils.generateWallet().getBip47Wallet();
     BipWallet bip84Wallet = testUtils.generateWallet().getBip84Wallet(BIP_WALLET.DEPOSIT_BIP84);
 
-    PaymentCode inputPCode = new PaymentCode(bip47InputWallet.getAccount(0).getPaymentCode());
+    PaymentCode inputPCode = bip47InputWallet.getAccount(0).getPaymentCode();
     // sender signs message with payment code notification address privkey
     ECKey inputNotifAddressECKey =
         bip47InputWallet.getAccount(0).getNotificationAddress().getECKey();
@@ -61,7 +61,7 @@ public class WhirlpoolSimpleIntegrationTest extends AbstractIntegrationTest {
             inputPCodeSig,
             params));
 
-    PaymentCode outputPCode = new PaymentCode(bip47OutputWallet.getAccount(0).getPaymentCode());
+    PaymentCode outputPCode = bip47OutputWallet.getAccount(0).getPaymentCode();
     // receiver signs message with payment code notification address
     ECKey outputNotifAddressECKey =
         bip47OutputWallet.getAccount(0).getNotificationAddress().getECKey();

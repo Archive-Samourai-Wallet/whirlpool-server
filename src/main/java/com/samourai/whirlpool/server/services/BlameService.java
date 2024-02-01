@@ -1,7 +1,7 @@
 package com.samourai.whirlpool.server.services;
 
 import com.google.common.collect.ImmutableMap;
-import com.samourai.whirlpool.server.beans.BlameReason;
+import com.samourai.whirlpool.protocol.soroban.payload.beans.BlameReason;
 import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;

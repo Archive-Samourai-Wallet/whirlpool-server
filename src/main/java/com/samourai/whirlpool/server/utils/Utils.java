@@ -1,5 +1,6 @@
 package com.samourai.whirlpool.server.utils;
 
+import ch.qos.logback.classic.Level;
 import com.samourai.javaserver.utils.ServerUtils;
 import com.samourai.javawsserver.interceptors.JWSSIpHandshakeInterceptor;
 import com.samourai.wallet.bipFormat.BIP_FORMAT;
@@ -83,12 +84,21 @@ public class Utils {
     return sortedMap;
   }
 
-  public static String computeInputId(TxOutPoint outPoint) {
-    return computeInputId(outPoint.getHash(), outPoint.getIndex());
+  public static String computeOutpointId(TxOutPoint outPoint) {
+    return computeOutpointId(outPoint.getHash(), outPoint.getIndex());
   }
 
-  public static String computeInputId(String utxoHash, long utxoIndex) {
+  public static String computeOutpointId(String utxoHash, long utxoIndex) {
     return utxoHash + ":" + utxoIndex;
+  }
+
+  public static String computeInputId(RegisteredInput registeredInput) {
+    TxOutPoint outPoint = registeredInput.getOutPoint();
+    return computeInputId(outPoint.getHash(), outPoint.getIndex(), registeredInput.getUsername());
+  }
+
+  public static String computeInputId(String utxoHash, long utxoIndex, String username) {
+    return utxoHash + ":" + utxoIndex + "_" + username;
   }
 
   public static void setLoggerDebug() {
@@ -156,7 +166,7 @@ public class Utils {
     }
 
     // comes from previous mix => ban UTXO
-    String utxo = Utils.computeInputId(utxoHash, utxoIndex);
+    String utxo = Utils.computeOutpointId(utxoHash, utxoIndex);
     return utxo;
   }
 
@@ -193,5 +203,14 @@ public class Utils {
       log.debug("signing address: " + signingAddress.getAddressString());
     }
     return MessageSignUtilGeneric.getInstance().signMessage(signingAddress.getECKey(), payload);
+  }
+
+  public static Logger prefixLogger(Logger log, String logPrefix) {
+    // Level level = ((ch.qos.logback.classic.Logger) log).getEffectiveLevel();
+    // TODO not working with setLoggerDebug?
+    Level level = Level.DEBUG;
+    Logger newLog = LoggerFactory.getLogger(log.getName() + "[" + logPrefix + "]");
+    ((ch.qos.logback.classic.Logger) newLog).setLevel(level);
+    return newLog;
   }
 }

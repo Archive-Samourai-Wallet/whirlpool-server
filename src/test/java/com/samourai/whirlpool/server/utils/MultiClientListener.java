@@ -1,5 +1,6 @@
 package com.samourai.whirlpool.server.utils;
 
+import com.samourai.whirlpool.client.mix.handler.MixDestination;
 import com.samourai.whirlpool.client.mix.listener.MixFailReason;
 import com.samourai.whirlpool.client.mix.listener.MixStep;
 import com.samourai.whirlpool.client.whirlpool.listener.WhirlpoolClientListener;
@@ -17,7 +18,7 @@ public class MultiClientListener implements WhirlpoolClientListener {
   }
 
   @Override
-  public void success(Utxo receiveUtxo) {
+  public void success(Utxo receiveUtxo, MixDestination receiveDestination) {
     mixStatus = MixStatus.SUCCESS;
     notifyMultiClientManager();
   }

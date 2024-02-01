@@ -5,11 +5,13 @@ import com.samourai.http.client.IHttpClient;
 import com.samourai.http.client.IHttpClientService;
 import com.samourai.javaserver.utils.ServerUtils;
 import com.samourai.soroban.client.RpcWallet;
+import com.samourai.soroban.client.endpoint.meta.SorobanMetadataImpl;
+import com.samourai.soroban.client.endpoint.meta.typed.SorobanEndpointTyped;
+import com.samourai.soroban.client.endpoint.meta.typed.SorobanItemTyped;
 import com.samourai.soroban.client.wallet.SorobanWalletService;
 import com.samourai.wallet.api.backend.BackendServer;
 import com.samourai.wallet.bip47.rpc.BIP47Account;
 import com.samourai.wallet.bip47.rpc.BIP47Wallet;
-import com.samourai.wallet.bip47.rpc.Bip47Partner;
 import com.samourai.wallet.bip47.rpc.PaymentCode;
 import com.samourai.wallet.bip47.rpc.java.Bip47UtilJava;
 import com.samourai.wallet.bip47.rpc.java.SecretPointFactoryJava;
@@ -31,9 +33,9 @@ import com.samourai.whirlpool.client.wallet.data.dataSource.DataSourceFactory;
 import com.samourai.whirlpool.client.wallet.data.dataSource.DojoDataSourceFactory;
 import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientConfig;
 import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientImpl;
-import com.samourai.whirlpool.protocol.SorobanProtocolWhirlpool;
+import com.samourai.whirlpool.protocol.SorobanAppWhirlpool;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
-import com.samourai.whirlpool.protocol.soroban.api.WhirlpoolApiCoordinator;
+import com.samourai.whirlpool.protocol.soroban.WhirlpoolApiCoordinator;
 import com.samourai.whirlpool.protocol.util.XorMask;
 import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.beans.Pool;
@@ -51,6 +53,7 @@ import com.samourai.whirlpool.server.services.soroban.SorobanCoordinatorService;
 import com.samourai.whirlpool.server.utils.AssertMultiClientManager;
 import com.samourai.whirlpool.server.utils.TestUtils;
 import com.samourai.whirlpool.server.utils.Utils;
+import com.samourai.xmanager.client.XManagerClient;
 import java.lang.invoke.MethodHandles;
 import java.util.Optional;
 import org.bitcoinj.core.NetworkParameters;
@@ -125,6 +128,11 @@ public abstract class AbstractIntegrationTest {
   @Autowired protected HD_WalletFactoryGeneric hdWalletFactory;
 
   @Autowired protected BlameService blameService;
+  @Autowired protected PartnerService partnerService;
+  @Autowired protected ExportService exportService;
+  @Autowired protected XManagerClient xManagerClient;
+  @Autowired protected BackendService backendService;
+  @Autowired protected MetricService metricService;
 
   @Autowired protected SorobanCoordinatorService sorobanCoordinatorService;
 
@@ -138,7 +146,7 @@ public abstract class AbstractIntegrationTest {
   @Autowired protected JavaHttpClientService httpClientService;
   @Autowired protected RpcClientServiceServer rpcClientServiceServer;
 
-  @Autowired protected SorobanProtocolWhirlpool sorobanProtocolWhirlpool;
+  @Autowired protected SorobanAppWhirlpool sorobanAppWhirlpool;
 
   protected MessageSignUtilGeneric messageSignUtil = MessageSignUtilGeneric.getInstance();
 
@@ -174,7 +182,7 @@ public abstract class AbstractIntegrationTest {
         walletFactory.restoreWallet(
             MOCK_SEED_WORDS, MOCK_SEED_PASSPHRASE, serverConfig.getNetworkParameters());
     BIP47Wallet bip47Wallet = new BIP47Wallet(hdw84);
-    rpcWallet = rpcClientServiceServer.getRpcWallet(bip47Wallet);
+    rpcWallet = rpcClientServiceServer.getRpcWallet(bip47Wallet.getAccount(0));
   }
 
   protected void configurePools(
@@ -427,12 +435,19 @@ public abstract class AbstractIntegrationTest {
   }
 
   protected SorobanInput generateSorobanInput() throws Exception {
-    PaymentCode paymentCode = testUtils.generatePaymentCode();
-    Bip47Partner client = rpcWallet.getBip47Partner(paymentCode, true);
-    return new SorobanInput(client, String.valueOf(System.currentTimeMillis()));
+    PaymentCode sender = testUtils.generatePaymentCode();
+    SorobanEndpointTyped endpointReply =
+        sorobanAppWhirlpool.getEndpointRegisterInput(
+            serverContext.getCoordinatorWallet().getPaymentCode());
+    return new SorobanInput(sender, endpointReply);
   }
 
   protected String tx64FromTxHex(String txHex) {
     return WhirlpoolProtocol.encodeBytes(org.bitcoinj.core.Utils.HEX.decode(txHex));
+  }
+
+  protected SorobanItemTyped mockSorobanItemTyped() {
+    return new SorobanItemTyped(
+        "foo", new SorobanMetadataImpl(), "foo", sorobanAppWhirlpool.getEndpointCoordinators());
   }
 }

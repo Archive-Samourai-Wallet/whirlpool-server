@@ -3,10 +3,7 @@ package com.samourai.whirlpool.server.services;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import com.samourai.wallet.segwit.SegwitAddress;
-import com.samourai.whirlpool.server.beans.InputPool;
-import com.samourai.whirlpool.server.beans.Mix;
-import com.samourai.whirlpool.server.beans.MixStatus;
-import com.samourai.whirlpool.server.beans.Pool;
+import com.samourai.whirlpool.server.beans.*;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import com.samourai.whirlpool.server.integration.AbstractMixIntegrationTest;
@@ -39,7 +36,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
     serverConfig.setTestMode(true); // TODO
   }
 
-  private TxOutPoint runTestValidInput(boolean liquidity, boolean spent) throws Exception {
+  private RegisteredInput runTestValidInput(boolean liquidity, boolean spent) throws Exception {
     TxOutPoint txOutPoint = null;
     try {
       Mix mix = __getCurrentMix();
@@ -65,18 +62,20 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
       }
 
       // TEST
-      registerInputService.registerInput(
-          poolId,
-          username,
-          signature,
-          txOutPoint.getHash(),
-          txOutPoint.getIndex(),
-          liquidity,
-          false,
-          blockchainDataService.getBlockHeight(),
-          null,
-          null);
+      RegisteredInput registeredInput =
+          registerInputService.registerInput(
+              poolId,
+              username,
+              signature,
+              txOutPoint.getHash(),
+              txOutPoint.getIndex(),
+              liquidity,
+              false,
+              blockchainDataService.getBlockHeight(),
+              null,
+              null);
       waitMixLimitsService(mix);
+      return registeredInput;
 
     } catch (Exception e) {
       if (spent && RegisterInputService.ERROR_ALREADY_SPENT.equals(e.getMessage())) {
@@ -84,14 +83,14 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
       }
       e.printStackTrace();
       Assertions.assertTrue(false);
+      throw e;
     }
-    return txOutPoint;
   };
 
   @Test
   public void registerInput_shouldRegisterMustMixWhenValid() throws Exception {
     // TEST
-    TxOutPoint txOutPoint = runTestValidInput(false, false);
+    RegisteredInput registeredInput = runTestValidInput(false, false);
 
     // VERIFY
     Mix mix = __getCurrentMix();
@@ -100,7 +99,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
     // mustMix should be registered
     testUtils.assertPoolEmpty(pool);
     testUtils.assertMix(0, 1, mix); // mustMix confirming
-    Assertions.assertTrue(mix.hasConfirmingInput(txOutPoint));
+    Assertions.assertTrue(mix.hasConfirmingInput(registeredInput));
   }
 
   @Test
@@ -122,7 +121,7 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
   @Test
   public void registerInput_shouldQueueLiquidityWhenValid() throws Exception {
     // TEST
-    TxOutPoint txOutPoint = runTestValidInput(true, false);
+    RegisteredInput registeredInput = runTestValidInput(true, false);
 
     // VERIFY
     Mix mix = __getCurrentMix();
@@ -138,14 +137,14 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
     mix.setMixStatusAndTime(MixStatus.REGISTER_OUTPUT); // mix already started
 
     // TEST
-    TxOutPoint txOutPoint = runTestValidInput(false, false);
+    RegisteredInput registeredInput = runTestValidInput(false, false);
 
     // VERIFY
 
     // mustMix should be registered
     testUtils.assertPool(1, 0, pool); // mustMix queued
     testUtils.assertMixEmpty(mix);
-    Assertions.assertTrue(mix.getPool().getMustMixQueue().hasInput(txOutPoint));
+    Assertions.assertTrue(mix.getPool().getMustMixQueue().hasInput(registeredInput));
   }
 
   @Test
@@ -155,13 +154,13 @@ public class RegisterInputServiceTest extends AbstractMixIntegrationTest {
     mix.setMixStatusAndTime(MixStatus.REGISTER_OUTPUT); // mix already started
 
     // TEST
-    TxOutPoint txOutPoint = runTestValidInput(true, false);
+    RegisteredInput registeredInput = runTestValidInput(true, false);
 
     // VERIFY
     InputPool liquidityPool = mix.getPool().getLiquidityQueue();
 
     // liquidity should be queued
-    Assertions.assertTrue(liquidityPool.hasInput(txOutPoint));
+    Assertions.assertTrue(liquidityPool.hasInput(registeredInput));
     testUtils.assertPool(0, 1, pool); // mustMix queued
     testUtils.assertMixEmpty(mix);
   }

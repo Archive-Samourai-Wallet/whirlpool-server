@@ -1,10 +1,13 @@
 package com.samourai.whirlpool.server.beans;
 
+import com.samourai.soroban.client.SorobanPayloadable;
 import com.samourai.wallet.bip47.rpc.PaymentCode;
 import com.samourai.whirlpool.protocol.WhirlpoolErrorCode;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.protocol.beans.Utxo;
-import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
+import com.samourai.whirlpool.protocol.soroban.payload.beans.BlameReason;
+import com.samourai.whirlpool.protocol.soroban.payload.mix.MixStatusResponseConfirmInput;
+import com.samourai.whirlpool.protocol.soroban.payload.mix.MixStatusResponseFail;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import com.samourai.whirlpool.server.exceptions.QueueInputException;
 import com.samourai.whirlpool.server.persistence.to.MixTO;
@@ -48,6 +51,9 @@ public class Mix {
   private Transaction tx;
   private FailReason failReason;
   private String failInfo;
+  private List<String> blameInputSenders;
+  private BlameReason blameReason;
+  private SorobanPayloadable mixStatusResponse;
 
   public Mix(String mixId, Pool pool, CryptoService cryptoService) {
     this.mixTO = null;
@@ -78,6 +84,9 @@ public class Mix {
     this.tx = null;
     this.failReason = null;
     this.failInfo = null;
+    this.blameInputSenders = new LinkedList<>();
+    this.blameReason = null;
+    this.mixStatusResponse = new MixStatusResponseConfirmInput();
   }
 
   public MixTO computeMixTO() {
@@ -202,7 +211,7 @@ public class Mix {
       return 0;
     }
     if (pool.isSurgeDisabledForLowLiquidityPool()) {
-      log.warn("[" + getLogId() + "] surge temporarily disabled because of low liquidity pool");
+      log.warn("DISABLE_SURGE " + mixId + " because of low liquidity pool");
       return 0;
     }
     if (pool.getSurge() < 1) {
@@ -219,7 +228,7 @@ public class Mix {
       if (log.isDebugEnabled()) {
         log.debug(
             "["
-                + getLogId()
+                + mixId
                 + "] computeSurge("
                 + i
                 + "): "
@@ -245,7 +254,7 @@ public class Mix {
     int newSurge = computeSurge();
     if (surge != newSurge) {
       if (log.isDebugEnabled()) {
-        log.debug("[" + getLogId() + "] setSurge: " + surge + "->" + newSurge);
+        log.debug("SET_SURGE " + mixId + " " + surge + "->" + newSurge);
       }
       this.surge = newSurge;
       if (surge == 0) {
@@ -261,7 +270,7 @@ public class Mix {
   public void setConfirmingSurge(boolean confirmingSurge) {
     this.confirmingSurge = confirmingSurge;
     if (log.isDebugEnabled()) {
-      log.debug("[" + getLogId() + "] confirmingSurge=" + confirmingSurge);
+      log.debug("SET_CONFIRMING_SURGE=" + confirmingSurge + " " + mixId);
     }
   }
 
@@ -275,10 +284,6 @@ public class Mix {
 
   public String getMixId() {
     return mixId;
-  }
-
-  public String getLogId() {
-    return pool.getPoolId() + "/" + mixId;
   }
 
   public String getLogStatus() {
@@ -353,15 +358,21 @@ public class Mix {
     timeStatus.put(mixStatus, new Timestamp(System.currentTimeMillis()));
   }
 
-  public boolean hasConfirmingInput(TxOutPoint txOutPoint) {
-    return confirmingInputs.hasInput(txOutPoint);
+  public boolean hasConfirmingInput(RegisteredInput registeredInput) {
+    return confirmingInputs.hasInput(registeredInput);
   }
 
   public void registerConfirmingInput(RegisteredInput registeredInput) {
     registeredInput.setConfirmingSince(System.currentTimeMillis());
     confirmingInputs.register(registeredInput);
     if (log.isDebugEnabled()) {
-      log.debug("[" + registeredInput.getPoolId() + "] +confirming: " + registeredInput.toString());
+      log.debug(
+          "ADD_CONFIRMING "
+              + (registeredInput.isSoroban() ? "SOROBAN" : "CLASSIC")
+              + " "
+              + mixId
+              + " "
+              + registeredInput.toString());
     }
     if (this.created == null) {
       timeStatus.put(MixStatus.CONFIRM_INPUT, new Timestamp(System.currentTimeMillis()));
@@ -373,9 +384,9 @@ public class Mix {
     return removeConfirmingInputBy(confirmingInputs.removeByUsername(username));
   }
 
-  public synchronized Optional<RegisteredInput> removeConfirmingInputByUtxo(
-      String utxoHash, long utxoIndex) {
-    return removeConfirmingInputBy(confirmingInputs.removeByUtxo(utxoHash, utxoIndex));
+  public synchronized Optional<RegisteredInput> removeConfirmingInput(
+      RegisteredInput registeredInput) {
+    return removeConfirmingInputBy(confirmingInputs.remove(registeredInput));
   }
 
   public synchronized Optional<RegisteredInput> removeConfirmingInputBySender(PaymentCode sender) {
@@ -385,11 +396,13 @@ public class Mix {
   protected Optional<RegisteredInput> removeConfirmingInputBy(
       Optional<RegisteredInput> confirmingInput) {
     if (confirmingInput.isPresent()) {
-      if (log.isTraceEnabled()) {
-        log.trace(
-            "["
-                + getLogId()
-                + "] unregistered confirming input: "
+      if (log.isDebugEnabled()) {
+        log.debug(
+            "REMOVE_CONFIRMING "
+                + (confirmingInput.get().isSoroban() ? "SOROBAN" : "CLASSIC")
+                + " "
+                + mixId
+                + " "
                 + confirmingInput.get().toString());
       }
       confirmingInput.get().setConfirmingSince(null);
@@ -402,12 +415,7 @@ public class Mix {
         confirmingInputs._getInputs().stream()
             .filter(registeredInput -> registeredInput.getConfirmingSince() < minConfirmingSince)
             .collect(Collectors.toList());
-    expiredInputs.stream()
-        .forEach(
-            registeredInput ->
-                removeConfirmingInputByUtxo(
-                    registeredInput.getOutPoint().getHash(),
-                    registeredInput.getOutPoint().getIndex()));
+    expiredInputs.stream().forEach(registeredInput -> removeConfirmingInput(registeredInput));
   }
 
   public int getNbConfirmingInputs() {
@@ -466,7 +474,7 @@ public class Mix {
 
   public synchronized void registerInput(RegisteredInput registeredInput)
       throws IllegalInputException {
-    if (confirmedInputs.findByUtxo(registeredInput.getOutPoint()).isPresent()) {
+    if (confirmedInputs.find(registeredInput).isPresent()) {
       throw new IllegalInputException(
           WhirlpoolErrorCode.INPUT_ALREADY_REGISTERED, "input already registered");
     }
@@ -481,13 +489,8 @@ public class Mix {
   }
 
   public synchronized void unregisterInput(RegisteredInput confirmedInput) {
-    log.info(
-        "["
-            + getLogId()
-            + "] "
-            + " unregistering a CONFIRMED input: "
-            + confirmedInput.getOutPoint());
-    confirmedInputs.removeByUtxo(confirmedInput.getOutPoint());
+    log.info("REMOVE_INPUT " + mixId + " " + confirmedInput.getOutPoint());
+    confirmedInputs.remove(confirmedInput);
   }
 
   public String computeInputsHash() {
@@ -624,5 +627,34 @@ public class Mix {
 
   public boolean isBlamableStatus() {
     return !isDone() && !MixStatus.CONFIRM_INPUT.equals(getMixStatus());
+  }
+
+  public void setBlameInputs(List<RegisteredInput> blameInputs, BlameReason blameReason) {
+    this.blameInputSenders =
+        blameInputs.stream()
+            .filter(registeredInput -> registeredInput.isSoroban())
+            .map(registeredInput -> registeredInput.getSorobanInput().getSender().toString())
+            .collect(Collectors.toList());
+    this.blameReason = blameReason;
+  }
+
+  public BlameReason getBlameReason() {
+    return blameReason;
+  }
+
+  public SorobanPayloadable getMixStatusResponse(SorobanInput sorobanInput) {
+    if (mixStatusResponse instanceof MixStatusResponseFail) {
+      // set blame info depending on sorobanInput
+      boolean isBlameInput =
+          blameInputSenders != null
+              && blameInputSenders.contains(sorobanInput.getSender().toString());
+      BlameReason blame = isBlameInput ? blameReason : null;
+      ((MixStatusResponseFail) mixStatusResponse).setBlame(blame);
+    }
+    return mixStatusResponse;
+  }
+
+  public void setMixStatusResponse(SorobanPayloadable mixStatusResponse) {
+    this.mixStatusResponse = mixStatusResponse;
   }
 }

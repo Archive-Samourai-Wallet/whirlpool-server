@@ -38,9 +38,6 @@ public class WhirlpoolServerConfig extends ServerConfig {
   private NetworkParameters networkParameters;
   private RpcClientConfig rpcClient;
   private RegisterInputConfig registerInput;
-  private RegisterOutputConfig registerOutput;
-  private SigningConfig signing;
-  private RevealOutputConfig revealOutput;
   private BanConfig ban;
   private ExportConfig export;
   private PartnerConfig[] partners;
@@ -48,7 +45,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
   private long requestTimeout;
   private SecretWalletConfig signingWallet;
   private SecretWalletConfig coordinatorWallet;
-  private String coordinatorId;
+  private String coordinatorName;
   private String externalUrlClear;
   private String externalUrlOnion;
   private WhirlpoolNetwork whirlpoolNetwork;
@@ -147,30 +144,6 @@ public class WhirlpoolServerConfig extends ServerConfig {
     this.registerInput = registerInput;
   }
 
-  public RegisterOutputConfig getRegisterOutput() {
-    return registerOutput;
-  }
-
-  public void setRegisterOutput(RegisterOutputConfig registerOutput) {
-    this.registerOutput = registerOutput;
-  }
-
-  public SigningConfig getSigning() {
-    return signing;
-  }
-
-  public void setSigning(SigningConfig signing) {
-    this.signing = signing;
-  }
-
-  public RevealOutputConfig getRevealOutput() {
-    return revealOutput;
-  }
-
-  public void setRevealOutput(RevealOutputConfig revealOutput) {
-    this.revealOutput = revealOutput;
-  }
-
   public BanConfig getBan() {
     return ban;
   }
@@ -227,12 +200,12 @@ public class WhirlpoolServerConfig extends ServerConfig {
     this.coordinatorWallet = coordinatorWallet;
   }
 
-  public String getCoordinatorId() {
-    return coordinatorId;
+  public String getCoordinatorName() {
+    return coordinatorName;
   }
 
-  public void setCoordinatorId(String coordinatorId) {
-    this.coordinatorId = coordinatorId;
+  public void setCoordinatorName(String coordinatorName) {
+    this.coordinatorName = coordinatorName;
   }
 
   public String getExternalUrlClear() {
@@ -264,7 +237,6 @@ public class WhirlpoolServerConfig extends ServerConfig {
     private int minConfirmationsLiquidity;
     private int maxInputsSameHash;
     private int maxInputsSameUserHash;
-    private long confirmInterval;
 
     public int getMinConfirmationsMustMix() {
       return minConfirmationsMustMix;
@@ -296,50 +268,6 @@ public class WhirlpoolServerConfig extends ServerConfig {
 
     public void setMaxInputsSameUserHash(int maxInputsSameUserHash) {
       this.maxInputsSameUserHash = maxInputsSameUserHash;
-    }
-
-    public long getConfirmInterval() {
-      return confirmInterval;
-    }
-
-    public void setConfirmInterval(long confirmInterval) {
-      this.confirmInterval = confirmInterval;
-    }
-  }
-
-  public static class RegisterOutputConfig {
-    private int timeout;
-
-    public int getTimeout() {
-      return timeout;
-    }
-
-    public void setTimeout(int timeout) {
-      this.timeout = timeout;
-    }
-  }
-
-  public static class SigningConfig {
-    private int timeout;
-
-    public int getTimeout() {
-      return timeout;
-    }
-
-    public void setTimeout(int timeout) {
-      this.timeout = timeout;
-    }
-  }
-
-  public static class RevealOutputConfig {
-    private int timeout;
-
-    public int getTimeout() {
-      return timeout;
-    }
-
-    public void setTimeout(int timeout) {
-      this.timeout = timeout;
     }
   }
 
@@ -958,8 +886,8 @@ public class WhirlpoolServerConfig extends ServerConfig {
     Map<String, String> configInfo = super.getConfigInfo();
     configInfo.put(
         "coordinator",
-        "coordinatorId="
-            + coordinatorId
+        "coordinatorName="
+            + coordinatorName
             + ", externalUrlClear="
             + externalUrlClear
             + ", externalUrlOnion="
@@ -990,16 +918,6 @@ public class WhirlpoolServerConfig extends ServerConfig {
             + registerInput.minConfirmationsLiquidity
             + ", mustMix="
             + registerInput.minConfirmationsMustMix);
-    configInfo.put("registerInput.confirmInterval", String.valueOf(registerInput.confirmInterval));
-
-    String timeoutInfo =
-        "registerOutput="
-            + String.valueOf(registerOutput.timeout)
-            + ", signing="
-            + String.valueOf(signing.timeout)
-            + ", revealOutput="
-            + String.valueOf(revealOutput.timeout);
-    configInfo.put("timeouts", timeoutInfo);
     configInfo.put("export.mixs", export.mixs.directory + " -> " + export.mixs.filename);
     configInfo.put(
         "export.activity", export.activity.directory + " -> " + export.activity.filename);

@@ -1,7 +1,6 @@
 package com.samourai.whirlpool.server.services;
 
 import com.samourai.javaserver.exceptions.NotifiableException;
-import com.samourai.wallet.bip47.rpc.PaymentCode;
 import com.samourai.whirlpool.protocol.WhirlpoolErrorCode;
 import com.samourai.whirlpool.server.beans.FailMode;
 import com.samourai.whirlpool.server.beans.Mix;
@@ -96,28 +95,6 @@ public class ConfirmInputService {
   }
 
   public synchronized byte[] confirmInput(
-      String mixId, byte[] blindedBordereau, String userHash, PaymentCode sender) throws Exception {
-    try {
-      Mix mix = mixService.getMix(mixId);
-      // soroban clients
-      RegisteredInput registeredInput =
-          mix.removeConfirmingInputBySender(sender)
-              .orElseThrow(
-                  () ->
-                      new IllegalInputException(
-                          WhirlpoolErrorCode.SERVER_ERROR,
-                          "Confirming input not found: sender=" + sender.toString()));
-      return confirmInput(mix, registeredInput, blindedBordereau, userHash);
-    } catch (QueueInputException e) {
-      // confirmInput rejected => disconnect Soroban input
-      throw new NotifiableException(WhirlpoolErrorCode.INPUT_REJECTED, e.getMessage());
-    } catch (Exception e) {
-      // Soroban network error?
-      throw NotifiableException.computeNotifiableException(e);
-    }
-  }
-
-  protected synchronized byte[] confirmInput(
       Mix mix, RegisteredInput registeredInput, byte[] blindedBordereau, String userHash)
       throws Exception {
     if (log.isDebugEnabled()) {
@@ -138,13 +115,7 @@ public class ConfirmInputService {
 
     // add to mix inputs
     mix.registerInput(registeredInput);
-    log.info(
-        "["
-            + mix.getLogId()
-            + "] confirmed "
-            + (registeredInput.isLiquidity() ? "liquidity" : "mustMix")
-            + ": "
-            + registeredInput.getOutPoint());
+    log.info("+CONFIRM_INPUT " + mix.getMixId() + " " + registeredInput.toString());
     mixService.logMixStatus(mix);
 
     // log activity

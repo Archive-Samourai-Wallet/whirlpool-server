@@ -327,7 +327,7 @@ public class Whirlpool5WalletsProceduralIntegrationTest extends AbstractIntegrat
       //
       // collect wallet payment codes
       //
-      String pcode = bip47w.getAccount(0).getPaymentCode();
+      String pcode = bip47w.getAccount(0).getPaymentCode().toString();
       wallets.put(pcode, hdw84);
       bip47Wallets.put(pcode, bip47w);
 
@@ -378,7 +378,7 @@ public class Whirlpool5WalletsProceduralIntegrationTest extends AbstractIntegrat
           bech32Util.toBech32(hdw84.getAccount(0).getChain(1).getAddressAt(0), params);
       System.out.println("tx0 change address:" + tx0change);
 
-      String pcode = bip47w.getAccount(0).getPaymentCode();
+      String pcode = bip47w.getAccount(0).getPaymentCode().toString();
       JSONObject payloadObj = payloads.get(pcode);
       payloadObj.put("tx0change", tx0change);
       payloadObj.put("tx0utxo", utxos.get(tx0spendFrom));
@@ -520,11 +520,11 @@ public class Whirlpool5WalletsProceduralIntegrationTest extends AbstractIntegrat
       // sender calculates address with receiver's payment code
       SegwitAddress sendAddress =
           bip47Util.getSendAddress(
-              bip47Wallets.get(fromPCode), new PaymentCode(toPCode), 0, params);
+              bip47Wallets.get(fromPCode).getAccount(0), new PaymentCode(toPCode), 0, params);
       // receiver calculates address with sender's payment code
       SegwitAddress receiveAddress =
           bip47Util.getReceiveAddress(
-              bip47Wallets.get(toPCode), new PaymentCode(fromPCode), 0, params);
+              bip47Wallets.get(toPCode).getAccount(0), new PaymentCode(fromPCode), 0, params);
 
       // sender calculates from pubkey
       String addressFromSender = bech32Util.toBech32(sendAddress.getECKey().getPubKey(), params);

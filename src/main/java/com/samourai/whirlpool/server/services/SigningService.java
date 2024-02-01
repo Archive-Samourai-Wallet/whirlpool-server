@@ -1,6 +1,5 @@
 package com.samourai.whirlpool.server.services;
 
-import com.samourai.wallet.bip47.rpc.PaymentCode;
 import com.samourai.wallet.util.TxUtil;
 import com.samourai.whirlpool.protocol.WhirlpoolErrorCode;
 import com.samourai.whirlpool.server.beans.Mix;
@@ -47,23 +46,7 @@ public class SigningService {
     signing(witness64, mix, confirmedInput);
   }
 
-  public void signing(String mixId, String[] witness64, PaymentCode sender) throws Exception {
-    // find confirmed input
-    Mix mix = mixService.getMix(mixId, MixStatus.SIGNING);
-    RegisteredInput confirmedInput =
-        mix.getInputs()
-            .findBySorobanSender(sender)
-            .orElseThrow(
-                () ->
-                    new IllegalInputException(
-                        WhirlpoolErrorCode.INPUT_REJECTED,
-                        "Input not found for signing sender=" + sender.toString()));
-
-    // signing
-    signing(witness64, mix, confirmedInput);
-  }
-
-  protected synchronized void signing(String[] witness60, Mix mix, RegisteredInput confirmedInput)
+  public synchronized void signing(String[] witness60, Mix mix, RegisteredInput confirmedInput)
       throws Exception {
     if (log.isDebugEnabled()) {
       log.debug("(<) [" + mix.getMixId() + "] signing: " + confirmedInput);
@@ -93,7 +76,7 @@ public class SigningService {
     // signature success
     mix.setTx(tx);
     mix.setSigned(confirmedInput);
-    log.info("[" + mix.getLogId() + "] signing success: " + confirmedInput);
+    log.info("INPUT_SIGNED " + mix.getMixId() + " " + confirmedInput);
 
     mixService.onSign(mix);
   }

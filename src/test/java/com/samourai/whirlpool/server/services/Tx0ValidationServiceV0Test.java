@@ -2,7 +2,7 @@ package com.samourai.whirlpool.server.services;
 
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
-import com.samourai.whirlpool.client.tx0.*;
+import com.samourai.whirlpool.client.tx0.Tx0PreviewService;
 import com.samourai.whirlpool.client.wallet.WhirlpoolWalletConfig;
 import com.samourai.whirlpool.client.wallet.data.minerFee.BasicMinerFeeSupplier;
 import com.samourai.whirlpool.protocol.feeOpReturn.FeeOpReturnImplV0;
@@ -15,7 +15,9 @@ import com.samourai.whirlpool.server.integration.AbstractIntegrationTest;
 import com.samourai.whirlpool.server.services.fee.WhirlpoolFeeData;
 import com.samourai.xmanager.protocol.XManagerService;
 import java.lang.invoke.MethodHandles;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.NoSuchElementException;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionOutput;
 import org.junit.jupiter.api.Assertions;
@@ -74,7 +76,19 @@ public class Tx0ValidationServiceV0Test extends AbstractIntegrationTest {
     tx0PreviewService =
         new Tx0PreviewService(new BasicMinerFeeSupplier(1, 9999, 1), whirlpoolWalletConfig);
 
-    tx0Service = new Tx0Service(params, tx0PreviewService, feeOpReturnImplV1);
+    tx0Service =
+        new Tx0Service(
+            poolService,
+            partnerService,
+            tx0ValidationService,
+            scodeService,
+            feePayloadService,
+            exportService,
+            serverConfig,
+            serverContext,
+            xManagerClient,
+            backendService,
+            metricService);
   }
 
   private void assertFeeData(String txid, int feeIndice, short scodePayload) throws Exception {

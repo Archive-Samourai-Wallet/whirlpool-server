@@ -4,14 +4,14 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{decorators/dashboard}">
 <head>
-    <title>Soroban status</title>
+    <title>Soroban nodes</title>
     <meta http-equiv="refresh" content="60" />
     <link rel="stylesheet" href="/css/smartwizard.css"/>
     <link rel="stylesheet" href="/css/status.css"/>
 </head>
 <body>
     <div layout:fragment="main">
-        <h1 class="h2">Soroban status
+        <h1 class="h2">Soroban nodes
             <svg width="20px" height="20px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid" class="lds-eclipse">
                 <path stroke="none" d="M10 50A40 40 0 0 0 90 50A40 42 0 0 1 10 50" fill="#bd4030">
                     <animateTransform attributeName="transform" type="rotate" calcMode="linear" values="0 50 51;360 50 51" keyTimes="0;1" dur="1s" begin="0s" repeatCount="indefinite"></animateTransform>
@@ -26,7 +26,7 @@
                 <th class="align-middle">Status</th>
                 <th class="align-middle">Since</th>
                 <th class="align-middle">Last check</th>
-                <th class="align-middle">Down reason</th>
+                <th class="align-middle">Info</th>
             </thead>
             <tbody>
             <div th:each="upStatus : *{upStatuses}">
@@ -44,7 +44,7 @@
                         <small><span th:text="${@templateUtil.durationFromNow(upStatus.lastCheck)}"/></small>
                     </td>
                     <td class="align-middle">
-                        <small th:text="${upStatus.up ? '-' : upStatus.downReason}"/>
+                        <small th:text="${upStatus.info}"/>
                     </td>
                 </tr>
             </div>

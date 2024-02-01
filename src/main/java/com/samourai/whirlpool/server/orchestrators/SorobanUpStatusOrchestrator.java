@@ -1,16 +1,18 @@
 package com.samourai.whirlpool.server.orchestrators;
 
 import com.samourai.soroban.client.SorobanServerDex;
-import com.samourai.soroban.client.UntypedPayloadWithSender;
+import com.samourai.soroban.client.endpoint.meta.typed.SorobanItemTyped;
 import com.samourai.soroban.client.rpc.RpcSession;
 import com.samourai.wallet.util.AbstractOrchestrator;
 import com.samourai.wallet.util.AsyncUtil;
-import com.samourai.whirlpool.protocol.SorobanProtocolWhirlpool;
+import com.samourai.whirlpool.protocol.soroban.WhirlpoolApiCoordinator;
+import com.samourai.whirlpool.protocol.soroban.payload.upStatus.UpStatusMessage;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
-import com.samourai.whirlpool.server.config.WhirlpoolServerContext;
 import java.lang.invoke.MethodHandles;
-import java.util.*;
-import java.util.function.Predicate;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.bitcoinj.core.NetworkParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,87 +20,120 @@ import org.slf4j.LoggerFactory;
 public class SorobanUpStatusOrchestrator extends AbstractOrchestrator {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private static final AsyncUtil asyncUtil = AsyncUtil.getInstance();
-  private static final int START_DELAY =
-      30000; // 30s start delay - to run after SorobanCoordinatorOrchestrator
-  private static final int LOOP_DELAY = 240000; // 4min
-  private static final int LAG_TRESHOLD = 3;
+
+  private static final int LOOP_DELAY = 180000; // every 3min
+  private static final int PROPAGATION_DELAY = 10000; // 10sec
 
   private WhirlpoolServerConfig serverConfig;
-  private WhirlpoolServerContext serverContext;
-  private RpcSession rpcSession;
-  private SorobanProtocolWhirlpool sorobanProtocolWhirlpool;
+  private WhirlpoolApiCoordinator whirlpoolApiCoordinator;
 
   public SorobanUpStatusOrchestrator(
-      WhirlpoolServerConfig serverConfig,
-      WhirlpoolServerContext serverContext,
-      RpcSession rpcSession,
-      SorobanProtocolWhirlpool sorobanProtocolWhirlpool) {
-    super(LOOP_DELAY, START_DELAY, null);
+      WhirlpoolServerConfig serverConfig, WhirlpoolApiCoordinator whirlpoolApiCoordinator) {
+    super(LOOP_DELAY, 0, null);
     this.serverConfig = serverConfig;
-    this.serverContext = serverContext;
-    this.rpcSession = rpcSession;
-    this.sorobanProtocolWhirlpool = sorobanProtocolWhirlpool;
+    this.whirlpoolApiCoordinator = whirlpoolApiCoordinator;
   }
 
-  private Collection<String> getServerUrls() {
+  private Collection<String> computeServerUrls(boolean onion) {
     NetworkParameters params = serverConfig.getNetworkParameters();
     SorobanServerDex sorobanServerDex = SorobanServerDex.get(params);
-    Collection<String> serverUrls = new LinkedList<>(sorobanServerDex.getServerUrls(false));
-    serverUrls.addAll(sorobanServerDex.getServerUrls(true));
-    return serverUrls;
+    return sorobanServerDex.getServerUrls(onion);
   }
 
   @Override
   protected void runOrchestrator() {
-    // check soroban statuses
-    Collection<String> serverUrls = getServerUrls();
-    Map<String, Long> lagByNode = checkSorobanNodes(serverUrls);
-    if (log.isDebugEnabled()) {
-      log.debug(
-          "SorobanUpStatus: "
-              + lagByNode.size()
+    doRun(false);
+    doRun(true);
+  }
+
+  private void doRun(boolean onion) {
+    long checkId = System.currentTimeMillis();
+
+    // send one UpStatusMessage per soroban node
+    Collection<String> serverUrls = computeServerUrls(onion);
+    for (String serverUrl : serverUrls) {
+      try {
+        asyncUtil.blockingAwait(
+            whirlpoolApiCoordinator
+                .getRpcSession()
+                .withSorobanClient(
+                    sorobanClient -> whirlpoolApiCoordinator.upStatusSend(sorobanClient, checkId),
+                    serverUrl));
+      } catch (Exception e) {
+        log.error("upStatusSend(" + serverUrl + ") failed: " + e.getMessage());
+      }
+    }
+
+    // wait for propagation delay
+    sleepOrchestrator(PROPAGATION_DELAY, true);
+
+    // fetch each node
+    Map<String, Collection<SorobanItemTyped>> resultsByNode =
+        serverUrls
+            .parallelStream()
+            .collect(
+                Collectors.toMap(
+                    serverUrl -> serverUrl, serverUrl -> fetchSorobanNode(serverUrl, checkId)));
+
+    // find max propagation
+    int maxPropagations =
+        resultsByNode.values().stream().mapToInt(list -> list.size()).max().getAsInt();
+
+    // update UpStatus
+    int nbUp = 0;
+    for (Map.Entry<String, Collection<SorobanItemTyped>> e : resultsByNode.entrySet()) {
+      String serverUrl = e.getKey();
+      Collection<SorobanItemTyped> messages = e.getValue();
+      String origins =
+          messages.stream()
+              .map(
+                  i -> {
+                    try {
+                      return i.read(UpStatusMessage.class).origin;
+                    } catch (Exception ee) {
+                      log.error("", ee);
+                      return "null";
+                    }
+                  })
+              .collect(Collectors.joining(", "));
+
+      String info =
+          messages.size() > 0 ? messages.size() + " nodes found: " + origins : "No node found";
+      if (messages.size() == maxPropagations) {
+        // UP
+        RpcSession.getUpStatusPool().setStatusUp(serverUrl, info);
+        nbUp++;
+      } else {
+        // DOWN
+        RpcSession.getUpStatusPool().setStatusDown(serverUrl, info);
+      }
+    }
+
+    if (nbUp == 0) {
+      log.error("*** ALL SOROBAN NODES SEEMS DOWN! ***, onion=" + onion);
+    } else {
+      log.info(
+          nbUp
               + "/"
               + serverUrls.size()
-              + " downs: "
-              + lagByNode.toString());
+              + " up, maxPropagations="
+              + maxPropagations
+              + ", onion="
+              + onion);
     }
   }
 
-  private Map<String, Long> checkSorobanNodes(Collection<String> serverUrls) {
-    Map<String, Long> lagByNode = new LinkedHashMap<>();
-    String pCodeMine = serverContext.getCoordinatorWallet().getPaymentCode().toString();
-    String dir = sorobanProtocolWhirlpool.getDirCoordinators();
-    serverUrls
-        .parallelStream()
-        .forEach(
-            serverUrl -> {
-              try {
-                Predicate<UntypedPayloadWithSender> filterPayloadsMine =
-                    payload -> payload.getSender().toString().equals(pCodeMine);
-                UntypedPayloadWithSender myLastPayload =
-                    asyncUtil
-                        .blockingGet(
-                            rpcSession.withSorobanClient(
-                                sorobanClient ->
-                                    sorobanClient.listSignedWithSender(dir, filterPayloadsMine),
-                                serverUrl))
-                        .getFirst()
-                        .orElseThrow(() -> new Exception("No payload of mine found"));
-
-                // compute lagTime = number of missed SorobanCoordinatorOrchestrator's cycles
-                Long lag =
-                    (long) Math.floor(System.currentTimeMillis() - myLastPayload.getTimePayload())
-                        / SorobanCoordinatorOrchestrator.LOOP_DELAY;
-                if (lag > LAG_TRESHOLD) {
-                  lagByNode.put(serverUrl, lag);
-                  RpcSession.getUpStatusPool()
-                      .setStatusDown(serverUrl, new Exception("lag detected: " + lag));
-                }
-              } catch (Exception e) {
-                // upStatus will be automatically updated by withServerUrl() for TimeoutException
-                lagByNode.put(serverUrl, 99999L);
-              }
-            });
-    return lagByNode;
+  private Collection<SorobanItemTyped> fetchSorobanNode(String serverUrl, long checkId) {
+    try {
+      return asyncUtil.blockingGet(
+          whirlpoolApiCoordinator
+              .getRpcSession()
+              .withSorobanClient(
+                  sorobanClient -> whirlpoolApiCoordinator.upStatusFetch(sorobanClient, checkId),
+                  serverUrl));
+    } catch (Exception e) {
+      log.error("upStatusFetch(" + serverUrl + ") failed: " + e.getMessage());
+      return new LinkedList<>();
+    }
   }
 }

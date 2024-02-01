@@ -1,6 +1,6 @@
 package com.samourai.whirlpool.server.persistence.to;
 
-import com.samourai.whirlpool.server.beans.BlameReason;
+import com.samourai.whirlpool.protocol.soroban.payload.beans.BlameReason;
 import com.samourai.whirlpool.server.persistence.to.shared.EntityCreatedTO;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;

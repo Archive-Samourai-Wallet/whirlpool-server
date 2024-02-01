@@ -6,10 +6,10 @@ import com.samourai.wallet.util.RandomUtil;
 import com.samourai.wallet.util.TxUtil;
 import com.samourai.wallet.util.Util;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
-import com.samourai.whirlpool.protocol.soroban.PushTxSuccessResponse;
-import com.samourai.whirlpool.protocol.soroban.tx0.Tx0DataRequest;
-import com.samourai.whirlpool.protocol.soroban.tx0.Tx0DataResponse;
-import com.samourai.whirlpool.protocol.soroban.tx0.Tx0PushRequest;
+import com.samourai.whirlpool.protocol.soroban.payload.tx0.Tx0DataRequest;
+import com.samourai.whirlpool.protocol.soroban.payload.tx0.Tx0DataResponse;
+import com.samourai.whirlpool.protocol.soroban.payload.tx0.Tx0PushRequest;
+import com.samourai.whirlpool.protocol.soroban.payload.tx0.Tx0PushResponseSuccess;
 import com.samourai.whirlpool.protocol.v0.rest.Tx0DataResponseV1;
 import com.samourai.whirlpool.server.beans.*;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;
@@ -188,7 +188,7 @@ public class Tx0Service {
             feeIndex, scodePayload, partner.getPayload(), opReturnV0);
     String feePayload64 = WhirlpoolProtocol.encodeBytes(feePayload);
 
-    if (log.isDebugEnabled()) {
+    /*if (log.isDebugEnabled()) {
       log.debug(
           "Tx0Data["
               + poolId
@@ -208,7 +208,7 @@ public class Tx0Service {
               + partner.getId()
               + ", opReturnV0="
               + opReturnV0);
-    }
+    }*/
     String feePaymentCode = tx0ValidationService.getFeePaymentCode(opReturnV0);
     String feeOutputSignature = null;
     if (feeAddress != null) {
@@ -361,11 +361,11 @@ public class Tx0Service {
     return feeValue;
   }
 
-  public PushTxSuccessResponse pushTx0(Tx0PushRequest tx0PushRequest) throws Exception {
+  public Tx0PushResponseSuccess pushTx0(Tx0PushRequest tx0PushRequest) throws Exception {
     return pushTx0(tx0PushRequest, System.currentTimeMillis());
   }
 
-  protected PushTxSuccessResponse pushTx0(Tx0PushRequest tx0PushRequest, long txTime)
+  protected Tx0PushResponseSuccess pushTx0(Tx0PushRequest tx0PushRequest, long txTime)
       throws Exception {
     if (log.isDebugEnabled()) {
       log.debug("(<) pushTx0 (" + tx0PushRequest.poolId + ")");
@@ -439,6 +439,6 @@ public class Tx0Service {
       log.error("", e);
     }
 
-    return new PushTxSuccessResponse(txid);
+    return new Tx0PushResponseSuccess(txid);
   }
 }

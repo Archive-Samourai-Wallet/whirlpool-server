@@ -1,18 +1,21 @@
 package com.samourai.whirlpool.server.services;
 
-import com.samourai.soroban.client.SorobanPayload;
-import com.samourai.wallet.bip47.rpc.Bip47Partner;
+import com.samourai.soroban.client.SorobanPayloadable;
 import com.samourai.wallet.bip69.BIP69InputComparator;
 import com.samourai.wallet.bip69.BIP69OutputComparator;
 import com.samourai.wallet.segwit.bech32.Bech32UtilGeneric;
 import com.samourai.wallet.util.TxUtil;
-import com.samourai.whirlpool.protocol.SorobanProtocolWhirlpool;
+import com.samourai.whirlpool.client.wallet.WhirlpoolEventService;
 import com.samourai.whirlpool.protocol.WhirlpoolErrorCode;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
-import com.samourai.whirlpool.protocol.soroban.*;
+import com.samourai.whirlpool.protocol.soroban.WhirlpoolApiClient;
+import com.samourai.whirlpool.protocol.soroban.payload.beans.BlameReason;
+import com.samourai.whirlpool.protocol.soroban.payload.mix.*;
 import com.samourai.whirlpool.protocol.websocket.notifications.*;
 import com.samourai.whirlpool.server.beans.*;
 import com.samourai.whirlpool.server.beans.MixStatus;
+import com.samourai.whirlpool.server.beans.event.MixStartEvent;
+import com.samourai.whirlpool.server.beans.event.MixStopEvent;
 import com.samourai.whirlpool.server.beans.export.MixCsv;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
@@ -22,9 +25,7 @@ import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import com.samourai.whirlpool.server.exceptions.MixException;
 import com.samourai.whirlpool.server.exceptions.QueueInputException;
 import com.samourai.whirlpool.server.services.rpc.RpcClientService;
-import com.samourai.whirlpool.server.services.soroban.SorobanCoordinatorService;
 import com.samourai.whirlpool.server.utils.Utils;
-import io.reactivex.Completable;
 import java.lang.invoke.MethodHandles;
 import java.text.DateFormat;
 import java.util.*;
@@ -55,8 +56,6 @@ public class MixService {
   private ExportService exportService;
   private MetricService metricService;
   private TaskService taskService;
-  private SorobanCoordinatorService sorobanCoordinatorService;
-  private SorobanProtocolWhirlpool sorobanProtocolWhirlpool;
   private WhirlpoolServerContext serverContext;
 
   private Map<String, Mix> currentMixs;
@@ -78,8 +77,6 @@ public class MixService {
       ExportService exportService,
       MetricService metricService,
       TaskService taskService,
-      SorobanCoordinatorService sorobanCoordinatorService,
-      SorobanProtocolWhirlpool sorobanProtocolWhirlpool,
       WhirlpoolServerContext serverContext,
       WSSessionService wsSessionService) {
     this.cryptoService = cryptoService;
@@ -96,8 +93,6 @@ public class MixService {
     this.exportService = exportService;
     this.metricService = metricService;
     this.taskService = taskService;
-    this.sorobanCoordinatorService = sorobanCoordinatorService;
-    this.sorobanProtocolWhirlpool = sorobanProtocolWhirlpool;
     this.serverContext = serverContext;
 
     this.__reset();
@@ -178,8 +173,8 @@ public class MixService {
           "Current mix is full for inputs with same address", registeredInput, pool.getPoolId());
     }
 
-    // verify input not already confirmed
-    if (mix.getInputs().findByUtxo(registeredInput.getOutPoint()).isPresent()) {
+    // verify same utxo not already confirmed
+    if (mix.getInputs().findByOutPoint(registeredInput.getOutPoint()).isPresent()) {
       // input already confirmed => reject duplicate client
       throw new IllegalInputException(
           WhirlpoolErrorCode.INPUT_ALREADY_REGISTERED, "Input already confirmed");
@@ -191,10 +186,24 @@ public class MixService {
     validateOnConfirmInput(mix, registeredInput);
   }
 
+  public void disconnectSorobanInputsExpired(Mix mix) {
+    // disconnect expired soroban inputs
+    long minLastSeen = System.currentTimeMillis() - WhirlpoolApiClient.TIMEOUT_MIX_STATUS;
+    Collection<RegisteredInput> sorobanInputsExpired =
+        mix.getInputs().getListSorobanInputsExpired(minLastSeen);
+    for (RegisteredInput registeredInput : sorobanInputsExpired) {
+      onMixInputDisconnect(registeredInput, mix);
+    }
+  }
+
   public void onTimeoutConfirmInput(Mix mix) {
     long minConfirmingSince =
-        System.currentTimeMillis() - (3 * sorobanProtocolWhirlpool.getRegisterInputFrequencyMs());
+        System.currentTimeMillis()
+            - com.samourai.whirlpool.protocol.soroban.payload.beans.MixStatus.CONFIRM_INPUT
+                .getTimeoutMs();
     mix.cleanConfirmingInputs(minConfirmingSince);
+    poolService.expireSorobanInputs(mix.getPool());
+
     if (MixStatus.CONFIRM_INPUT.equals(mix.getMixStatus()) && isConfirmInputReady(mix)) {
       // all inputs confirmed
       if (mix.getSurge() > 0 && !mix.isFullWithSurge() && !mix.isConfirmingSurge()) {
@@ -206,6 +215,7 @@ public class MixService {
         return;
       }
     }
+
     // invite more inputs
     inviteToMix(mix);
   }
@@ -229,8 +239,8 @@ public class MixService {
     if (inputsInvited > 0) {
       if (log.isDebugEnabled()) {
         log.debug(
-            "["
-                + mix.getLogId()
+            "INVITED_TO_MIX "
+                + mix.getMixId()
                 + "] invited "
                 + liquiditiesInvited
                 + "/"
@@ -294,20 +304,12 @@ public class MixService {
   }
 
   private void inviteToMix(Mix mix, RegisteredInput registeredInput) throws Exception {
-    log.info("[" + mix.getLogId() + "] inviteToMix: " + registeredInput.toString());
 
     // register confirming input
     mix.registerConfirmingInput(registeredInput);
 
     if (registeredInput.isSoroban()) {
-      RegisterInputResponse registerInputResponse =
-          new RegisterInputResponse(mix.getMixId(), mix.getPublicKey());
-      SorobanInput sorobanInput = registeredInput.getSorobanInput();
-      Bip47Partner bip47Partner = sorobanInput.getBip47Partner();
-      serverContext
-          .getWhirlpoolPartnerApi(bip47Partner)
-          .sendReplyEncrypted(registerInputResponse, sorobanInput.getRequestId())
-          .subscribe();
+      // will reply RegisterInputResponse on next RegisterInputRequest
     } else {
       // add delay as we are called from LimitsWatcher which may run just after an input registered
       String publicKey64 = WhirlpoolProtocol.encodeBytes(mix.getPublicKey());
@@ -346,11 +348,15 @@ public class MixService {
   public void registerOutputFailure(String inputsHash, String receiveAddress) throws Exception {
     Mix mix = getMixByInputsHash(inputsHash, MixStatus.REGISTER_OUTPUT);
     mix.setLastReceiveAddressesRejected(receiveAddress);
-    log.info("[" + mix.getLogId() + "] registered output failure: " + receiveAddress);
+    log.info(
+        "FAIL_REGISTER_OUTPUT ["
+            + mix.getMixId()
+            + "] registered output failure: "
+            + receiveAddress);
   }
 
   public void logMixStatus(Mix mix) {
-    log.info("[" + mix.getLogId() + "] " + mix.getLogStatus());
+    log.info("// MIX_STATUS [" + mix.getMixId() + "] " + mix.getLogStatus());
   }
 
   protected boolean isRegisterOutputReady(Mix mix) {
@@ -407,7 +413,7 @@ public class MixService {
     Mix mix = null;
     try {
       mix = getMix(mixId);
-      log.info("[MIX " + mix.getLogId() + "] => " + mixStatus);
+      log.info("MIX_STATUS_CHANGE " + mix.getMixId() + " => " + mixStatus);
       if (mixStatus.equals(mix.getMixStatus())) {
         // just in case...
         log.error(
@@ -440,7 +446,7 @@ public class MixService {
         if (log.isDebugEnabled()) {
           log.debug(
               "[MIX "
-                  + mix.getLogId()
+                  + mix.getMixId()
                   + "] Ignoring "
                   + confirmingInputs.size()
                   + " late confirming inputs");
@@ -455,9 +461,12 @@ public class MixService {
 
       mixLimitsService.onMixStatusChange(mix);
 
+      // update mixStatusResponse
+      SorobanPayloadable mixStatusNotificationSoroban = computeMixStatusResponseSoroban(mix);
+      mix.setMixStatusResponse(mixStatusNotificationSoroban);
+
       // notify users (ConfirmInputResponse was already sent when user joined mix)
       if (mixStatus != MixStatus.CONFIRM_INPUT) {
-        sendMixStatusNotification(mix).subscribe();
         sendMixStatusNotificationV0(mix);
       }
 
@@ -470,22 +479,6 @@ public class MixService {
       if (mix != null) {
         onMixOver(mix);
       }
-    }
-  }
-
-  private Completable sendMixStatusNotification(Mix mix) {
-    try {
-      SorobanPayload mixStatusNotificationSoroban = computeMixStatusNotificationSoroban(mix);
-      Collection<SorobanInput> sorobanClients =
-          mix.getInputs()
-              .getListBySoroban(true)
-              .parallelStream()
-              .map(confirmedInput -> confirmedInput.getSorobanInput())
-              .collect(Collectors.toList());
-      return sorobanCoordinatorService.sendNotificationToClients(
-          sorobanClients, mixStatusNotificationSoroban);
-    } catch (Exception e) {
-      return Completable.error(e);
     }
   }
 
@@ -528,32 +521,25 @@ public class MixService {
     return mixStatusNotification;
   }
 
-  private SorobanPayload computeMixStatusNotificationSoroban(Mix mix) {
-    SorobanPayload mixStatusNotification = null;
+  private SorobanPayloadable computeMixStatusResponseSoroban(Mix mix) {
     switch (mix.getMixStatus()) {
       case REGISTER_OUTPUT:
         String inputsHash = mix.computeInputsHash();
-        mixStatusNotification = new RegisterOutputNotification(inputsHash);
-        break;
+        return new MixStatusResponseRegisterOutput(inputsHash);
       case REVEAL_OUTPUT:
-        mixStatusNotification = new RevealOutputNotification();
-        break;
+        return new MixStatusResponseRevealOutput();
       case SIGNING:
         String tx64 = WhirlpoolProtocol.encodeBytes(mix.getTx().bitcoinSerialize());
-        mixStatusNotification = new SigningNotification(tx64);
-        break;
+        return new MixStatusResponseSigning(tx64);
       case SUCCESS:
         String txid = mix.getTx().getHashAsString();
-        mixStatusNotification = new PushTxSuccessResponse(txid);
-        break;
+        return new MixStatusResponseSuccess(txid);
       case FAIL:
-        mixStatusNotification = new FailMixNotification();
-        break;
+        return new MixStatusResponseFail();
       default:
         log.error("computeMixStatusNotification: unknown MixStatus " + mix.getMixStatus());
         return null;
     }
-    return mixStatusNotification;
   }
 
   public Mix getMix(String mixId) throws MixException {
@@ -653,7 +639,7 @@ public class MixService {
   }
 
   public void onTimeoutRegisterOutput(Mix mix) {
-    log.info("[" + mix.getLogId() + "] REGISTER_OUTPUT time over, mix failed.");
+    log.info("MIX_FAILED [" + mix.getMixId() + "] REGISTER_OUTPUT time over, mix failed.");
     if (mix.getReceiveAddresses().isEmpty()) {
       // no output registered at all => no legit user suffered, skip REVEAL_OUTPUT and immediately
       // restart round
@@ -672,8 +658,8 @@ public class MixService {
     // blame users who didn't register outputs
     List<RegisteredInput> confirmedInputsToBlame = mix.getInputsNotRevealedOutput();
     log.info(
-        "["
-            + mix.getLogId()
+        "MIX_FAILED ["
+            + mix.getMixId()
             + "] REVEAL_OUTPUT time over, mix failed. Blaming "
             + confirmedInputsToBlame.size()
             + " who didn't sign...");
@@ -685,9 +671,9 @@ public class MixService {
     // blame users who didn't sign
     List<RegisteredInput> confirmedInputsToBlame = mix.getInputsNotSigned();
     log.info(
-        "["
-            + mix.getLogId()
-            + "] SIGNING time over, mix failed. Blaming "
+        "MIX_FAILED "
+            + mix.getMixId()
+            + " SIGNING time over, mix failed. Blaming "
             + confirmedInputsToBlame.size()
             + " who didn't sign...");
     blameAndResetMix(mix, confirmedInputsToBlame, BlameReason.SIGNING, FailReason.FAIL_SIGNING);
@@ -727,14 +713,15 @@ public class MixService {
   }
 
   public void blameAndResetMix(
-      Mix mix, List<RegisteredInput> spentInputs, BlameReason blameReason, FailReason failReason) {
+      Mix mix, List<RegisteredInput> blameInputs, BlameReason blameReason, FailReason failReason) {
     // blame inputs
-    for (RegisteredInput spentInput : spentInputs) {
+    for (RegisteredInput spentInput : blameInputs) {
       blameService.blame(spentInput, blameReason, mix);
     }
+    mix.setBlameInputs(blameInputs, blameReason);
 
     // reset mix
-    String outpointKeysToBlame = computeOutpointKeysToBlame(spentInputs);
+    String outpointKeysToBlame = computeOutpointKeysToBlame(blameInputs);
     goFail(mix, failReason, outpointKeysToBlame);
   }
 
@@ -767,56 +754,57 @@ public class MixService {
   protected void onClientDisconnect(String username) {
     for (Mix mix : getCurrentMixs()) {
       if (!mix.isDone()) {
-        String lastReceiveAddressRejected = mix.getLastReceiveAddressesRejected();
+        // remove from confirming inputs
+        mix.removeConfirmingInputByUsername(username);
 
         // was input already confirmed?
         Optional<RegisteredInput> unregisterInputOpt = mix.getInputs().findByUsername(username);
         if (unregisterInputOpt.isPresent()) {
-          RegisteredInput confirmedInput = unregisterInputOpt.get();
+          onMixInputDisconnect(unregisterInputOpt.get(), mix);
+        }
+      }
+    }
+  }
 
-          if (mix.isBlamableStatus()) {
-            // don't unregister input to preserve original mix metrics
+  private void onMixInputDisconnect(RegisteredInput confirmedInput, Mix mix) {
+    log.info("[" + mix.getMixId() + "] MIX_INPUT_DISCONNECTED " + confirmedInput);
+    if (mix.isBlamableStatus()) {
+      // don't unregister input to preserve original mix metrics
 
-            // blame
-            BlameReason blameReason = BlameReason.DISCONNECT;
-            blameService.blame(confirmedInput, blameReason, mix, lastReceiveAddressRejected);
+      // blame
+      BlameReason blameReason = BlameReason.DISCONNECT;
+      String lastReceiveAddressRejected = mix.getLastReceiveAddressesRejected();
+      blameService.blame(confirmedInput, blameReason, mix, lastReceiveAddressRejected);
 
-            // restart mix
-            String failInfo = computeOutpointKeysToBlame(Arrays.asList(confirmedInput));
-            FailReason failReason = FailReason.DISCONNECT;
-            if (lastReceiveAddressRejected != null) {
-              failInfo += " " + lastReceiveAddressRejected;
-            }
-            goFail(mix, failReason, failInfo);
-          } else {
-            // remove from confirming inputs
-            mix.removeConfirmingInputByUsername(username);
+      // restart mix
+      String failInfo = computeOutpointKeysToBlame(Arrays.asList(confirmedInput));
+      FailReason failReason = FailReason.DISCONNECT;
+      if (lastReceiveAddressRejected != null) {
+        failInfo += " " + lastReceiveAddressRejected;
+      }
+      goFail(mix, failReason, failInfo);
+    } else {
 
-            // remove from confirmed input
-            if (unregisterInputOpt.isPresent()) {
-              mix.unregisterInput(unregisterInputOpt.get());
-            }
+      // remove from confirmed input
+      mix.unregisterInput(confirmedInput);
 
-            // invalidate quarantine to recompute it
-            mix.getPool().clearQuarantine();
+      // invalidate quarantine to recompute it
+      mix.getPool().clearQuarantine();
 
-            // mix can continue
-            if (mix.getSurge() > 0) {
-              // adjust surge limit on mustmix disconnect
-              if (!confirmedInput.isLiquidity()) {
-                // adjust surge which may be lowered down
-                mix.setSurge();
-                int excessLiquidities = mix.getExessLiquidityAndSurge();
-                if (excessLiquidities > 0) {
-                  log.info(
-                      "Disconnected mustmix caused surge down adjustment => disconnecting "
-                          + excessLiquidities
-                          + " excess liquidities");
-                  mix.unregisterInputLiquidities(excessLiquidities);
-                  // TODO disconnect client ?
-                }
-              }
-            }
+      // mix can continue
+      if (mix.getSurge() > 0) {
+        // adjust surge limit on mustmix disconnect
+        if (!confirmedInput.isLiquidity()) {
+          // adjust surge which may be lowered down
+          mix.setSurge();
+          int excessLiquidities = mix.getExessLiquidityAndSurge();
+          if (excessLiquidities > 0) {
+            log.info(
+                "Disconnected mustmix caused surge down adjustment => disconnecting "
+                    + excessLiquidities
+                    + " excess liquidities");
+            mix.unregisterInputLiquidities(excessLiquidities);
+            // TODO disconnect client ?
           }
         }
       }
@@ -839,7 +827,7 @@ public class MixService {
   }
 
   public Mix __nextMix(Pool pool) {
-    String mixId = Utils.generateUniqueString();
+    String mixId = pool.getPoolId() + "-" + Utils.generateUniqueString();
     Mix mix = new Mix(mixId, pool, cryptoService);
     startMix(mix);
     return mix;
@@ -878,6 +866,7 @@ public class MixService {
     } catch (Exception e) {
       log.error("", e);
     }
+    WhirlpoolEventService.getInstance().post(new MixStopEvent(mix));
 
     // reset lastUserHash
     poolService.resetLastUserHash(mix);
@@ -899,9 +888,10 @@ public class MixService {
     currentMixs.put(mixId, mix);
     pool.setCurrentMix(mix);
 
-    log.info("[" + mix.getLogId() + "] NEW MIX");
+    log.info("NEW_MIX " + mix.getMixId());
     logMixStatus(mix);
     mixLimitsService.manage(mix);
+    WhirlpoolEventService.getInstance().post(new MixStartEvent(mix));
   }
 
   public MixLimitsService __getMixLimitsService() {

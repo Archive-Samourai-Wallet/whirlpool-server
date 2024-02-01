@@ -120,11 +120,17 @@ public class ManualMixer {
       // sender calculates address with receiver's payment code
       SegwitAddress sendAddress =
           bip47Util.getSendAddress(
-              wallets.get(fromPCode).getBip47Wallet(), new PaymentCode(toPCode), 0, params);
+              wallets.get(fromPCode).getBip47Wallet().getAccount(0),
+              new PaymentCode(toPCode),
+              0,
+              params);
       // receiver calculates address with sender's payment code
       SegwitAddress receiveAddress =
           bip47Util.getReceiveAddress(
-              wallets.get(toPCode).getBip47Wallet(), new PaymentCode(fromPCode), 0, params);
+              wallets.get(toPCode).getBip47Wallet().getAccount(0),
+              new PaymentCode(fromPCode),
+              0,
+              params);
 
       // sender calculates from pubkey
       String addressFromSender = bech32Util.toBech32(sendAddress.getECKey().getPubKey(), params);

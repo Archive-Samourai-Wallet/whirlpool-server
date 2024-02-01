@@ -78,7 +78,7 @@ public class TestUtils {
 
   public PaymentCode generatePaymentCode() throws Exception {
     BIP47Wallet bip47Wallet = generateWallet().getBip47Wallet();
-    return new PaymentCode(bip47Wallet.getAccount(0).getPaymentCode());
+    return bip47Wallet.getAccount(0).getPaymentCode();
   }
 
   public void assertPool(int nbMustMix, int nbLiquidity, Pool pool) {

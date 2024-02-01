@@ -34,7 +34,7 @@ public class SorobanWebController {
 
     new WhirlpoolDashboardTemplateModel(serverConfig, "soroban").apply(model);
 
-    Collection<UpStatus> upStatuses = upStatusPool.getList();
+    Collection<UpStatus> upStatuses = upStatusPool.getListWithExpired();
     int nbServersUp = (int) upStatuses.stream().filter(s -> s.isUp()).count();
     int nbServersDown = (int) upStatuses.stream().filter(s -> !s.isUp()).count();
 

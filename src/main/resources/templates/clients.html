@@ -62,10 +62,9 @@
                         <span th:text="${@templateUtil.durationFromNow(input.right.since)}"/>
                     </td>
                     <td class="align-middle">
-                        <span th:if="${input.right.isSoroban() && !input.left.equals('MIXING')}">
+                        <span th:if="${input.right.isSoroban()}">
                             <span th:text="${@templateUtil.durationFromNow(input.right.sorobanInput.sorobanLastSeen)}"/>
                         </span>
-                        <span th:if="${!input.right.isSoroban() || input.left.equals('MIXING')}">connected</span>
                     </td>
                     <td class="align-middle">
                         <small th:text="${input.right.username}"/><br/>

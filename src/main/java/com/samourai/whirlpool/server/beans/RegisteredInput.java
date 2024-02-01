@@ -119,6 +119,8 @@ public class RegisteredInput {
         + outPoint
         + ", liquidity="
         + liquidity
+        + ", soroban="
+        + (sorobanInput != null)
         + ", username="
         + (username != null ? username : "null")
         + ", tor="

@@ -14,7 +14,7 @@ import com.samourai.whirlpool.client.mix.handler.*;
 import com.samourai.whirlpool.client.wallet.beans.IndexRange;
 import com.samourai.whirlpool.client.wallet.data.coordinator.CoordinatorSupplier;
 import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientConfig;
-import com.samourai.whirlpool.protocol.SorobanProtocolWhirlpool;
+import com.samourai.whirlpool.protocol.SorobanAppWhirlpool;
 import com.samourai.whirlpool.server.beans.Pool;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.services.rpc.RpcClientServiceServer;
@@ -32,7 +32,7 @@ public class WhirlpoolClientService {
   private WhirlpoolServerConfig serverConfig;
   private BlockchainDataService blockchainDataService;
   private RpcClientServiceServer rpcClientServiceServer;
-  private SorobanProtocolWhirlpool sorobanProtocolWhirlpool;
+  private SorobanAppWhirlpool sorobanAppWhirlpool;
   private CryptoUtil cryptoUtil;
 
   @Autowired
@@ -41,13 +41,13 @@ public class WhirlpoolClientService {
       WhirlpoolServerConfig serverConfig,
       BlockchainDataService blockchainDataService,
       RpcClientServiceServer rpcClientServiceServer,
-      SorobanProtocolWhirlpool sorobanProtocolWhirlpool,
+      SorobanAppWhirlpool sorobanAppWhirlpool,
       CryptoUtil cryptoUtil) {
     this.httpClientService = httpClientService;
     this.serverConfig = serverConfig;
     this.blockchainDataService = blockchainDataService;
     this.rpcClientServiceServer = rpcClientServiceServer;
-    this.sorobanProtocolWhirlpool = sorobanProtocolWhirlpool;
+    this.sorobanAppWhirlpool = sorobanAppWhirlpool;
     this.cryptoUtil = cryptoUtil;
   }
 

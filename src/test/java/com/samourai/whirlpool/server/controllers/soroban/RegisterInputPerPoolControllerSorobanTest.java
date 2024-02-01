@@ -5,6 +5,7 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 import com.samourai.wallet.segwit.SegwitAddress;
 import com.samourai.whirlpool.client.WhirlpoolClient;
 import com.samourai.whirlpool.client.mix.MixParams;
+import com.samourai.whirlpool.client.mix.handler.MixDestination;
 import com.samourai.whirlpool.client.mix.handler.UtxoWithBalance;
 import com.samourai.whirlpool.client.mix.listener.MixFailReason;
 import com.samourai.whirlpool.client.mix.listener.MixStep;
@@ -32,10 +33,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-public class RegisterInputControllerSorobanTest extends AbstractIntegrationTest {
+public class RegisterInputPerPoolControllerSorobanTest extends AbstractIntegrationTest {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-  @Autowired private RegisterInputControllerSoroban registerInputControllerSoroban;
+  @Autowired private RegisterInputPerPoolControllerSoroban registerInputPerPoolControllerSoroban;
 
   @BeforeEach
   @Override
@@ -60,14 +61,15 @@ public class RegisterInputControllerSorobanTest extends AbstractIntegrationTest 
 
     // initial
     Assertions.assertEquals(0, pool.getLiquidityQueue().getSize());
-    Assertions.assertEquals(false, pool.getLiquidityQueue().hasInput(txOutPoint));
+    Assertions.assertEquals(false, pool.getLiquidityQueue().hasOutPoint(txOutPoint));
 
     MockMinerFeeSupplier minerFeeSupplier = new MockMinerFeeSupplier();
     ITx0PreviewServiceConfig tx0PreviewServiceConfig =
         new MockTx0PreviewServiceConfig(serverConfig.getWhirlpoolNetwork());
     Tx0PreviewService tx0PreviewService =
         new MockTx0PreviewService(minerFeeSupplier, tx0PreviewServiceConfig);
-    CoordinatorSupplier coordinatorSupplier = new MockCoordinatorSupplier(tx0PreviewService);
+    CoordinatorSupplier coordinatorSupplier =
+        new MockCoordinatorSupplier(tx0PreviewService, computeWhirlpoolWalletConfig());
 
     // register client
     Runnable doRegister =
@@ -78,7 +80,7 @@ public class RegisterInputControllerSorobanTest extends AbstractIntegrationTest 
           WhirlpoolClientListener listener =
               new WhirlpoolClientListener() {
                 @Override
-                public void success(Utxo receiveUtxo) {}
+                public void success(Utxo receiveUtxo, MixDestination receiveDestination) {}
 
                 @Override
                 public void fail(MixFailReason reason, String notifiableError) {}
@@ -93,16 +95,16 @@ public class RegisterInputControllerSorobanTest extends AbstractIntegrationTest 
             } catch (InterruptedException e) {
             }
           }
-          registerInputControllerSoroban._runOrchestrator();
+          registerInputPerPoolControllerSoroban._runOrchestrator();
         };
     doRegister.run();
 
     // check input registered
     Assertions.assertEquals(1, pool.getLiquidityQueue().getSize());
-    Assertions.assertEquals(true, pool.getLiquidityQueue().hasInput(txOutPoint));
+    Assertions.assertEquals(true, pool.getLiquidityQueue().hasOutPoint(txOutPoint));
     RegisteredInput registeredInput =
         pool.getLiquidityQueue()
-            .findByUtxo(utxoWithBalance.getHash(), utxoWithBalance.getIndex())
+            .findByOutPoint(utxoWithBalance.getHash(), utxoWithBalance.getIndex())
             .get();
     long lastSeen = registeredInput.getSorobanInput().getSorobanLastSeen();
 
@@ -111,10 +113,10 @@ public class RegisterInputControllerSorobanTest extends AbstractIntegrationTest 
 
     // check sorobanLastSeen updated
     Assertions.assertEquals(1, pool.getLiquidityQueue().getSize());
-    Assertions.assertEquals(true, pool.getLiquidityQueue().hasInput(txOutPoint));
+    Assertions.assertEquals(true, pool.getLiquidityQueue().hasOutPoint(txOutPoint));
     registeredInput =
         pool.getLiquidityQueue()
-            .findByUtxo(utxoWithBalance.getHash(), utxoWithBalance.getIndex())
+            .findByOutPoint(utxoWithBalance.getHash(), utxoWithBalance.getIndex())
             .get();
     long newLastSeen = registeredInput.getSorobanInput().getSorobanLastSeen();
     Assertions.assertTrue(newLastSeen > lastSeen);

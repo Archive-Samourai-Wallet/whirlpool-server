@@ -1,5 +1,6 @@
 package com.samourai.whirlpool.server.beans;
 
+import com.samourai.wallet.bip47.rpc.BIP47Account;
 import com.samourai.wallet.bip47.rpc.BIP47Wallet;
 import com.samourai.wallet.bip47.rpc.PaymentCode;
 import com.samourai.wallet.bip47.rpc.java.Bip47UtilJava;
@@ -18,7 +19,7 @@ public class SecretWalletContext {
       HD_WalletFactoryGeneric.getInstance();
   private static final Bip47UtilJava bip47Util = Bip47UtilJava.getInstance();
 
-  private BIP47Wallet bip47Wallet;
+  private BIP47Account bip47Account;
   private PaymentCode paymentCode;
   private HD_Address address;
   private String addressString;
@@ -29,14 +30,14 @@ public class SecretWalletContext {
     HD_Wallet bip44w =
         hdWalletFactory.restoreWallet(
             secretWalletConfig.getWords(), secretWalletConfig.getPassphrase(), params);
-    bip47Wallet = new BIP47Wallet(bip44w);
-    paymentCode = bip47Util.getPaymentCode(bip47Wallet);
+    bip47Account = new BIP47Wallet(bip44w).getAccount(0);
+    paymentCode = bip47Account.getPaymentCode();
     address = bip44w.getAddressAt(0, 0, 0);
     addressString = address.getAddressString();
   }
 
-  public BIP47Wallet getBip47Wallet() {
-    return bip47Wallet;
+  public BIP47Account getBip47Account() {
+    return bip47Account;
   }
 
   public PaymentCode getPaymentCode() {

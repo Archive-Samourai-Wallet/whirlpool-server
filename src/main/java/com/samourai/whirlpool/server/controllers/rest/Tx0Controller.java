@@ -2,8 +2,9 @@ package com.samourai.whirlpool.server.controllers.rest;
 
 import com.samourai.javaserver.exceptions.RestException;
 import com.samourai.wallet.api.backend.beans.BackendPushTxException;
-import com.samourai.whirlpool.protocol.soroban.tx0.Tx0DataRequest;
-import com.samourai.whirlpool.protocol.soroban.tx0.Tx0DataResponse;
+import com.samourai.whirlpool.protocol.soroban.payload.tx0.Tx0DataRequest;
+import com.samourai.whirlpool.protocol.soroban.payload.tx0.Tx0DataResponse;
+import com.samourai.whirlpool.protocol.soroban.payload.tx0.Tx0PushResponseSuccess;
 import com.samourai.whirlpool.protocol.v0.WhirlpoolEndpointV0;
 import com.samourai.whirlpool.protocol.v0.rest.*;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;
@@ -96,11 +97,10 @@ public class Tx0Controller extends AbstractRestController {
   @RequestMapping(value = WhirlpoolEndpointV0.REST_TX0_PUSH, method = RequestMethod.POST)
   public PushTxSuccessResponse tx0Push(@RequestBody Tx0PushRequest request) throws Exception {
     try {
-      com.samourai.whirlpool.protocol.soroban.tx0.Tx0PushRequest pushRequest =
-          new com.samourai.whirlpool.protocol.soroban.tx0.Tx0PushRequest(
+      com.samourai.whirlpool.protocol.soroban.payload.tx0.Tx0PushRequest pushRequest =
+          new com.samourai.whirlpool.protocol.soroban.payload.tx0.Tx0PushRequest(
               request.tx64, request.poolId);
-      com.samourai.whirlpool.protocol.soroban.PushTxSuccessResponse response =
-          tx0Service.pushTx0(pushRequest);
+      Tx0PushResponseSuccess response = tx0Service.pushTx0(pushRequest);
       return new PushTxSuccessResponse(response.txid);
     } catch (BackendPushTxException e) {
       // forward PushTxException as PushTxErrorResponse

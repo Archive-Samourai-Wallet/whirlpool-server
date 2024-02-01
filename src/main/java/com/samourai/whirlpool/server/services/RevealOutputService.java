@@ -1,6 +1,5 @@
 package com.samourai.whirlpool.server.services;
 
-import com.samourai.wallet.bip47.rpc.PaymentCode;
 import com.samourai.whirlpool.protocol.WhirlpoolErrorCode;
 import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.beans.MixStatus;
@@ -40,24 +39,7 @@ public class RevealOutputService {
     revealOutput(receiveAddress, mix, confirmedInput);
   }
 
-  public void revealOutput(String mixId, String receiveAddress, PaymentCode sender)
-      throws Exception {
-    // find confirmed input
-    Mix mix = mixService.getMix(mixId, MixStatus.REVEAL_OUTPUT);
-    RegisteredInput confirmedInput =
-        mix.getInputs()
-            .findBySorobanSender(sender)
-            .orElseThrow(
-                () ->
-                    new IllegalInputException(
-                        WhirlpoolErrorCode.INPUT_REJECTED,
-                        "Input not found for revealOutput sender=" + sender.toString()));
-
-    // revealOutput
-    revealOutput(receiveAddress, mix, confirmedInput);
-  }
-
-  protected synchronized void revealOutput(
+  public synchronized void revealOutput(
       String receiveAddress, Mix mix, RegisteredInput confirmedInput) throws Exception {
     if (log.isDebugEnabled()) {
       log.debug("(<) [" + mix.getMixId() + "] revealOutput: " + confirmedInput.toString());
@@ -84,7 +66,7 @@ public class RevealOutputService {
     }
 
     mix.addRevealedOutput(confirmedInput, receiveAddress);
-    log.info("[" + mix.getLogId() + "] revealOutput success: " + confirmedInput.toString());
+    log.info("REVEALED_OUTPUT " + mix.getMixId() + " " + confirmedInput.toString());
 
     mixService.onRevealOutput(mix);
   }

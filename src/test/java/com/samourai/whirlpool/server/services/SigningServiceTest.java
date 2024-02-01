@@ -36,6 +36,8 @@ public class SigningServiceTest extends AbstractIntegrationTest {
 
   @Autowired private RegisterOutputService registerOutputService;
 
+  @Autowired private SigningService signingService;
+
   @BeforeEach
   @Override
   public void setUp() throws Exception {
@@ -62,7 +64,7 @@ public class SigningServiceTest extends AbstractIntegrationTest {
     // test
     String username = "user1";
     String[] witness64 = doSigning(mix, premixHandler, liquidity, txOutPoint, username);
-    mixService.registerSignature(mix.getMixId(), username, witness64);
+    signingService.signing_webSocket(mix.getMixId(), witness64, username);
 
     // verify
     Assertions.assertEquals(MixStatus.SUCCESS, mix.getMixStatus());
@@ -88,7 +90,7 @@ public class SigningServiceTest extends AbstractIntegrationTest {
     try {
       String username = "user1";
       String[] witness64 = doSigning(mix, premixHandler, liquidity, txOutPoint, username);
-      mixService.registerSignature(mix.getMixId(), "dummy", witness64); // invalid user
+      signingService.signing_webSocket(mix.getMixId(), witness64, "dummy"); // invalid user
       Assertions.assertTrue(false);
     } catch (IllegalInputException e) {
       // verify
@@ -134,9 +136,9 @@ public class SigningServiceTest extends AbstractIntegrationTest {
     // test
     String username = "user1";
     String[] witness64 = doSigning(mix, premixHandler, liquidity, txOutPoint, username);
-    mixService.registerSignature(mix.getMixId(), username, witness64); // valid
+    signingService.signing_webSocket(mix.getMixId(), witness64, username); // valid
     try {
-      mixService.registerSignature(mix.getMixId(), username, witness64); // duplicate signing
+      signingService.signing_webSocket(mix.getMixId(), witness64, username); // duplicate signing
       Assertions.assertTrue(false);
     } catch (IllegalInputException e) {
       // verify
@@ -168,7 +170,7 @@ public class SigningServiceTest extends AbstractIntegrationTest {
     try {
       String username = "user1";
       String[] witness64 = doSigning(mix, premixHandler, liquidity, txOutPoint, username);
-      mixService.registerSignature(mix.getMixId(), username, witness64);
+      signingService.signing_webSocket(mix.getMixId(), witness64, username);
       Assertions.assertTrue(false);
     } catch (IllegalInputException e) {
       // verify
@@ -212,13 +214,7 @@ public class SigningServiceTest extends AbstractIntegrationTest {
     byte[] blindedBordereau = clientCryptoService.blind(bordereau, blindingParams);
     byte[] signedBlindedBordereau =
         confirmInputService
-            .confirmInput(
-                mixId,
-                username,
-                blindedBordereau,
-                "userHash" + username,
-                txOutPoint.getHash(),
-                txOutPoint.getIndex())
+            .confirmInput_webSocket(mixId, blindedBordereau, "userHash" + username, username)
             .get();
 
     // register output

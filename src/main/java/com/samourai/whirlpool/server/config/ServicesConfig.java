@@ -17,11 +17,11 @@ import com.samourai.wallet.util.CryptoTestUtil;
 import com.samourai.wallet.util.FormatsUtilGeneric;
 import com.samourai.wallet.util.MessageSignUtilGeneric;
 import com.samourai.wallet.util.TxUtil;
-import com.samourai.whirlpool.protocol.SorobanProtocolWhirlpool;
+import com.samourai.whirlpool.protocol.SorobanAppWhirlpool;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.protocol.feeOpReturn.FeeOpReturnImplV0;
 import com.samourai.whirlpool.protocol.feeOpReturn.FeeOpReturnImplV1;
-import com.samourai.whirlpool.protocol.soroban.api.WhirlpoolApiCoordinator;
+import com.samourai.whirlpool.protocol.soroban.WhirlpoolApiCoordinator;
 import com.samourai.whirlpool.protocol.util.XorMask;
 import com.samourai.whirlpool.protocol.v0.WhirlpoolEndpointV0;
 import com.samourai.whirlpool.protocol.v0.WhirlpoolProtocolV0;
@@ -143,14 +143,18 @@ public class ServicesConfig extends ServerServicesConfig {
   }
 
   @Bean
-  SorobanProtocolWhirlpool sorobanProtocolWhirlpool(WhirlpoolServerConfig serverConfig) {
-    return new SorobanProtocolWhirlpool(serverConfig.getWhirlpoolNetwork());
+  SorobanAppWhirlpool sorobanAppWhirlpool(
+      WhirlpoolServerConfig serverConfig, WhirlpoolServerContext serverContext) {
+    String senderSignedBySigningAddress =
+        serverContext.getCoordinatorSenderSignedBySigningAddress();
+    return new SorobanAppWhirlpool(
+        serverConfig.getWhirlpoolNetwork(), senderSignedBySigningAddress);
   }
 
   @Bean
   WhirlpoolApiCoordinator whirlpoolApiCoordinator(
-      WhirlpoolServerContext serverContext, SorobanProtocolWhirlpool sorobanProtocolWhirlpool) {
-    return new WhirlpoolApiCoordinator(serverContext.getRpcSession(), sorobanProtocolWhirlpool);
+      WhirlpoolServerContext serverContext, SorobanAppWhirlpool sorobanAppWhirlpool) {
+    return new WhirlpoolApiCoordinator(serverContext.getRpcSession(), sorobanAppWhirlpool);
   }
 
   @Bean

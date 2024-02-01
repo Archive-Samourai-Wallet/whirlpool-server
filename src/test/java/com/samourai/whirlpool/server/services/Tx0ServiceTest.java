@@ -1,15 +1,14 @@
-package com.samourai.whirlpool.server.controllers.soroban;
+package com.samourai.whirlpool.server.services;
 
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 import com.samourai.wallet.api.backend.beans.BackendPushTxException;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
-import com.samourai.whirlpool.protocol.soroban.PushTxSuccessResponse;
-import com.samourai.whirlpool.protocol.soroban.tx0.Tx0PushRequest;
+import com.samourai.whirlpool.protocol.soroban.payload.tx0.Tx0PushRequest;
+import com.samourai.whirlpool.protocol.soroban.payload.tx0.Tx0PushResponseSuccess;
 import com.samourai.whirlpool.server.beans.Pool;
 import com.samourai.whirlpool.server.beans.PoolFee;
 import com.samourai.whirlpool.server.integration.AbstractIntegrationTest;
-import com.samourai.whirlpool.server.services.Tx0Service;
 import java.lang.invoke.MethodHandles;
 import org.bitcoinj.core.Transaction;
 import org.junit.jupiter.api.Assertions;
@@ -473,7 +472,7 @@ public class Tx0ServiceTest extends AbstractIntegrationTest {
     }
   }*/
 
-  protected PushTxSuccessResponse pushTx0(byte[] tx, long txTime, String poolId) throws Exception {
+  protected Tx0PushResponseSuccess pushTx0(byte[] tx, long txTime, String poolId) throws Exception {
     String tx64 = WhirlpoolProtocol.encodeBytes(tx);
     Tx0PushRequest request = new Tx0PushRequest(tx64, poolId);
     return tx0Service.pushTx0(request, txTime);

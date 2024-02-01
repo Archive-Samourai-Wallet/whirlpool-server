@@ -1,11 +1,12 @@
 package com.samourai.whirlpool.server.services;
 
-import com.samourai.whirlpool.server.beans.*;
-import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
+import com.samourai.whirlpool.protocol.soroban.WhirlpoolApiClient;
+import com.samourai.whirlpool.protocol.soroban.payload.beans.MixStatus;
+import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.utils.timeout.ITimeoutWatcherListener;
 import com.samourai.whirlpool.server.utils.timeout.TimeoutWatcher;
 import java.lang.invoke.MethodHandles;
-import java.util.*;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,16 +16,14 @@ import org.springframework.stereotype.Service;
 @Service
 public class MixLimitsService {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-  private MixService mixService;;
-  private PoolService poolService;
-  private WhirlpoolServerConfig whirlpoolServerConfig;
+
+  private MixService mixService;
 
   private Map<String, TimeoutWatcher> limitsWatchers;
 
   @Autowired
-  public MixLimitsService(PoolService poolService, WhirlpoolServerConfig whirlpoolServerConfig) {
-    this.poolService = poolService;
-    this.whirlpoolServerConfig = whirlpoolServerConfig;
+  public MixLimitsService() {
+    this.mixService = null;
 
     this.__reset();
   }
@@ -75,23 +74,21 @@ public class MixLimitsService {
             Long timeToWait = null;
             switch (mix.getMixStatus()) {
               case CONFIRM_INPUT:
-                // timeout before adding more liquidities
-                long waitTime = whirlpoolServerConfig.getRegisterInput().getConfirmInterval();
-                timeToWait = waitTime * 1000 - elapsedTime;
+                // timeout before adding more liquidities - use soroban's register_input polling
+                // frequency
+                timeToWait = WhirlpoolApiClient.REGISTER_INPUT_POLLING_FREQUENCY_MS - elapsedTime;
                 break;
 
               case REGISTER_OUTPUT:
-                timeToWait =
-                    whirlpoolServerConfig.getRegisterOutput().getTimeout() * 1000 - elapsedTime;
+                timeToWait = MixStatus.REGISTER_OUTPUT.getTimeoutMs() - elapsedTime;
                 break;
 
               case SIGNING:
-                timeToWait = whirlpoolServerConfig.getSigning().getTimeout() * 1000 - elapsedTime;
+                timeToWait = MixStatus.SIGNING.getTimeoutMs() - elapsedTime;
                 break;
 
               case REVEAL_OUTPUT:
-                timeToWait =
-                    whirlpoolServerConfig.getRevealOutput().getTimeout() * 1000 - elapsedTime;
+                timeToWait = MixStatus.REVEAL_OUTPUT.getTimeoutMs() - elapsedTime;
                 break;
 
               default:
@@ -99,7 +96,7 @@ public class MixLimitsService {
                 if (log.isDebugEnabled()) {
                   log.debug(
                       "["
-                          + mix.getLogId()
+                          + mix.getMixId()
                           + "] limitsWatcher.computeTimeToWait => no timer: mixStatus="
                           + mix.getMixStatus());
                 }
@@ -112,22 +109,27 @@ public class MixLimitsService {
           public void onTimeout(TimeoutWatcher timeoutWatcher) {
             if (log.isTraceEnabled()) {
               log.debug(
-                  "[" + mix.getLogId() + "] limitsWatcher.onTimeout: " + " " + mix.getMixStatus());
+                  "[" + mix.getMixId() + "] limitsWatcher.onTimeout: " + " " + mix.getMixStatus());
             }
+            mixService.disconnectSorobanInputsExpired(mix);
             switch (mix.getMixStatus()) {
               case CONFIRM_INPUT:
+                // confirm more inputs
                 mixService.onTimeoutConfirmInput(mix);
                 break;
 
               case REGISTER_OUTPUT:
+                // go REVEAL_OUTPUT or FAIL
                 mixService.onTimeoutRegisterOutput(mix);
                 break;
 
               case REVEAL_OUTPUT:
+                // go FAIL
                 mixService.onTimeoutRevealOutput(mix);
                 break;
 
               case SIGNING:
+                // go FAIL
                 mixService.onTimeoutSigning(mix);
                 break;
 
@@ -135,7 +137,7 @@ public class MixLimitsService {
                 if (log.isDebugEnabled()) {
                   log.debug(
                       "["
-                          + mix.getLogId()
+                          + mix.getMixId()
                           + "] limitsWatcher.onTimeout => ignored: mixStatus="
                           + mix.getMixStatus());
                 }

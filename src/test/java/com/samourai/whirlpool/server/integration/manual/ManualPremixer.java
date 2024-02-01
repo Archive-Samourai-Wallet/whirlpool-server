@@ -79,7 +79,7 @@ public class ManualPremixer {
       //
       // collect wallet payment codes
       //
-      String pcode = bip47w.getAccount(0).getPaymentCode();
+      String pcode = bip47w.getAccount(0).getPaymentCode().toString();
       BIP47WalletAndHDWallet bip47WalletAndHDWallet = new BIP47WalletAndHDWallet(bip47w, hdw84);
       wallets.put(pcode, bip47WalletAndHDWallet);
 
@@ -137,7 +137,7 @@ public class ManualPremixer {
           bech32Util.toBech32(hdw84.getAccount(0).getChain(1).getAddressAt(0), params);
       System.out.println("tx0 change address:" + tx0change);
 
-      String pcode = bip47w.getAccount(0).getPaymentCode();
+      String pcode = bip47w.getAccount(0).getPaymentCode().toString();
       JSONObject payloadObj = payloads.get(pcode);
       payloadObj.put("tx0change", tx0change);
       payloadObj.put("tx0utxo", utxos.get(tx0spendFrom));
