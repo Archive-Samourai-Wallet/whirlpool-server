@@ -1,9 +1,11 @@
 package com.samourai.whirlpool.server.services;
 
+import com.samourai.wallet.util.Pair;
 import com.samourai.whirlpool.server.beans.MixStatus;
 import com.samourai.whirlpool.server.beans.Pool;
 import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.beans.export.MixCsv;
+import com.samourai.whirlpool.server.orchestrators.SorobanUpStatusOrchestrator;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Tag;
 import java.lang.invoke.MethodHandles;
@@ -50,7 +52,31 @@ public class MetricService {
   private static final String SUMMARY_TX0_PREMIX_COUNT = "whirlpool_tx0_premix_count";
   private static final String SUMMARY_TX0_PREMIX_VOLUME = "whirlpool_tx0_premix_volume";
 
+  private static final String GAUGE_SOROBAN_NODE = "whirlpool_soroban_node";
+
   public MetricService() {}
+
+  public void init(SorobanUpStatusOrchestrator upStatusOrchestrator) {
+    // soroban status
+    createGaugeSorobanNode(upStatusOrchestrator, true, true);
+    createGaugeSorobanNode(upStatusOrchestrator, true, false);
+    createGaugeSorobanNode(upStatusOrchestrator, false, true);
+    createGaugeSorobanNode(upStatusOrchestrator, false, false);
+  }
+
+  private void createGaugeSorobanNode(
+      SorobanUpStatusOrchestrator upStatusOrchestrator, boolean onion, boolean up) {
+    Iterable<Tag> tags =
+        Arrays.asList(Tag.of("onion", Boolean.toString(onion)), Tag.of("up", Boolean.toString(up)));
+    Metrics.gauge(
+        GAUGE_SOROBAN_NODE,
+        tags,
+        upStatusOrchestrator,
+        o -> {
+          Pair<Integer, Integer> nbUpDown = o.getNbUpDown(onion);
+          return up ? nbUpDown.getLeft() : nbUpDown.getRight();
+        });
+  }
 
   public void onMixResult(MixCsv mix, Collection<RegisteredInput> inputs) {
     if (MixStatus.SUCCESS.equals(mix.getMixStatus())) {

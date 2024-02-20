@@ -49,7 +49,7 @@ public class SigningService {
   public synchronized void signing(String[] witness60, Mix mix, RegisteredInput confirmedInput)
       throws Exception {
     if (log.isDebugEnabled()) {
-      log.debug("(<) [" + mix.getMixId() + "] signing: " + confirmedInput);
+      log.debug("(<) MIX_SIGNING " + mix.getMixId() + " " + confirmedInput);
     }
 
     // check user
@@ -76,7 +76,6 @@ public class SigningService {
     // signature success
     mix.setTx(tx);
     mix.setSigned(confirmedInput);
-    log.info("INPUT_SIGNED " + mix.getMixId() + " " + confirmedInput);
 
     mixService.onSign(mix);
   }

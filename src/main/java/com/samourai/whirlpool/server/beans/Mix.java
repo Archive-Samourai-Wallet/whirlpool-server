@@ -1,13 +1,15 @@
 package com.samourai.whirlpool.server.beans;
 
-import com.samourai.soroban.client.SorobanPayloadable;
 import com.samourai.wallet.bip47.rpc.PaymentCode;
+import com.samourai.wallet.sorobanClient.SorobanPayloadable;
 import com.samourai.whirlpool.protocol.WhirlpoolErrorCode;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.protocol.beans.Utxo;
 import com.samourai.whirlpool.protocol.soroban.payload.beans.BlameReason;
 import com.samourai.whirlpool.protocol.soroban.payload.mix.MixStatusResponseConfirmInput;
 import com.samourai.whirlpool.protocol.soroban.payload.mix.MixStatusResponseFail;
+import com.samourai.whirlpool.server.controllers.soroban.AbstractPerMixControllerSoroban;
+import com.samourai.whirlpool.server.controllers.soroban.MixStatusControllerSoroban;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import com.samourai.whirlpool.server.exceptions.QueueInputException;
 import com.samourai.whirlpool.server.persistence.to.MixTO;
@@ -55,6 +57,9 @@ public class Mix {
   private BlameReason blameReason;
   private SorobanPayloadable mixStatusResponse;
 
+  private AbstractPerMixControllerSoroban sorobanControllerMixStep;
+  private MixStatusControllerSoroban sorobanControllerMixStatus;
+
   public Mix(String mixId, Pool pool, CryptoService cryptoService) {
     this.mixTO = null;
     this.created = null;
@@ -87,6 +92,9 @@ public class Mix {
     this.blameInputSenders = new LinkedList<>();
     this.blameReason = null;
     this.mixStatusResponse = new MixStatusResponseConfirmInput();
+
+    this.sorobanControllerMixStep = null;
+    this.sorobanControllerMixStatus = null;
   }
 
   public MixTO computeMixTO() {
@@ -211,7 +219,9 @@ public class Mix {
       return 0;
     }
     if (pool.isSurgeDisabledForLowLiquidityPool()) {
-      log.warn("DISABLE_SURGE " + mixId + " because of low liquidity pool");
+      if (surge != 0) {
+        log.warn("MIX_SURGE_DISABLE " + mixId + " because of low liquidity pool");
+      }
       return 0;
     }
     if (pool.getSurge() < 1) {
@@ -225,11 +235,11 @@ public class Mix {
     for (int i = 1; i <= pool.getSurge(); i++) {
       long txSize = pool.computeTxSize(i);
       float satPerB = ((float) minerFeeAccumulated) / txSize;
-      if (log.isDebugEnabled()) {
-        log.debug(
-            "["
+      if (log.isTraceEnabled()) {
+        log.trace(
+            "MIX_SURGE "
                 + mixId
-                + "] computeSurge("
+                + " computeSurge("
                 + i
                 + "): "
                 + "minerFeeAccumulated="
@@ -254,7 +264,7 @@ public class Mix {
     int newSurge = computeSurge();
     if (surge != newSurge) {
       if (log.isDebugEnabled()) {
-        log.debug("SET_SURGE " + mixId + " " + surge + "->" + newSurge);
+        log.debug("MIX_SURGE_CHANGE " + mixId + " " + surge + "->" + newSurge);
       }
       this.surge = newSurge;
       if (surge == 0) {
@@ -365,15 +375,13 @@ public class Mix {
   public void registerConfirmingInput(RegisteredInput registeredInput) {
     registeredInput.setConfirmingSince(System.currentTimeMillis());
     confirmingInputs.register(registeredInput);
-    if (log.isDebugEnabled()) {
-      log.debug(
-          "ADD_CONFIRMING "
-              + (registeredInput.isSoroban() ? "SOROBAN" : "CLASSIC")
-              + " "
-              + mixId
-              + " "
-              + registeredInput.toString());
-    }
+    log.info(
+        "MIX_ADD_CONFIRMING "
+            + (registeredInput.isSoroban() ? "SOROBAN" : "CLASSIC")
+            + " "
+            + mixId
+            + " "
+            + registeredInput.toString());
     if (this.created == null) {
       timeStatus.put(MixStatus.CONFIRM_INPUT, new Timestamp(System.currentTimeMillis()));
       this.created = System.currentTimeMillis();
@@ -396,15 +404,13 @@ public class Mix {
   protected Optional<RegisteredInput> removeConfirmingInputBy(
       Optional<RegisteredInput> confirmingInput) {
     if (confirmingInput.isPresent()) {
-      if (log.isDebugEnabled()) {
-        log.debug(
-            "REMOVE_CONFIRMING "
-                + (confirmingInput.get().isSoroban() ? "SOROBAN" : "CLASSIC")
-                + " "
-                + mixId
-                + " "
-                + confirmingInput.get().toString());
-      }
+      log.info(
+          "MIX_REMOVE_CONFIRMING "
+              + (confirmingInput.get().isSoroban() ? "SOROBAN" : "CLASSIC")
+              + " "
+              + mixId
+              + " "
+              + confirmingInput.get().toString());
       confirmingInput.get().setConfirmingSince(null);
     }
     return confirmingInput;
@@ -464,9 +470,7 @@ public class Mix {
   }
 
   public long computeMinerFeeAccumulated() {
-    return getInputs()
-        ._getInputs()
-        .parallelStream()
+    return getInputs()._getInputs().parallelStream()
         .filter(input -> !input.isLiquidity())
         .map(input -> input.computeMinerFees(pool))
         .reduce(0L, Long::sum);
@@ -479,6 +483,13 @@ public class Mix {
           WhirlpoolErrorCode.INPUT_ALREADY_REGISTERED, "input already registered");
     }
     confirmedInputs.register(registeredInput);
+    log.info(
+        "MIX_ADD_INPUT "
+            + (registeredInput.isSoroban() ? "SOROBAN" : "CLASSIC")
+            + " "
+            + mixId
+            + " "
+            + registeredInput);
   }
 
   public synchronized void unregisterInputLiquidities(int limit) {
@@ -489,15 +500,13 @@ public class Mix {
   }
 
   public synchronized void unregisterInput(RegisteredInput confirmedInput) {
-    log.info("REMOVE_INPUT " + mixId + " " + confirmedInput.getOutPoint());
+    log.info("MIX_REMOVE_INPUT " + mixId + " " + confirmedInput);
     confirmedInputs.remove(confirmedInput);
   }
 
   public String computeInputsHash() {
     Collection<Utxo> inputs =
-        getInputs()
-            ._getInputs()
-            .parallelStream()
+        getInputs()._getInputs().parallelStream()
             .map(confirmedInput -> confirmedInput.getOutPoint())
             .map(input -> new Utxo(input.getHash(), input.getIndex()))
             .collect(Collectors.toList());
@@ -507,6 +516,15 @@ public class Mix {
   public void registerOutput(String receiveAddress, byte[] bordereau) {
     receiveAddresses.add(receiveAddress);
     bordereaux.add(bordereau);
+    log.info(
+        "MIX_REGISTER_OUTPUT "
+            + mixId
+            + " "
+            + receiveAddress
+            + " "
+            + receiveAddresses.size()
+            + "/"
+            + getNbInputs());
   }
 
   public void setLastReceiveAddressesRejected(String lastReceiveAddressesRejected) {
@@ -546,13 +564,12 @@ public class Mix {
   }
 
   public void addRevealedOutput(RegisteredInput registeredInput, String receiveAddress) {
+    log.info("MIX_REVEAL_OUTPUT " + mixId + " " + registeredInput.toString());
     revealedReceiveAddressesByUsername.put(registeredInput.getUsername(), receiveAddress);
   }
 
   public List<RegisteredInput> getInputsNotRevealedOutput() {
-    return getInputs()
-        ._getInputs()
-        .parallelStream()
+    return getInputs()._getInputs().parallelStream()
         .filter(input -> !hasRevealedOutput(input))
         .collect(Collectors.toList());
   }
@@ -570,13 +587,12 @@ public class Mix {
   }
 
   public void setSigned(RegisteredInput registeredInput) {
+    log.info("MIX_SIGN " + mixId + " " + registeredInput);
     signed.put(registeredInput.getUsername(), true);
   }
 
   public List<RegisteredInput> getInputsNotSigned() {
-    return getInputs()
-        ._getInputs()
-        .parallelStream()
+    return getInputs()._getInputs().parallelStream()
         .filter(input -> !isSigned(input))
         .collect(Collectors.toList());
   }
@@ -649,12 +665,29 @@ public class Mix {
           blameInputSenders != null
               && blameInputSenders.contains(sorobanInput.getSender().toString());
       BlameReason blame = isBlameInput ? blameReason : null;
-      ((MixStatusResponseFail) mixStatusResponse).setBlame(blame);
+      ((MixStatusResponseFail) mixStatusResponse).blame = blame;
     }
     return mixStatusResponse;
   }
 
   public void setMixStatusResponse(SorobanPayloadable mixStatusResponse) {
     this.mixStatusResponse = mixStatusResponse;
+  }
+
+  public AbstractPerMixControllerSoroban getSorobanControllerMixStep() {
+    return sorobanControllerMixStep;
+  }
+
+  public void setSorobanControllerMixStep(
+      AbstractPerMixControllerSoroban sorobanControllerMixStep) {
+    this.sorobanControllerMixStep = sorobanControllerMixStep;
+  }
+
+  public MixStatusControllerSoroban getSorobanControllerMixStatus() {
+    return sorobanControllerMixStatus;
+  }
+
+  public void setSorobanControllerMixStatus(MixStatusControllerSoroban sorobanControllerMixStatus) {
+    this.sorobanControllerMixStatus = sorobanControllerMixStatus;
   }
 }

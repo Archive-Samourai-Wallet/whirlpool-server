@@ -6,6 +6,7 @@ import com.samourai.wallet.hd.HD_WalletFactoryGeneric;
 import com.samourai.wallet.segwit.bech32.Bech32UtilGeneric;
 import com.samourai.wallet.util.Callback;
 import com.samourai.wallet.util.TxUtil;
+import com.samourai.wallet.xmanagerClient.XManagerClient;
 import com.samourai.whirlpool.server.beans.Partner;
 import com.samourai.whirlpool.server.beans.Pool;
 import com.samourai.whirlpool.server.beans.PoolFee;
@@ -16,7 +17,6 @@ import com.samourai.whirlpool.server.config.WhirlpoolServerConfig.SecretWalletCo
 import com.samourai.whirlpool.server.services.fee.WhirlpoolFeeData;
 import com.samourai.whirlpool.server.services.fee.WhirlpoolFeeOutput;
 import com.samourai.whirlpool.server.utils.Utils;
-import com.samourai.xmanager.client.XManagerClient;
 import com.samourai.xmanager.protocol.XManagerService;
 import java.lang.invoke.MethodHandles;
 import java.util.Optional;

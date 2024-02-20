@@ -43,6 +43,9 @@ public class Tx0Controller extends AbstractRestController {
   @RequestMapping(value = WhirlpoolEndpointV0.REST_TX0_DATA_V1, method = RequestMethod.POST)
   public Tx0DataResponseV2 tx0Data(
       HttpServletRequest request, @RequestBody Tx0DataRequestV2 tx0DataRequest) throws Exception {
+    if (log.isDebugEnabled()) {
+      log.debug("(<) TX0_DATA CLASSIC");
+    }
     return doTx0Data(request, tx0DataRequest, false);
   }
 
@@ -50,6 +53,9 @@ public class Tx0Controller extends AbstractRestController {
   @RequestMapping(value = WhirlpoolEndpointV0.REST_TX0_DATA_V0, method = RequestMethod.POST)
   public Tx0DataResponseV2 tx0Data_opReturnV0(
       HttpServletRequest request, @RequestBody Tx0DataRequestV2 tx0DataRequest) throws Exception {
+    if (log.isDebugEnabled()) {
+      log.debug("(<) TX0_DATA CLASSIC");
+    }
     return doTx0Data(request, tx0DataRequest, true);
   }
 
@@ -91,12 +97,18 @@ public class Tx0Controller extends AbstractRestController {
     // prevent bruteforce attacks
     Thread.sleep(700);
 
+    if (log.isDebugEnabled()) {
+      log.debug("(<) TX0_DATA_V1 CLASSIC " + poolId);
+    }
     return tx0Service.tx0DataV1(request, poolId, scode);
   }
 
   @RequestMapping(value = WhirlpoolEndpointV0.REST_TX0_PUSH, method = RequestMethod.POST)
   public PushTxSuccessResponse tx0Push(@RequestBody Tx0PushRequest request) throws Exception {
     try {
+      if (log.isDebugEnabled()) {
+        log.debug("(<) TX0_PUSH CLASSIC " + request.poolId);
+      }
       com.samourai.whirlpool.protocol.soroban.payload.tx0.Tx0PushRequest pushRequest =
           new com.samourai.whirlpool.protocol.soroban.payload.tx0.Tx0PushRequest(
               request.tx64, request.poolId);

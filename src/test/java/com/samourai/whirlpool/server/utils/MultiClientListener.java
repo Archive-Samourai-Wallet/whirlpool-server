@@ -18,18 +18,18 @@ public class MultiClientListener implements WhirlpoolClientListener {
   }
 
   @Override
-  public void success(Utxo receiveUtxo, MixDestination receiveDestination) {
+  public void success(String mixId, Utxo receiveUtxo, MixDestination receiveDestination) {
     mixStatus = MixStatus.SUCCESS;
     notifyMultiClientManager();
   }
 
   @Override
-  public void progress(MixStep step) {
+  public void progress(String mixId, MixStep step) {
     mixStep = step;
   }
 
   @Override
-  public void fail(MixFailReason reason, String notifiableError) {
+  public void fail(String mixId, MixFailReason reason, String notifiableError) {
     mixStatus = MixStatus.FAIL;
     notifyMultiClientManager();
   }

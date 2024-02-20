@@ -3,9 +3,12 @@ package com.samourai.whirlpool.server.controllers.websocket;
 import com.samourai.whirlpool.protocol.v0.WhirlpoolEndpointV0;
 import com.samourai.whirlpool.protocol.websocket.messages.RegisterInputRequest;
 import com.samourai.whirlpool.server.beans.FailMode;
+import com.samourai.whirlpool.server.beans.Pool;
+import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.exceptions.AlreadyRegisteredInputException;
 import com.samourai.whirlpool.server.services.ExportService;
+import com.samourai.whirlpool.server.services.PoolService;
 import com.samourai.whirlpool.server.services.RegisterInputService;
 import com.samourai.whirlpool.server.services.WSMessageService;
 import com.samourai.whirlpool.server.utils.Utils;
@@ -26,6 +29,7 @@ public class RegisterInputController extends AbstractWebSocketController {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private RegisterInputService registerInputService;
+  private PoolService poolService;
   private WhirlpoolServerConfig serverConfig;
 
   @Autowired
@@ -33,9 +37,11 @@ public class RegisterInputController extends AbstractWebSocketController {
       WSMessageService WSMessageService,
       ExportService exportService,
       RegisterInputService registerInputService,
+      PoolService poolService,
       WhirlpoolServerConfig serverConfig) {
     super(WSMessageService, exportService);
     this.registerInputService = registerInputService;
+    this.poolService = poolService;
     this.serverConfig = serverConfig;
   }
 
@@ -53,9 +59,9 @@ public class RegisterInputController extends AbstractWebSocketController {
     String username = principal.getName();
     if (log.isDebugEnabled()) {
       log.debug(
-          "(<) ["
+          "(<) INPUT_REGISTER_CLASSIC "
               + payload.poolId
-              + "] "
+              + " "
               + headers.getDestination()
               + " "
               + payload.utxoHash
@@ -70,18 +76,20 @@ public class RegisterInputController extends AbstractWebSocketController {
 
     // register input in pool
     Boolean tor = Utils.getTor(messageHeaderAccessor);
+    Pool pool = poolService.getPool(payload.poolId);
     try {
-      registerInputService.registerInput(
-          payload.poolId,
-          username,
-          payload.signature,
-          payload.utxoHash,
-          payload.utxoIndex,
-          payload.liquidity,
-          tor,
-          payload.blockHeight,
-          null,
-          computeClientDetails(messageHeaderAccessor));
+      RegisteredInput registeredInput =
+          registerInputService.validateRegisterInputRequest(
+              pool,
+              username,
+              payload.signature,
+              payload.utxoHash,
+              payload.utxoIndex,
+              payload.liquidity,
+              tor,
+              payload.blockHeight,
+              null);
+      poolService.registerInput(registeredInput, computeClientDetails(messageHeaderAccessor));
     } catch (AlreadyRegisteredInputException e) {
       // silent error
       log.warn(e.getMessage());

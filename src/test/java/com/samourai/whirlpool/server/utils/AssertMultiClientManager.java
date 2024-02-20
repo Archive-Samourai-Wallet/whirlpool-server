@@ -1,11 +1,11 @@
 package com.samourai.whirlpool.server.utils;
 
-import com.samourai.soroban.client.RpcWallet;
 import com.samourai.soroban.client.rpc.RpcWalletImpl;
 import com.samourai.wallet.bipWallet.BipWallet;
 import com.samourai.wallet.chain.ChainSupplier;
 import com.samourai.wallet.hd.BIP_WALLET;
 import com.samourai.wallet.segwit.SegwitAddress;
+import com.samourai.wallet.sorobanClient.RpcWallet;
 import com.samourai.wallet.util.TxUtil;
 import com.samourai.whirlpool.client.WhirlpoolClient;
 import com.samourai.whirlpool.client.mix.MixParams;

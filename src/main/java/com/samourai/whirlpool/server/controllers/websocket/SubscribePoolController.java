@@ -47,13 +47,13 @@ public class SubscribePoolController extends AbstractWebSocketController {
     // don't validate headers here, so user is able to receive protocol version mismatch errors
 
     String username = principal.getName();
-    if (log.isTraceEnabled()) {
-      log.trace("(<) subscribe " + headers.getDestination() + ", username=" + username);
-    }
 
     // validate poolId & reply poolStatusNotification
     String headerPoolId = getHeaderPoolId(headers);
     if (headerPoolId != null) {
+      if (log.isTraceEnabled()) {
+        log.trace("(<) INPUT_SUBSCRIBE " + headerPoolId + ", username=" + username);
+      }
       // reply pool info for older non-soroban clients
       Pool pool = poolService.getPool(headerPoolId);
       SubscribePoolResponse subscribePoolResponse =

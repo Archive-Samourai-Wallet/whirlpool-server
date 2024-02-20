@@ -11,7 +11,6 @@ import com.samourai.whirlpool.client.wallet.data.coordinator.ExpirableCoordinato
 import com.samourai.whirlpool.client.wallet.data.minerFee.MockMinerFeeSupplier;
 import com.samourai.whirlpool.client.whirlpool.beans.Coordinator;
 import com.samourai.whirlpool.protocol.soroban.WhirlpoolApiClient;
-import com.samourai.whirlpool.server.controllers.soroban.RegisterInputPerPoolControllerSoroban;
 import com.samourai.whirlpool.server.integration.AbstractIntegrationTest;
 import com.samourai.whirlpool.server.orchestrators.SorobanCoordinatorOrchestrator;
 import java.lang.invoke.MethodHandles;
@@ -21,7 +20,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest(webEnvironment = RANDOM_PORT)
@@ -29,8 +27,6 @@ public class SorobanCoordinatorServiceTest extends AbstractIntegrationTest {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private SorobanCoordinatorOrchestrator poolInfoOrchestrator;
-
-  @Autowired private RegisterInputPerPoolControllerSoroban registerInputPerPoolControllerSoroban;
 
   @BeforeEach
   @Override

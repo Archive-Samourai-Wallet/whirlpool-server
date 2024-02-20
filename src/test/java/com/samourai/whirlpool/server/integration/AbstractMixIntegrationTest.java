@@ -3,6 +3,7 @@ package com.samourai.whirlpool.server.integration;
 import com.samourai.wallet.segwit.SegwitAddress;
 import com.samourai.whirlpool.client.utils.ClientUtils;
 import com.samourai.whirlpool.server.beans.Mix;
+import com.samourai.whirlpool.server.beans.Pool;
 import com.samourai.whirlpool.server.beans.SorobanInput;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.services.*;
@@ -30,20 +31,21 @@ public abstract class AbstractMixIntegrationTest extends AbstractIntegrationTest
       boolean liquidity,
       SorobanInput sorobanInputOrNull)
       throws Exception {
-    String poolId = mix.getPool().getPoolId();
+    Pool pool = mix.getPool();
+    String poolId = pool.getPoolId();
 
     ECKey ecKey = new ECKey();
     String signature = ecKey.signMessage(poolId);
 
-    long inputBalance = mix.getPool().computePremixBalanceMax(liquidity);
+    long inputBalance = pool.computePremixBalanceMax(liquidity);
     TxOutPoint txOutPoint =
         createAndMockTxOutPoint(
             new SegwitAddress(ecKey.getPubKey(), cryptoService.getNetworkParameters()),
             inputBalance,
             confirmations);
 
-    registerInputService.registerInput(
-        poolId,
+    registerInput(
+        pool,
         username,
         signature,
         txOutPoint.getHash(),
@@ -51,8 +53,7 @@ public abstract class AbstractMixIntegrationTest extends AbstractIntegrationTest
         liquidity,
         false,
         blockchainDataService.getBlockHeight(),
-        sorobanInputOrNull,
-        null);
+        sorobanInputOrNull);
     waitMixLimitsService(mix);
     return txOutPoint;
   }

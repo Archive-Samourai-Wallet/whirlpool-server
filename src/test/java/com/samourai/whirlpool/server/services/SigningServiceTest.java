@@ -9,6 +9,7 @@ import com.samourai.whirlpool.client.mix.handler.UtxoWithBalance;
 import com.samourai.whirlpool.client.utils.ClientUtils;
 import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.beans.MixStatus;
+import com.samourai.whirlpool.server.beans.Pool;
 import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
@@ -188,24 +189,27 @@ public class SigningServiceTest extends AbstractIntegrationTest {
       String username)
       throws Exception {
     String mixId = mix.getMixId();
-    String poolId = mix.getPool().getPoolId();
+    Pool pool = mix.getPool();
+    String poolId = pool.getPoolId();
 
     // register input
     String signature = premixHandler.signMessage(poolId);
-    registerInputService.registerInput(
-        poolId,
-        username,
-        signature,
-        txOutPoint.getHash(),
-        txOutPoint.getIndex(),
-        liquidity,
-        false,
-        blockchainDataService.getBlockHeight(),
-        null,
-        null);
+    RegisteredInput registeredInput =
+        registerInput(
+            pool,
+            username,
+            signature,
+            txOutPoint.getHash(),
+            txOutPoint.getIndex(),
+            liquidity,
+            false,
+            blockchainDataService.getBlockHeight(),
+            null);
     waitMixLimitsService(mix);
 
     // confirm input
+    mix.registerConfirmingInput(registeredInput);
+
     byte[] bordereau = ClientUtils.generateBordereau();
     RSAKeyParameters serverPublicKey = (RSAKeyParameters) mix.getKeyPair().getPublic();
     RSABlindingParameters blindingParams =
@@ -220,8 +224,7 @@ public class SigningServiceTest extends AbstractIntegrationTest {
     // register output
     byte[] unblindedSignedBordereau =
         clientCryptoService.unblind(signedBlindedBordereau, blindingParams);
-    registerOutputService.registerOutput(
-        mix.computeInputsHash(), unblindedSignedBordereau, receiveAddress, bordereau);
+    registerOutputService.registerOutput(mix, unblindedSignedBordereau, receiveAddress, bordereau);
 
     // signing
     Transaction txToSign = new Transaction(params, mix.getTx().bitcoinSerialize());

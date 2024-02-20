@@ -2,7 +2,7 @@ package com.samourai.whirlpool.server.config;
 
 import com.samourai.javaserver.config.ServerConfig;
 import com.samourai.javaserver.exceptions.NotifiableException;
-import com.samourai.whirlpool.client.wallet.beans.WhirlpoolNetwork;
+import com.samourai.wallet.constants.WhirlpoolNetwork;
 import com.samourai.whirlpool.protocol.WhirlpoolErrorCode;
 import com.samourai.whirlpool.server.beans.FailMode;
 import com.samourai.whirlpool.server.services.ScodeService;
@@ -35,6 +35,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
   private boolean mixEnabled;
   private String metricsUrlApp;
   private String metricsUrlSystem;
+  private String monitoringHookUrl;
   private NetworkParameters networkParameters;
   private RpcClientConfig rpcClient;
   private RegisterInputConfig registerInput;
@@ -112,6 +113,14 @@ public class WhirlpoolServerConfig extends ServerConfig {
 
   public void setMetricsUrlSystem(String metricsUrlSystem) {
     this.metricsUrlSystem = metricsUrlSystem;
+  }
+
+  public String getMonitoringHookUrl() {
+    return monitoringHookUrl;
+  }
+
+  public void setMonitoringHookUrl(String monitoringHookUrl) {
+    this.monitoringHookUrl = monitoringHookUrl;
   }
 
   public boolean isTestnet() {
@@ -896,6 +905,9 @@ public class WhirlpoolServerConfig extends ServerConfig {
             + whirlpoolNetwork);
     configInfo.put("testMode", String.valueOf(testMode));
     configInfo.put("failMode", String.valueOf(failMode));
+    configInfo.put(
+        "metrics", "metricsUrlApp=" + metricsUrlApp + ", metricsUrlSystem=" + metricsUrlSystem);
+    configInfo.put("monitoringHookUrl", monitoringHookUrl);
     configInfo.put(
         "rpcClient",
         rpcClient.getHost() + ":" + rpcClient.getPort() + "," + networkParameters.getId());

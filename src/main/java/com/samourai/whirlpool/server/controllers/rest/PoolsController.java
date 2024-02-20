@@ -31,13 +31,14 @@ public class PoolsController extends AbstractRestController {
   public PoolsResponse pools() {
     Collection<PoolInfo> poolInfos = computePoolInfosV0();
     PoolsResponse poolsResponse = new PoolsResponse(poolInfos.toArray(new PoolInfo[] {}));
+    if (log.isTraceEnabled()) {
+      log.trace("(<) POOLS");
+    }
     return poolsResponse;
   }
 
   protected Collection<PoolInfo> computePoolInfosV0() {
-    return poolService
-        .getPools()
-        .parallelStream()
+    return poolService.getPools().parallelStream()
         .map(
             pool -> {
               Mix currentMix = pool.getCurrentMix();

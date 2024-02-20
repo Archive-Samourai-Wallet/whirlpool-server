@@ -4,8 +4,10 @@ import com.samourai.whirlpool.protocol.soroban.WhirlpoolApiCoordinator;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.orchestrators.SorobanCoordinatorOrchestrator;
 import com.samourai.whirlpool.server.orchestrators.SorobanUpStatusOrchestrator;
+import com.samourai.whirlpool.server.services.MetricService;
 import com.samourai.whirlpool.server.services.MinerFeeService;
 import com.samourai.whirlpool.server.services.PoolService;
+import com.samourai.whirlpool.server.services.monitoring.MonitoringService;
 import java.lang.invoke.MethodHandles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +26,9 @@ public class SorobanCoordinatorService {
       PoolService poolService,
       WhirlpoolServerConfig serverConfig,
       WhirlpoolApiCoordinator whirlpoolApiCoordinator,
-      MinerFeeService minerFeeService) {
+      MinerFeeService minerFeeService,
+      MetricService metricService,
+      MonitoringService monitoringService) {
 
     // start publishing pools
     coordinatorOrchestrator =
@@ -34,8 +38,11 @@ public class SorobanCoordinatorService {
 
     // start watching soroban nodes
     sorobanUpStatusOrchestrator =
-        new SorobanUpStatusOrchestrator(serverConfig, whirlpoolApiCoordinator);
+        new SorobanUpStatusOrchestrator(serverConfig, whirlpoolApiCoordinator, monitoringService);
     sorobanUpStatusOrchestrator.start(true);
+
+    // fix dependency loop
+    metricService.init(sorobanUpStatusOrchestrator);
   }
 
   public void stop() {
@@ -44,5 +51,9 @@ public class SorobanCoordinatorService {
 
   public SorobanCoordinatorOrchestrator _getCoordinatorOrchestrator() { // for tests
     return coordinatorOrchestrator;
+  }
+
+  public SorobanUpStatusOrchestrator _getSorobanUpStatusOrchestrator() {
+    return sorobanUpStatusOrchestrator;
   }
 }

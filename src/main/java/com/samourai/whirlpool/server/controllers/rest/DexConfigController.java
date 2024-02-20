@@ -1,8 +1,8 @@
 package com.samourai.whirlpool.server.controllers.rest;
 
-import com.samourai.dex.config.DexConfigProvider;
-import com.samourai.dex.config.DexConfigResponse;
-import com.samourai.dex.config.SamouraiConfig;
+import com.samourai.wallet.dexConfig.DexConfigProvider;
+import com.samourai.wallet.dexConfig.DexConfigResponse;
+import com.samourai.wallet.dexConfig.SamouraiConfig;
 import com.samourai.wallet.util.JSONUtils;
 import com.samourai.whirlpool.server.config.WhirlpoolServerContext;
 import com.samourai.whirlpool.server.utils.Utils;
@@ -35,6 +35,9 @@ public class DexConfigController extends AbstractRestController {
           JSONUtils.getInstance().getObjectMapper().writeValueAsString(samouraiConfig);
       String signature = Utils.signMessage(serverContext.getSigningWallet(), samouraiConfigJson);
       dexConfigResponse = new DexConfigResponse(samouraiConfigJson, signature);
+    }
+    if (log.isTraceEnabled()) {
+      log.trace("(<) DEXCONFIG");
     }
     return dexConfigResponse;
   }

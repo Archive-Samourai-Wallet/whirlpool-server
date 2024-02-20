@@ -46,6 +46,10 @@ public class ConfirmInputController extends AbstractWebSocketController {
     validateHeaders(headers);
     String username = principal.getName();
 
+    if (log.isDebugEnabled()) {
+      log.debug("(<) MIX_CONFIRM_INPUT_CLASSIC mixId=" + payload.mixId + " username=" + username);
+    }
+
     // confirm input and send back signed bordereau, or enqueue back to pool
     byte[] blindedBordereau = WhirlpoolProtocol.decodeBytes(payload.blindedBordereau64);
     Optional<byte[]> signedBordereau =

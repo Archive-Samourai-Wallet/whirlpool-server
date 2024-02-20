@@ -6,6 +6,7 @@ import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.controllers.web.beans.WhirlpoolDashboardTemplateModel;
 import com.samourai.whirlpool.server.services.PoolService;
+import com.samourai.whirlpool.server.services.RegisterInputService;
 import java.lang.invoke.MethodHandles;
 import java.util.Collections;
 import java.util.List;
@@ -27,36 +28,53 @@ public class ClientsWebController {
 
   private WhirlpoolServerConfig serverConfig;
   private PoolService poolService;
+  private RegisterInputService registerInputService;
 
   @Autowired
-  public ClientsWebController(WhirlpoolServerConfig serverConfig, PoolService poolService) {
+  public ClientsWebController(
+      WhirlpoolServerConfig serverConfig,
+      PoolService poolService,
+      RegisterInputService registerInputService) {
     this.serverConfig = serverConfig;
     this.poolService = poolService;
+    this.registerInputService = registerInputService;
   }
 
   @RequestMapping(value = ENDPOINT, method = RequestMethod.GET)
   public String clients(Model model) throws Exception {
     new WhirlpoolDashboardTemplateModel(serverConfig, "clients").apply(model);
 
+    // queued websocket inputs
     List<Pair<String, RegisteredInput>> registeredInputs =
         poolService.getPools().stream()
             .flatMap(
                 pool ->
                     Stream.of(pool.getMustMixQueue(), pool.getLiquidityQueue())
                         .flatMap(queue -> queue._getInputs().stream())
-                        .map(input -> Pair.of("QUEUED", input)))
+                        .map(input -> Pair.of("QUEUE", input)))
             .collect(Collectors.toList());
 
+    // queued soroban inputs
+    registeredInputs.addAll(
+        poolService.getPools().stream()
+            .flatMap(
+                pool ->
+                    Stream.of(pool.getMustMixQueue(), pool.getLiquidityQueue())
+                        .flatMap(queue -> queue._getInputsSoroban(registerInputService).stream())
+                        .map(input -> Pair.of("QUEUE", input)))
+            .collect(Collectors.toList()));
+
+    // mixing inputs
     for (Pool pool : poolService.getPools()) {
       Mix mix = pool.getCurrentMix();
       for (RegisteredInput input : mix.getInputs()._getInputs()) {
-        registeredInputs.add(Pair.of(mix.getMixStatus().name(), input));
+        registeredInputs.add(Pair.of("MIX." + mix.getMixStatus().name(), input));
       }
     }
 
     poolService.getPools().stream()
         .flatMap(pool -> pool.getCurrentMix().getConfirmingInputs()._getInputs().stream())
-        .forEach(input -> registeredInputs.add(Pair.of("CONFIRMING", input)));
+        .forEach(input -> registeredInputs.add(Pair.of("MIX.CONFIRMING", input)));
 
     Collections.sort(
         registeredInputs, (a, b) -> a.getRight().getSince() < b.getRight().getSince() ? 1 : -1);

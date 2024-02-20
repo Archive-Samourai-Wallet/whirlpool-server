@@ -6,6 +6,7 @@ import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.controllers.web.beans.WhirlpoolDashboardTemplateModel;
 import com.samourai.whirlpool.server.services.MixLimitsService;
 import com.samourai.whirlpool.server.services.PoolService;
+import com.samourai.whirlpool.server.services.RegisterInputService;
 import java.lang.invoke.MethodHandles;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -28,15 +29,18 @@ public class StatusWebController {
   private WhirlpoolServerConfig serverConfig;
   private PoolService poolService;
   private MixLimitsService mixLimitsService;
+  private RegisterInputService registerInputService;
 
   @Autowired
   public StatusWebController(
       WhirlpoolServerConfig serverConfig,
       PoolService poolService,
-      MixLimitsService mixLimitsService) {
+      MixLimitsService mixLimitsService,
+      RegisterInputService registerInputService) {
     this.serverConfig = serverConfig;
     this.poolService = poolService;
     this.mixLimitsService = mixLimitsService;
+    this.registerInputService = registerInputService;
   }
 
   @RequestMapping(value = ENDPOINT, method = RequestMethod.GET)
@@ -107,11 +111,17 @@ public class StatusWebController {
                   "mustMixQueuedNoQuarantine",
                   mix.getPool().getMustMixQueue().findByQuarantine(false));
               poolAttributes.put(
+                  "mustMixQueuedSorobanInputs",
+                  mix.getPool().getMustMixQueue()._getInputsSoroban(registerInputService));
+              poolAttributes.put(
                   "mustMixQueuedQuarantine",
                   mix.getPool().getMustMixQueue().findByQuarantine(true));
               poolAttributes.put(
                   "liquiditiesQueuedNoQuarantine",
                   mix.getPool().getLiquidityQueue().findByQuarantine(false));
+              poolAttributes.put(
+                  "liquiditiesQueuedSorobanInputs",
+                  mix.getPool().getLiquidityQueue()._getInputsSoroban(registerInputService));
               poolAttributes.put(
                   "liquiditiesQueuedQuarantine",
                   mix.getPool().getLiquidityQueue().findByQuarantine(true));

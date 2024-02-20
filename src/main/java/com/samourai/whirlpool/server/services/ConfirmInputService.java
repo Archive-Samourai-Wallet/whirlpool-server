@@ -75,14 +75,7 @@ public class ConfirmInputService {
             new ActivityCsv("CONFIRM_INPUT:QUEUED", poolId, registeredInput, null, null);
         exportService.exportActivity(activityCsv);
 
-        poolService.registerInput(
-            poolId,
-            registeredInput.getUsername(),
-            registeredInput.isLiquidity(),
-            registeredInput.getOutPoint(),
-            registeredInput.getTor(),
-            registeredInput.getSorobanInput(),
-            userHash);
+        poolService.registerInput(registeredInput, null);
         return Optional.empty();
       }
     } catch (MixException e) {
@@ -98,7 +91,7 @@ public class ConfirmInputService {
       Mix mix, RegisteredInput registeredInput, byte[] blindedBordereau, String userHash)
       throws Exception {
     if (log.isDebugEnabled()) {
-      log.debug("(<) [" + mix.getMixId() + "] confirmInput: " + registeredInput.toString());
+      log.debug("(<) INPUT_CONFIRM " + mix.getMixId() + " " + registeredInput.toString());
     }
 
     // failMode
@@ -115,7 +108,6 @@ public class ConfirmInputService {
 
     // add to mix inputs
     mix.registerInput(registeredInput);
-    log.info("+CONFIRM_INPUT " + mix.getMixId() + " " + registeredInput.toString());
     mixService.logMixStatus(mix);
 
     // log activity
@@ -128,10 +120,6 @@ public class ConfirmInputService {
       // enough mustMix confirmed, update mix surge limit
       mix.setSurge();
       // surges will be invited soon by mixLimitsService
-    }
-
-    if (log.isDebugEnabled()) {
-      log.debug("(<) [" + mix.getMixId() + "] confirmInput success: " + registeredInput.toString());
     }
     return signedBordereau;
   }

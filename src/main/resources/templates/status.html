@@ -53,9 +53,9 @@
                     <strong th:text="${pool.nbInputsSurge}"/> / <span th:text="${pool.mixSurge}"/> surges</span>
                 </td>
                 <td class="align-middle">
-                    <span th:title="${@templateUtil.registeredInputsToString(pool.mustMixQueuedNoQuarantine)}"><strong th:text="${pool.mustMixQueuedNoQuarantine.size()}"/> mustMix</span>
+                    <span><strong th:text="${pool.mustMixQueuedNoQuarantine.size()}" th:title="${@templateUtil.registeredInputsToString(pool.mustMixQueuedNoQuarantine)}"/>+<strong th:text="${pool.mustMixQueuedSorobanInputs.size()}" th:title="${@templateUtil.registeredInputsToString(pool.mustMixQueuedSorobanInputs)}"/> mustMix</span>
                     <span th:if="${pool.mustMixQueuedQuarantine.size()>0}" style="text-decoration:line-through" th:title="${@templateUtil.registeredInputsToString(pool.mustMixQueuedQuarantine)}">+ <span th:text="${pool.mustMixQueuedQuarantine.size()}"/> quarantine</span><br/>
-                    <span th:title="${@templateUtil.registeredInputsToString(pool.liquiditiesQueuedNoQuarantine)}"><strong th:text="${pool.liquiditiesQueuedNoQuarantine.size()}"/> liquidities</span>
+                    <span><strong th:text="${pool.liquiditiesQueuedNoQuarantine.size()}" th:title="${@templateUtil.registeredInputsToString(pool.liquiditiesQueuedNoQuarantine)}"/>+<strong th:text="${pool.liquiditiesQueuedSorobanInputs.size()}" th:title="${@templateUtil.registeredInputsToString(pool.liquiditiesQueuedSorobanInputs)}"/></span>
                     <span th:if="${pool.liquiditiesQueuedQuarantine.size()>0}" style="text-decoration:line-through" th:title="${@templateUtil.registeredInputsToString(pool.liquiditiesQueuedQuarantine)}">+ <span th:text="${pool.liquiditiesQueuedQuarantine.size()}"/> quarantine</span><br/>
                 </td>
                 <td class="align-middle"><small>

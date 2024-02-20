@@ -5,6 +5,7 @@ import com.samourai.wallet.api.backend.beans.BackendPushTxException;
 import com.samourai.wallet.util.RandomUtil;
 import com.samourai.wallet.util.TxUtil;
 import com.samourai.wallet.util.Util;
+import com.samourai.wallet.xmanagerClient.XManagerClient;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.protocol.soroban.payload.tx0.Tx0DataRequest;
 import com.samourai.whirlpool.protocol.soroban.payload.tx0.Tx0DataResponse;
@@ -16,7 +17,6 @@ import com.samourai.whirlpool.server.beans.export.ActivityCsv;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.config.WhirlpoolServerContext;
 import com.samourai.whirlpool.server.utils.Utils;
-import com.samourai.xmanager.client.XManagerClient;
 import com.samourai.xmanager.protocol.XManagerService;
 import com.samourai.xmanager.protocol.rest.AddressIndexResponse;
 import java.lang.invoke.MethodHandles;
@@ -84,7 +84,7 @@ public class Tx0Service {
       Map<String, String> clientDetails)
       throws Exception {
     if (log.isDebugEnabled()) {
-      log.debug("(<) tx0Data (" + tx0DataRequest.partnerId + ")");
+      log.debug("(<) TX0_DATA (" + tx0DataRequest.partnerId + ")");
     }
 
     String scode = tx0DataRequest.scode;
@@ -246,7 +246,7 @@ public class Tx0Service {
   public Tx0DataResponseV1 tx0DataV1(HttpServletRequest request, String poolId, String scode)
       throws Exception {
     if (log.isDebugEnabled()) {
-      log.debug("(<) tx0DataV1 (" + poolId + ")");
+      log.debug("(<) TX0_DATA_V1 " + poolId);
     }
     if (StringUtils.isEmpty(scode) || "null".equals(scode)) {
       scode = null;
@@ -368,7 +368,7 @@ public class Tx0Service {
   protected Tx0PushResponseSuccess pushTx0(Tx0PushRequest tx0PushRequest, long txTime)
       throws Exception {
     if (log.isDebugEnabled()) {
-      log.debug("(<) pushTx0 (" + tx0PushRequest.poolId + ")");
+      log.debug("(<) TX0_PUSH " + tx0PushRequest.poolId);
     }
 
     Pool pool = poolService.getPool(tx0PushRequest.poolId);
@@ -379,7 +379,7 @@ public class Tx0Service {
     try {
       tx0Validation = tx0ValidationService.parseAndValidate(txBytes, txTime, pool);
     } catch (Exception e) {
-      log.error("Not a TX0", e);
+      log.error("TX0_PUSH_ERROR " + tx0PushRequest.poolId + " Not a TX0", e);
       // hide error details and wrap "Not a TX0" as BackendPushTxException
       throw new BackendPushTxException("Not a TX0");
     }
@@ -387,7 +387,7 @@ public class Tx0Service {
     Transaction tx = tx0Validation.getTx();
     String txid = tx.getHashAsString();
     if (log.isDebugEnabled()) {
-      log.info("pushing tx0: " + txid);
+      log.debug("TX0_PUSH " + tx0PushRequest.poolId + " pushing " + txid);
     }
 
     // push with strict mode
@@ -395,7 +395,7 @@ public class Tx0Service {
     Collection<Integer> strictModeVouts = tx0Validation.findStrictModeVouts();
     backendService.pushTx(txHex, strictModeVouts); // throws BackendPushTxException
     if (log.isDebugEnabled()) {
-      log.debug("pushTx0 success: " + txid);
+      log.debug("TX0_PUSH_SUCCESS " + tx0PushRequest.poolId + " " + txid);
     }
 
     // metric
@@ -414,7 +414,7 @@ public class Tx0Service {
       }
       if (log.isDebugEnabled()) {
         log.debug(
-            "Tx0: "
+            "TX0_PUSH_SUCCESS "
                 + txid
                 + ": "
                 + premixCount

@@ -12,7 +12,6 @@ import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import com.samourai.whirlpool.server.integration.AbstractMixIntegrationTest;
 import java.lang.invoke.MethodHandles;
-import java.util.LinkedHashMap;
 import org.bitcoinj.core.ECKey;
 import org.bouncycastle.crypto.params.RSABlindingParameters;
 import org.junit.jupiter.api.Assertions;
@@ -60,8 +59,7 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
     Assertions.assertEquals(0, mix.getReceiveAddresses().size());
     byte[] unblindedSignedBordereau =
         clientCryptoService.unblind(signedBlindedBordereau, blindingParams);
-    registerOutputService.registerOutput(
-        mix.computeInputsHash(), unblindedSignedBordereau, receiveAddress, bordereau);
+    registerOutputService.registerOutput(mix, unblindedSignedBordereau, receiveAddress, bordereau);
     Assertions.assertEquals(1, mix.getReceiveAddresses().size());
 
     // TEST
@@ -74,12 +72,11 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
   @Test
   public void confirmInput_shouldSuccessWhenValid_soroban() throws Exception {
     Mix mix = __getCurrentMix();
-    String mixId = mix.getMixId();
     String username = "testusername";
     String receiveAddress = testUtils.generateSegwitAddress().getBech32AsString();
 
     // REGISTER_INPUT
-    SorobanInput sorobanInput = generateSorobanInput();
+    SorobanInput sorobanInput = generateSorobanInput(mix.getPool().getPoolId(), false);
     TxOutPoint outPoint = registerInput(mix, username, 999, false, sorobanInput);
     testUtils.assertMix(0, 1, mix); // mustMix confirming
 
@@ -108,8 +105,7 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
     Assertions.assertEquals(0, mix.getReceiveAddresses().size());
     byte[] unblindedSignedBordereau =
         clientCryptoService.unblind(signedBlindedBordereau, blindingParams);
-    registerOutputService.registerOutput(
-        mix.computeInputsHash(), unblindedSignedBordereau, receiveAddress, bordereau);
+    registerOutputService.registerOutput(mix, unblindedSignedBordereau, receiveAddress, bordereau);
     Assertions.assertEquals(1, mix.getReceiveAddresses().size());
 
     // TEST
@@ -125,7 +121,6 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
     String mixId = mix.getMixId();
     Pool pool = mix.getPool();
     String poolId = mix.getPool().getPoolId();
-    String receiveAddress = testUtils.generateSegwitAddress().getBech32AsString();
 
     ECKey ecKey = new ECKey();
     SegwitAddress inputAddress =
@@ -145,9 +140,8 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
     Assertions.assertEquals(1, txOutPoint2.getIndex());
 
     // TEST
-    registerInputService
-        .registerInput(
-            poolId,
+    registerInput(
+            pool,
             "user1",
             signature,
             txOutPoint1.getHash(),
@@ -155,16 +149,14 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
             false,
             false,
             blockchainDataService.getBlockHeight(),
-            null,
-            new LinkedHashMap<>())
+            null)
         .getOutPoint();
     waitMixLimitsService(mix);
     testUtils.assertPoolEmpty(pool);
     testUtils.assertMix(0, 1, mix); // confirming
 
-    registerInputService
-        .registerInput(
-            poolId,
+    registerInput(
+            pool,
             "user2",
             signature,
             txOutPoint2.getHash(),
@@ -172,7 +164,6 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
             false,
             false,
             blockchainDataService.getBlockHeight(),
-            null,
             null)
         .getOutPoint();
     waitMixLimitsService(mix);
@@ -221,8 +212,8 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
     Assertions.assertEquals(1, txOutPoint2.getIndex());
 
     // TEST
-    registerInputService.registerInput(
-        poolId,
+    registerInput(
+        pool,
         "user1",
         signature,
         txOutPoint1.getHash(),
@@ -230,14 +221,13 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
         false,
         false,
         blockchainDataService.getBlockHeight(),
-        null,
         null);
     waitMixLimitsService(mix);
     testUtils.assertPoolEmpty(pool);
     testUtils.assertMix(0, 1, mix); // confirming
 
-    registerInputService.registerInput(
-        poolId,
+    registerInput(
+        pool,
         "user2",
         signature,
         txOutPoint2.getHash(),
@@ -245,7 +235,6 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
         false,
         false,
         blockchainDataService.getBlockHeight(),
-        null,
         null);
     waitMixLimitsService(mix);
     testUtils.assertPoolEmpty(pool);

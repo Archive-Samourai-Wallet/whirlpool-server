@@ -1,14 +1,12 @@
 package com.samourai.whirlpool.server.services;
 
-import com.samourai.http.client.HttpUsage;
-import com.samourai.http.client.IHttpClient;
-import com.samourai.http.client.IHttpClientService;
+import com.samourai.http.client.JettyHttpClientService;
 import com.samourai.soroban.client.rpc.RpcSession;
-import com.samourai.tor.client.TorClientService;
 import com.samourai.wallet.bip47.rpc.java.Bip47UtilJava;
 import com.samourai.wallet.chain.ChainSupplier;
 import com.samourai.wallet.client.indexHandler.IIndexHandler;
 import com.samourai.wallet.crypto.CryptoUtil;
+import com.samourai.wallet.httpClient.IHttpClientService;
 import com.samourai.whirlpool.client.mix.MixParams;
 import com.samourai.whirlpool.client.mix.handler.*;
 import com.samourai.whirlpool.client.wallet.beans.IndexRange;
@@ -52,28 +50,12 @@ public class WhirlpoolClientService {
   }
 
   public WhirlpoolClientConfig createWhirlpoolClientConfig() {
-    TorClientService torClientService =
-        new TorClientService() {
-          @Override
-          public void changeIdentity() {}
-        };
-    IHttpClientService multiUsageHttpClientService =
-        new IHttpClientService() {
-          @Override
-          public IHttpClient getHttpClient(HttpUsage httpUsage) {
-            return httpClientService.getHttpClient();
-          }
 
-          @Override
-          public void stop() {
-            httpClientService.stop();
-          }
-        };
+    IHttpClientService httpClientService = new JettyHttpClientService();
 
     try {
       return new WhirlpoolClientConfig(
-          multiUsageHttpClientService,
-          torClientService,
+          httpClientService,
           rpcClientServiceServer,
           Bip47UtilJava.getInstance(),
           cryptoUtil,

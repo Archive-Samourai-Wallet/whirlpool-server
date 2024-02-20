@@ -4,6 +4,9 @@ import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.protocol.v0.WhirlpoolEndpointV0;
 import com.samourai.whirlpool.protocol.v0.rest.CheckOutputRequest;
 import com.samourai.whirlpool.protocol.v0.rest.RegisterOutputRequest;
+import com.samourai.whirlpool.server.beans.Mix;
+import com.samourai.whirlpool.server.beans.MixStatus;
+import com.samourai.whirlpool.server.services.MixService;
 import com.samourai.whirlpool.server.services.RegisterOutputService;
 import java.lang.invoke.MethodHandles;
 import javax.servlet.http.HttpServletRequest;
@@ -19,10 +22,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class RegisterOutputController extends AbstractRestController {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
+  private MixService mixService;
   private RegisterOutputService registerOutputService;
 
   @Autowired
-  public RegisterOutputController(RegisterOutputService registerOutputService) {
+  public RegisterOutputController(
+      MixService mixService, RegisterOutputService registerOutputService) {
+    this.mixService = mixService;
     this.registerOutputService = registerOutputService;
   }
 
@@ -30,7 +36,7 @@ public class RegisterOutputController extends AbstractRestController {
   public void checkOutput(HttpServletRequest request, @RequestBody CheckOutputRequest payload)
       throws Exception {
     if (log.isDebugEnabled()) {
-      log.debug("(<) " + WhirlpoolEndpointV0.REST_CHECK_OUTPUT);
+      log.debug("(<) CHECK_OUTPUT " + WhirlpoolEndpointV0.REST_CHECK_OUTPUT);
     }
 
     // check output
@@ -49,7 +55,14 @@ public class RegisterOutputController extends AbstractRestController {
       // clients < protocol V0.23.9
       bordereau = payload.receiveAddress.getBytes();
     }
+
+    // find mix
+    Mix mix = mixService.getMixByInputsHash(payload.inputsHash, MixStatus.REGISTER_OUTPUT);
+    if (log.isDebugEnabled()) {
+      log.debug("(<) REGISTER_OUTPUT_CLASSIC " + mix.getMixId() + " " + payload.receiveAddress);
+    }
+
     registerOutputService.registerOutput(
-        payload.inputsHash, unblindedSignedBordereau, payload.receiveAddress, bordereau);
+        mix, unblindedSignedBordereau, payload.receiveAddress, bordereau);
   }
 }

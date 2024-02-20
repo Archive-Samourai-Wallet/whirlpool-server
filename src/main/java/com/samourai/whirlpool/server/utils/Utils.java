@@ -1,17 +1,22 @@
 package com.samourai.whirlpool.server.utils;
 
 import ch.qos.logback.classic.Level;
+import com.samourai.javaserver.exceptions.NotifiableException;
+import com.samourai.javaserver.utils.LogbackUtils;
 import com.samourai.javaserver.utils.ServerUtils;
 import com.samourai.javawsserver.interceptors.JWSSIpHandshakeInterceptor;
+import com.samourai.soroban.protocol.payload.SorobanErrorMessage;
 import com.samourai.wallet.bipFormat.BIP_FORMAT;
 import com.samourai.wallet.hd.HD_Address;
 import com.samourai.wallet.segwit.bech32.Bech32UtilGeneric;
 import com.samourai.wallet.util.MessageSignUtilGeneric;
+import com.samourai.whirlpool.protocol.WhirlpoolErrorCode;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.beans.SecretWalletContext;
 import com.samourai.whirlpool.server.beans.TxOutSignature;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
+import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import com.samourai.whirlpool.server.services.rpc.JSONRpcClientServiceImpl;
 import com.samourai.whirlpool.server.services.rpc.RpcClientService;
 import java.lang.invoke.MethodHandles;
@@ -105,6 +110,15 @@ public class Utils {
     serverUtils.setLoggerDebug("com.samourai.whirlpool");
     serverUtils.setLoggerDebug("com.samourai.wallet");
     serverUtils.setLoggerDebug("com.samourai.soroban.client");
+    LogbackUtils.setLogLevel(
+        "com.samourai.soroban.client.rpc.RpcClient", org.slf4j.event.Level.TRACE.toString());
+
+    // skip noisy logs
+    LogbackUtils.setLogLevel(
+        "org.springframework.web.socket.config.WebSocketMessageBrokerStats",
+        org.slf4j.event.Level.ERROR.toString());
+    LogbackUtils.setLogLevel(
+        "com.samourai.javawsserver.config", org.slf4j.event.Level.INFO.toString());
   }
 
   public static BigDecimal satoshisToBtc(long satoshis) {
@@ -212,5 +226,21 @@ public class Utils {
     Logger newLog = LoggerFactory.getLogger(log.getName() + "[" + logPrefix + "]");
     ((ch.qos.logback.classic.Logger) newLog).setLevel(level);
     return newLog;
+  }
+
+  public static SorobanErrorMessage computeSorobanErrorMessage(Exception e) {
+    int errorCode;
+    String message;
+    if (e instanceof IllegalInputException) {
+      errorCode = ((IllegalInputException) e).getErrorCode();
+      message = e.getMessage();
+    } else if (e instanceof NotifiableException) {
+      errorCode = ((NotifiableException) e).getErrorCode();
+      message = e.getMessage();
+    } else {
+      errorCode = WhirlpoolErrorCode.SERVER_ERROR;
+      message = NotifiableException.computeNotifiableException(e).getMessage();
+    }
+    return new SorobanErrorMessage(errorCode, message);
   }
 }

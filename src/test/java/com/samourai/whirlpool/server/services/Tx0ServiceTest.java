@@ -138,6 +138,7 @@ public class Tx0ServiceTest extends AbstractIntegrationTest {
       Assertions.assertEquals("Not a TX0", e.getPushTxError());
     }
   }
+
   /*
   @Test
   public void validate_feePayloadInvalid() throws Exception {

@@ -5,7 +5,7 @@
       layout:decorate="~{decorators/dashboard}">
 <head>
     <title>Clients</title>
-    <meta http-equiv="refresh" content="60" />
+    <meta http-equiv="refresh" content="120" />
     <link rel="stylesheet" href="/css/smartwizard.css"/>
     <link rel="stylesheet" href="/css/status.css"/>
 </head>
@@ -25,11 +25,11 @@
             <thead>
                 <th class="align-middle">PoolId</th>
                 <th class="align-middle">Status</th>
+                <th class="align-middle">Canal</th>
                 <th class="align-middle">Utxo</th>
                 <th class="align-middle">Amount</th>
                 <th class="align-middle">Liquidity</th>
                 <th class="align-middle">Tor</th>
-                <th class="align-middle">Canal</th>
                 <th class="align-middle">Since</th>
                 <th class="align-middle">Last seen</th>
                 <th class="align-middle">Username / userhash</th>
@@ -44,6 +44,9 @@
                         <small th:text="${input.left}"/>
                     </td>
                     <td class="align-middle">
+                        <span th:text="${input.right.isSoroban()?'SOROBAN':'CLASSIC'}"/>
+                    </td>
+                    <td class="align-middle">
                         <small th:text="${input.right.outPoint.toKey()}"/>
                     </td>
                     <td class="align-middle">
@@ -54,9 +57,6 @@
                     </td>
                     <td class="align-middle">
                         <span th:text="${input.right.tor!=null?(input.right.tor?'Yes':'No'):'n/a'}"/>
-                    </td>
-                    <td class="align-middle">
-                        <span th:text="${input.right.isSoroban()?'SOROBAN':'CLASSIC'}"/>
                     </td>
                     <td class="align-middle">
                         <span th:text="${@templateUtil.durationFromNow(input.right.since)}"/>

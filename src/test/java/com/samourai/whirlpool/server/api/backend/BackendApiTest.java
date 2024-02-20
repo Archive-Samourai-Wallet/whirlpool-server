@@ -5,6 +5,7 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 import com.samourai.wallet.api.backend.BackendApi;
 import com.samourai.wallet.api.backend.BackendServer;
 import com.samourai.wallet.api.backend.beans.WalletResponse;
+import com.samourai.wallet.httpClient.HttpUsage;
 import com.samourai.whirlpool.server.integration.AbstractIntegrationTest;
 import com.samourai.whirlpool.server.services.JavaHttpClientService;
 import org.junit.jupiter.api.Assertions;
@@ -27,7 +28,7 @@ public class BackendApiTest extends AbstractIntegrationTest {
 
     backendApi =
         BackendApi.newBackendApiSamourai(
-            new JavaHttpClientService(serverConfig).getHttpClient(),
+            new JavaHttpClientService(serverConfig).getHttpClient(HttpUsage.BACKEND),
             BackendServer.TESTNET.getBackendUrlClear());
   }
 

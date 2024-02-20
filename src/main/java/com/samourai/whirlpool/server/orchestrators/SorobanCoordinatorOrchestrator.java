@@ -14,9 +14,11 @@ import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 public class SorobanCoordinatorOrchestrator extends AbstractOrchestrator {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+  private static final AsyncUtil asyncUtil = AsyncUtil.getInstance();
   private static final long COORDINATOR_PRIORITY = 10; // TODO
   public static final int REGISTER_COORDINATOR_FREQUENCY_MS =
       60000; // getEndpointCoordinator.getExpirationMs()/3
@@ -42,6 +44,7 @@ public class SorobanCoordinatorOrchestrator extends AbstractOrchestrator {
 
   @Override
   protected void runOrchestrator() {
+    MDC.put("mdc", "orchestrator=SorobanCoordinatorOrchestrator");
     try {
       // register coordinator
       long mixFeePerB = minerFeeService.getMixFeePerB();
@@ -53,18 +56,15 @@ public class SorobanCoordinatorOrchestrator extends AbstractOrchestrator {
           new CoordinatorInfo(serverConfig.getCoordinatorName(), COORDINATOR_PRIORITY);
       SorobanInfo sorobanInfo =
           new SorobanInfo(
-              whirlpoolApiCoordinator.getRpcSession().getServerUrlsUp(false),
-              whirlpoolApiCoordinator.getRpcSession().getServerUrlsUp(true));
+              whirlpoolApiCoordinator.getRpcSession().getSorobanUrlsUp(false),
+              whirlpoolApiCoordinator.getRpcSession().getSorobanUrlsUp(true));
       CoordinatorMessage coordinatorMessage =
           new CoordinatorMessage(coordinatorInfo, poolInfosSoroban, sorobanInfo);
-      if (log.isDebugEnabled()) {
-        log.debug("CoordinatorMessage = " + coordinatorMessage.toPayload());
-      }
-      AsyncUtil.getInstance()
-          .blockingAwait(whirlpoolApiCoordinator.coordinatorsRegister(coordinatorMessage));
+      asyncUtil.blockingAwait(whirlpoolApiCoordinator.coordinatorsRegister(coordinatorMessage));
     } catch (Exception e) {
       log.error("Failed to register Soroban pools", e);
     }
+    MDC.clear();
   }
 
   public void _runOrchestrator() { // for tests

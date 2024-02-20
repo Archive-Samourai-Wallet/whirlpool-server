@@ -2,6 +2,7 @@ package com.samourai.whirlpool.server.beans;
 
 import com.samourai.wallet.util.FeeUtil;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
+import com.samourai.whirlpool.protocol.soroban.WhirlpoolApiCoordinator;
 
 public class Pool {
   private static final FeeUtil feeUtil = FeeUtil.getInstance();
@@ -20,8 +21,8 @@ public class Pool {
   private int txSize;
 
   private Mix currentMix;
-  private InputPool mustMixQueue;
-  private InputPool liquidityQueue;
+  private InputPoolQueue mustMixQueue;
+  private InputPoolQueue liquidityQueue;
 
   public Pool(
       String poolId,
@@ -33,7 +34,8 @@ public class Pool {
       int minLiquidityPoolForSurge,
       int anonymitySet,
       int tx0MaxOutputs,
-      PoolMinerFee minerFee) {
+      PoolMinerFee minerFee,
+      WhirlpoolApiCoordinator whirlpoolApiCoordinator) {
     this.poolId = poolId;
     this.denomination = denomination;
     this.poolFee = poolFee;
@@ -47,8 +49,8 @@ public class Pool {
     this.minerFeeMix = computeTxSize(0) * minerFee.getMinRelaySatPerB();
     this.txSize = feeUtil.estimatedSizeSegwit(0, 0, anonymitySet, anonymitySet, 0);
 
-    this.mustMixQueue = new InputPool();
-    this.liquidityQueue = new InputPool();
+    this.mustMixQueue = new InputPoolQueue(this, false, whirlpoolApiCoordinator);
+    this.liquidityQueue = new InputPoolQueue(this, true, whirlpoolApiCoordinator);
   }
 
   public long computeTxSize(int surges) {
@@ -162,11 +164,11 @@ public class Pool {
     this.currentMix = currentMix;
   }
 
-  public InputPool getMustMixQueue() {
+  public InputPoolQueue getMustMixQueue() {
     return mustMixQueue;
   }
 
-  public InputPool getLiquidityQueue() {
+  public InputPoolQueue getLiquidityQueue() {
     return liquidityQueue;
   }
 

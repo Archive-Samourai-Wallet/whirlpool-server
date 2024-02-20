@@ -6,15 +6,13 @@ import com.samourai.whirlpool.protocol.WhirlpoolErrorCode;
 import com.samourai.whirlpool.server.beans.Pool;
 import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.beans.SorobanInput;
-import com.samourai.whirlpool.server.beans.export.ActivityCsv;
 import com.samourai.whirlpool.server.beans.rpc.RpcTransaction;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
+import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.exceptions.BannedInputException;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import com.samourai.whirlpool.server.persistence.to.BanTO;
 import java.lang.invoke.MethodHandles;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Optional;
 import org.apache.commons.lang3.BooleanUtils;
 import org.slf4j.Logger;
@@ -27,36 +25,33 @@ public class RegisterInputService {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   public static final String HEALTH_CHECK_UTXO = "HEALTH_CHECK";
   public static final String HEALTH_CHECK_SUCCESS = "HEALTH_CHECK_SUCCESS";
-  public static final String ERROR_ALREADY_SPENT = "Waiting for first mix confirmation";
+  public static final String ERROR_ALREADY_SPENT = "Input already mixed or spent";
 
-  private PoolService poolService;
+  private WhirlpoolServerConfig whirlpoolServerConfig;
   private FormatsUtilGeneric formatsUtil;
   private BlockchainDataService blockchainDataService;
   private InputValidationService inputValidationService;
   private BanService banService;
   private DbService dbService;
-  private ExportService exportService;
 
   @Autowired
   public RegisterInputService(
-      PoolService poolService,
+      WhirlpoolServerConfig whirlpoolServerConfig,
       FormatsUtilGeneric formatsUtil,
       BlockchainDataService blockchainDataService,
       InputValidationService inputValidationService,
       BanService banService,
-      DbService dbService,
-      ExportService exportService) {
-    this.poolService = poolService;
+      DbService dbService) {
+    this.whirlpoolServerConfig = whirlpoolServerConfig;
     this.formatsUtil = formatsUtil;
     this.blockchainDataService = blockchainDataService;
     this.inputValidationService = inputValidationService;
     this.banService = banService;
     this.dbService = dbService;
-    this.exportService = exportService;
   }
 
-  public RegisteredInput registerInput(
-      String poolId,
+  public RegisteredInput validateRegisterInputRequest(
+      Pool pool,
       String username,
       String signature,
       String utxoHash,
@@ -64,8 +59,7 @@ public class RegisterInputService {
       boolean liquidity,
       Boolean tor,
       int blockHeight,
-      SorobanInput sorobanInputOrNull,
-      Map<String, String> clientDetails)
+      SorobanInput sorobanInputOrNull)
       throws NotifiableException {
 
     // check blockHeight
@@ -113,6 +107,7 @@ public class RegisterInputService {
               .orElseThrow(() -> notFoundException);
 
       // verify signature
+      String poolId = pool.getPoolId();
       inputValidationService.validateSignature(txOutPoint, poolId, signature);
 
       // verify unspent
@@ -127,31 +122,72 @@ public class RegisterInputService {
       String txid = rpcTransaction.getTx().getHashAsString();
       if (!dbService.hasTx0Whitelist(txid)) {
         // verify input is a valid mustMix or liquidity
-        Pool pool = poolService.getPool(poolId);
         boolean hasMixTxid = dbService.hasMixTxid(txid, txOutPoint.getValue());
         inputValidationService.validateProvenance(rpcTransaction, liquidity, pool, hasMixTxid);
       } else {
         log.warn("tx0 check disabled by whitelist for txid=" + txid);
       }
 
+      // verify balance
+      long inputBalance = txOutPoint.getValue();
+      if (!pool.checkInputBalance(inputBalance, liquidity)) {
+        long balanceMin = pool.computePremixBalanceMin(liquidity);
+        long balanceMax = pool.computePremixBalanceMax(liquidity);
+        throw new IllegalInputException(
+            WhirlpoolErrorCode.INPUT_REJECTED,
+            "Invalid input balance (expected: "
+                + balanceMin
+                + "-"
+                + balanceMax
+                + ", actual:"
+                + txOutPoint.getValue()
+                + ")");
+      }
+      // verify confirmations
+      if (!isUtxoConfirmed(txOutPoint, liquidity)) {
+        throw new IllegalInputException(
+            WhirlpoolErrorCode.INPUT_REJECTED, "Input is not confirmed");
+      }
+
       // register input to pool
       RegisteredInput registeredInput =
-          poolService.registerInput(
-              poolId, username, liquidity, txOutPoint, tor, sorobanInputOrNull, null);
-
-      // log activity
-      if (clientDetails == null) {
-        clientDetails = new LinkedHashMap<>();
-      }
-      clientDetails.put("soroban", sorobanInputOrNull != null ? "true" : "false");
-      ActivityCsv activityCsv =
-          new ActivityCsv("REGISTER_INPUT", poolId, registeredInput, null, clientDetails);
-      exportService.exportActivity(activityCsv);
+          new RegisteredInput(
+              poolId, username, liquidity, txOutPoint, tor, null, sorobanInputOrNull);
 
       return registeredInput;
     } catch (NotifiableException e) { // validation error or input rejected
       log.warn("Input rejected (" + utxoHash + ":" + utxoIndex + "): " + e.getMessage());
       throw e;
     }
+  }
+
+  private boolean isUtxoConfirmed(TxOutPoint txOutPoint, boolean liquidity) {
+    int inputConfirmations = txOutPoint.getConfirmations();
+    if (liquidity) {
+      // liquidity
+      int minConfirmationsMix =
+          whirlpoolServerConfig.getRegisterInput().getMinConfirmationsLiquidity();
+      if (inputConfirmations < minConfirmationsMix) {
+        log.info(
+            "input not confirmed: liquidity needs at least "
+                + minConfirmationsMix
+                + " confirmations: "
+                + txOutPoint.getHash());
+        return false;
+      }
+    } else {
+      // mustMix
+      int minConfirmationsTx0 =
+          whirlpoolServerConfig.getRegisterInput().getMinConfirmationsMustMix();
+      if (inputConfirmations < minConfirmationsTx0) {
+        log.info(
+            "input not confirmed: mustMix needs at least "
+                + minConfirmationsTx0
+                + " confirmations: "
+                + txOutPoint.getHash());
+        return false;
+      }
+    }
+    return true;
   }
 }

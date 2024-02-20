@@ -4,18 +4,12 @@ import com.samourai.wallet.bip47.rpc.PaymentCode;
 import com.samourai.wallet.util.RandomUtil;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.utils.Utils;
-import java.lang.invoke.MethodHandles;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class InputPool {
-  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-  private static final int SOROBAN_INPUT_EXPIRATION = 120000; // 2min
-
   private Map<String, RegisteredInput> inputsById;
 
   public InputPool() {
@@ -29,9 +23,7 @@ public class InputPool {
   }
 
   public Optional<RegisteredInput> findByUsername(String username) {
-    return inputsById
-        .values()
-        .parallelStream()
+    return inputsById.values().parallelStream()
         .filter(registeredInput -> username.equals(registeredInput.getUsername()))
         .findFirst();
   }
@@ -84,9 +76,7 @@ public class InputPool {
   }
 
   public Collection<RegisteredInput> findByQuarantine(boolean quarantine) {
-    return inputsById
-        .values()
-        .parallelStream()
+    return inputsById.values().parallelStream()
         .filter(registeredInput -> registeredInput.isQuarantine() == quarantine)
         .collect(Collectors.toList());
   }
@@ -97,13 +87,10 @@ public class InputPool {
         .collect(Collectors.toList());
   }
 
-  public synchronized Optional<RegisteredInput> removeRandom(
-      Predicate<Map.Entry<String, RegisteredInput>> filter) {
+  public synchronized Optional<RegisteredInput> removeRandom(Predicate<RegisteredInput> filter) {
     List<String> eligibleInputIds =
-        inputsById
-            .entrySet()
-            .parallelStream()
-            .filter(filter)
+        inputsById.entrySet().parallelStream()
+            .filter(e -> filter.test(e.getValue()))
             .map(entry -> entry.getKey())
             .collect(Collectors.toList());
     return removeRandom(eligibleInputIds);
@@ -165,9 +152,7 @@ public class InputPool {
 
   public int getSizeByTor(boolean tor) {
     return (int)
-        inputsById
-            .values()
-            .parallelStream()
+        inputsById.values().parallelStream()
             .filter(input -> Boolean.valueOf(tor).equals(input.getTor()))
             .count();
   }
@@ -177,16 +162,13 @@ public class InputPool {
   }
 
   public Collection<RegisteredInput> getListBySoroban(boolean soroban) {
-    return inputsById
-        .values()
-        .parallelStream()
+    return inputsById.values().parallelStream()
         .filter(input -> soroban == input.isSoroban())
         .collect(Collectors.toList());
   }
 
   public Collection<SorobanInput> getListSorobanInputs() {
-    return getListBySoroban(true)
-        .parallelStream()
+    return getListBySoroban(true).parallelStream()
         .map(confirmedInput -> confirmedInput.getSorobanInput())
         .collect(Collectors.toList());
   }
@@ -196,9 +178,7 @@ public class InputPool {
   }
 
   public Collection<RegisteredInput> getListByLiquidity(boolean liquidity) {
-    return inputsById
-        .values()
-        .parallelStream()
+    return inputsById.values().parallelStream()
         .filter(input -> liquidity == input.isLiquidity())
         .collect(Collectors.toList());
   }
@@ -216,26 +196,5 @@ public class InputPool {
         .filter(
             registeredInput -> registeredInput.getSorobanInput().getSorobanLastSeen() < minLastSeen)
         .collect(Collectors.toList());
-  }
-
-  public void expireSorobanInputs() {
-    long minLastSeen = System.currentTimeMillis() - SOROBAN_INPUT_EXPIRATION;
-
-    // cleanup expired registeredInputs
-    Collection<RegisteredInput> registeredInputsExpired = getListSorobanInputsExpired(minLastSeen);
-    int nbExpired = registeredInputsExpired.size();
-    if (nbExpired > 0) {
-      if (log.isDebugEnabled()) {
-        log.debug("EXPIRE_SOROBAN_INPUT " + nbExpired + " inputs expired");
-      }
-    }
-    registeredInputsExpired.forEach(
-        registeredInput -> {
-          if (log.isDebugEnabled()) {
-            log.debug(
-                "[" + registeredInput.getPoolId() + "] -queue: " + registeredInput.toString());
-          }
-          remove(registeredInput);
-        });
   }
 }

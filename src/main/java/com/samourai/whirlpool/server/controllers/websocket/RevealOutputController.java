@@ -39,6 +39,9 @@ public class RevealOutputController extends AbstractWebSocketController {
     validateHeaders(headers);
 
     String username = principal.getName();
+    if (log.isDebugEnabled()) {
+      log.debug("(<) MIX_REVEAL_OUTPUT_CLASSIC mixId=" + payload.mixId + " username=" + username);
+    }
     revealOutputService.revealOutput_webSocket(payload.mixId, payload.receiveAddress, username);
   }
 

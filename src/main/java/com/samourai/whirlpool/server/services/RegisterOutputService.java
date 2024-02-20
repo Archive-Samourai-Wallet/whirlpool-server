@@ -7,7 +7,6 @@ import com.samourai.wallet.util.MessageSignUtilGeneric;
 import com.samourai.whirlpool.protocol.WhirlpoolErrorCode;
 import com.samourai.whirlpool.server.beans.FailMode;
 import com.samourai.whirlpool.server.beans.Mix;
-import com.samourai.whirlpool.server.beans.MixStatus;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import java.lang.invoke.MethodHandles;
@@ -49,12 +48,8 @@ public class RegisterOutputService {
   }
 
   public synchronized void registerOutput(
-      String inputsHash, byte[] unblindedSignedBordereau, String receiveAddress, byte[] bordereau)
+      Mix mix, byte[] unblindedSignedBordereau, String receiveAddress, byte[] bordereau)
       throws Exception {
-    if (log.isDebugEnabled()) {
-      log.debug("(<) registerOutput: " + inputsHash + " " + receiveAddress);
-    }
-
     try {
       // validate
       validate(receiveAddress);
@@ -63,7 +58,7 @@ public class RegisterOutputService {
       whirlpoolServerConfig.checkFailMode(FailMode.REGISTER_OUTPUT);
 
       // register
-      doRegisterOutput(inputsHash, unblindedSignedBordereau, receiveAddress, bordereau);
+      doRegisterOutput(mix, unblindedSignedBordereau, receiveAddress, bordereau);
 
       // revoke output
       try {
@@ -75,15 +70,14 @@ public class RegisterOutputService {
       }
     } catch (Exception e) {
       log.info("registerOutput failed for " + receiveAddress + ": " + e.getMessage());
-      mixService.registerOutputFailure(inputsHash, receiveAddress);
+      mixService.registerOutputFailure(mix, receiveAddress);
       throw e;
     }
   }
 
   private void doRegisterOutput(
-      String inputsHash, byte[] unblindedSignedBordereau, String receiveAddress, byte[] bordereau)
+      Mix mix, byte[] unblindedSignedBordereau, String receiveAddress, byte[] bordereau)
       throws Exception {
-    Mix mix = mixService.getMixByInputsHash(inputsHash, MixStatus.REGISTER_OUTPUT);
 
     // verify bordereau not already registered
     if (bordereau == null) {
@@ -117,7 +111,6 @@ public class RegisterOutputService {
           WhirlpoolErrorCode.INPUT_ALREADY_REGISTERED, "output already registered as input");
     }
 
-    log.info("REGISTERED_OUTPUT " + mix.getMixId() + " " + receiveAddress);
     mix.registerOutput(receiveAddress, bordereau);
 
     mixService.onRegisterOutput(mix);

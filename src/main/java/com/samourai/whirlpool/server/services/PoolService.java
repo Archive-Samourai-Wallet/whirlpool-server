@@ -3,23 +3,19 @@ package com.samourai.whirlpool.server.services;
 import com.google.common.collect.ImmutableMap;
 import com.samourai.javaserver.exceptions.NotifiableException;
 import com.samourai.whirlpool.protocol.WhirlpoolErrorCode;
+import com.samourai.whirlpool.protocol.soroban.WhirlpoolApiCoordinator;
 import com.samourai.whirlpool.protocol.soroban.payload.coordinators.PoolInfo;
 import com.samourai.whirlpool.server.beans.*;
 import com.samourai.whirlpool.server.beans.export.ActivityCsv;
-import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import java.lang.invoke.MethodHandles;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
@@ -28,23 +24,22 @@ public class PoolService {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private WhirlpoolServerConfig whirlpoolServerConfig;
-  private CryptoService cryptoService;
   private ExportService exportService;
   private MetricService metricService;
+  private WhirlpoolApiCoordinator whirlpoolApiCoordinator;
   private Map<String, Pool> pools;
 
   @Autowired
   public PoolService(
       WhirlpoolServerConfig whirlpoolServerConfig,
-      CryptoService cryptoService,
       ExportService exportService,
       MetricService metricService,
       WSSessionService wsSessionService,
-      TaskScheduler taskScheduler) {
+      WhirlpoolApiCoordinator whirlpoolApiCoordinator) {
     this.whirlpoolServerConfig = whirlpoolServerConfig;
-    this.cryptoService = cryptoService;
     this.exportService = exportService;
     this.metricService = metricService;
+    this.whirlpoolApiCoordinator = whirlpoolApiCoordinator;
     __reset();
 
     // listen websocket onDisconnect
@@ -84,7 +79,8 @@ public class PoolService {
             poolConfig.getMinLiquidityPoolForSurge(),
             poolConfig.getAnonymitySet(),
             poolConfig.getTx0MaxOutputs(),
-            minerFee);
+            minerFee,
+            whirlpoolApiCoordinator);
     pools.put(poolId, pool);
     metricService.manage(pool);
     return pool;
@@ -95,8 +91,7 @@ public class PoolService {
   }
 
   public Collection<PoolInfo> computePoolInfosSoroban(long feePerB) {
-    return getPools()
-        .parallelStream()
+    return getPools().parallelStream()
         .map(
             pool ->
                 new PoolInfo(
@@ -128,48 +123,23 @@ public class PoolService {
     return pool;
   }
 
-  public RegisteredInput registerInput(
-      String poolId,
-      String username,
-      boolean liquidity,
-      TxOutPoint txOutPoint,
-      Boolean tor,
-      SorobanInput sorobanInputOrNull,
-      String lastUserHash)
+  public void registerInput(RegisteredInput registeredInput, Map<String, String> clientDetails)
       throws NotifiableException {
-    Pool pool = getPool(poolId);
-
-    // verify balance
-    long inputBalance = txOutPoint.getValue();
-    if (!pool.checkInputBalance(inputBalance, liquidity)) {
-      long balanceMin = pool.computePremixBalanceMin(liquidity);
-      long balanceMax = pool.computePremixBalanceMax(liquidity);
-      throw new IllegalInputException(
-          WhirlpoolErrorCode.INPUT_REJECTED,
-          "Invalid input balance (expected: "
-              + balanceMin
-              + "-"
-              + balanceMax
-              + ", actual:"
-              + txOutPoint.getValue()
-              + ")");
-    }
-
-    RegisteredInput registeredInput =
-        new RegisteredInput(
-            poolId, username, liquidity, txOutPoint, tor, lastUserHash, sorobanInputOrNull);
-
-    // verify confirmations
-    if (!isUtxoConfirmed(txOutPoint, liquidity)) {
-      throw new IllegalInputException(WhirlpoolErrorCode.INPUT_REJECTED, "Input is not confirmed");
-    }
-
     // queue input
     getPoolQueue(registeredInput).register(registeredInput);
     if (log.isDebugEnabled()) {
       log.debug("+INPUT_QUEUE " + registeredInput.getPoolId() + " " + registeredInput.toString());
     }
-    return registeredInput;
+
+    // log activity
+    if (clientDetails == null) {
+      clientDetails = new LinkedHashMap<>();
+    }
+    clientDetails.put("soroban", registeredInput.isSoroban() ? "true" : "false");
+    ActivityCsv activityCsv =
+        new ActivityCsv(
+            "REGISTER_INPUT", registeredInput.getPoolId(), registeredInput, null, clientDetails);
+    exportService.exportActivity(activityCsv);
   }
 
   private InputPool getPoolQueue(RegisteredInput registeredInput) throws NotifiableException {
@@ -189,36 +159,6 @@ public class PoolService {
   public void resetLastUserHash(Mix mix) {
     mix.getPool().getLiquidityQueue().resetLastUserHash();
     mix.getPool().getMustMixQueue().resetLastUserHash();
-  }
-
-  private boolean isUtxoConfirmed(TxOutPoint txOutPoint, boolean liquidity) {
-    int inputConfirmations = txOutPoint.getConfirmations();
-    if (liquidity) {
-      // liquidity
-      int minConfirmationsMix =
-          whirlpoolServerConfig.getRegisterInput().getMinConfirmationsLiquidity();
-      if (inputConfirmations < minConfirmationsMix) {
-        log.info(
-            "input not confirmed: liquidity needs at least "
-                + minConfirmationsMix
-                + " confirmations: "
-                + txOutPoint.getHash());
-        return false;
-      }
-    } else {
-      // mustMix
-      int minConfirmationsTx0 =
-          whirlpoolServerConfig.getRegisterInput().getMinConfirmationsMustMix();
-      if (inputConfirmations < minConfirmationsTx0) {
-        log.info(
-            "input not confirmed: mustMix needs at least "
-                + minConfirmationsTx0
-                + " confirmations: "
-                + txOutPoint.getHash());
-        return false;
-      }
-    }
-    return true;
   }
 
   private void onClientDisconnect(String username) {
@@ -252,11 +192,6 @@ public class PoolService {
         exportService.exportActivity(activityCsv);
       }
     }
-  }
-
-  public void expireSorobanInputs(Pool pool) {
-    pool.getMustMixQueue().expireSorobanInputs();
-    pool.getLiquidityQueue().expireSorobanInputs();
   }
 
   public int getNbInputs() {
