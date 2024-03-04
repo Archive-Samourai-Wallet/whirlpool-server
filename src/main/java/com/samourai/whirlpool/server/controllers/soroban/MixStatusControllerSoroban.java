@@ -24,22 +24,15 @@ public class MixStatusControllerSoroban extends AbstractPerMixControllerSoroban 
   }
 
   @Override
-  protected boolean isRequestCacheable(SorobanItemTyped message) {
-    // disable caching for MixStatusRequest to update response with mix progress
-    return false;
-  }
-
-  @Override
-  protected SorobanPayloadable doComputeReplyOnRequestNewForCaching(SorobanItemTyped request)
-      throws Exception {
+  protected SorobanPayloadable doComputeReply(SorobanItemTyped request) throws Exception {
     // update last seen
     RegisteredInput registeredInput = setMixInputLastSeen(request.getMetaSender());
 
     // reply
-    return mixStatus(registeredInput);
+    return mixStatusResponse(registeredInput);
   }
 
-  protected SorobanPayloadable mixStatus(RegisteredInput registeredInput) throws Exception {
+  protected SorobanPayloadable mixStatusResponse(RegisteredInput registeredInput) throws Exception {
     // send mixStatusResponse
     return mix.getMixStatusResponse(registeredInput.getSorobanInput());
   }

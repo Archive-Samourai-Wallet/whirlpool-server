@@ -1,7 +1,7 @@
 package com.samourai.whirlpool.server.controllers.soroban;
 
 import com.samourai.javaserver.exceptions.NotifiableException;
-import com.samourai.soroban.client.endpoint.controller.SorobanControllerTypedWithCachedReply;
+import com.samourai.soroban.client.endpoint.controller.SorobanControllerTyped;
 import com.samourai.soroban.client.endpoint.meta.typed.SorobanItemTyped;
 import com.samourai.wallet.api.backend.beans.BackendPushTxException;
 import com.samourai.wallet.sorobanClient.SorobanPayloadable;
@@ -20,7 +20,7 @@ import javax.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Tx0PerPoolControllerSoroban extends SorobanControllerTypedWithCachedReply {
+public class Tx0PerPoolControllerSoroban extends SorobanControllerTyped {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   private Tx0Service tx0Service;
@@ -53,40 +53,17 @@ public class Tx0PerPoolControllerSoroban extends SorobanControllerTypedWithCache
   }
 
   @Override
-  protected SorobanPayloadable computeReplyOnRequestNewForCaching(
-      SorobanItemTyped request, String key) throws Exception {
+  protected SorobanPayloadable computeReply(SorobanItemTyped request) throws Exception {
     if (request.isTyped(Tx0DataRequest.class)) {
-      if (log.isDebugEnabled()) {
-        log.debug("(<) TX0_DATA_SOROBAN " + poolId + " sender=" + request.getMetaSender());
-      }
       return tx0Data(request.read(Tx0DataRequest.class));
     }
     if (request.isTyped(Tx0PushRequest.class)) {
-      if (log.isDebugEnabled()) {
-        log.debug("(<) TX0_PUSH_SOROBAN " + poolId + " sender=" + request.getMetaSender());
-      }
       return tx0Push(request.read(Tx0PushRequest.class));
     }
     throw new Exception("Unexpected request type: " + request.getType());
   }
 
-  @Override
-  protected void onRequestExisting(SorobanItemTyped request, String key) throws Exception {
-    super.onRequestExisting(request, key);
-
-    if (log.isDebugEnabled()) {
-      log.debug(
-          "(<) TX0_REQUEST_SOROBAN_EXISTING (existing) "
-              + poolId
-              + " "
-              + request.getType()
-              + " sender="
-              + request.getMetaSender());
-    }
-  }
-
   protected Tx0DataResponse tx0Data(Tx0DataRequest tx0DataRequest) throws Exception {
-    // TODO checkPoolId(tx0PushRequest.poolId);
     return tx0Service.tx0Data(tx0DataRequest, false, null, null);
   }
 
@@ -103,21 +80,6 @@ public class Tx0PerPoolControllerSoroban extends SorobanControllerTypedWithCache
   private void checkPoolId(String requestPoolId) throws Exception {
     if (!poolId.equals(requestPoolId)) {
       throw new NotifiableException(WhirlpoolErrorCode.INVALID_ARGUMENT, "Invalid poolId");
-    }
-  }
-
-  @Override
-  protected void sendReply(SorobanItemTyped request, SorobanPayloadable response) throws Exception {
-    super.sendReply(request, response);
-
-    if (log.isDebugEnabled()) {
-      log.debug(
-          "(>) TX0_SOROBAN_REPLY mixId="
-              + poolId
-              + " type="
-              + request.getType()
-              + " sender="
-              + request.getMetaSender());
     }
   }
 }

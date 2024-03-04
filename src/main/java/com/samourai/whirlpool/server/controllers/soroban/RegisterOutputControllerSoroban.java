@@ -36,18 +36,12 @@ public class RegisterOutputControllerSoroban extends AbstractPerMixControllerSor
   // to allow multiple attempts on address reuse
 
   @Override
-  protected SorobanPayloadable doComputeReplyOnRequestNewForCaching(SorobanItemTyped request)
-      throws Exception {
+  protected SorobanPayloadable doComputeReply(SorobanItemTyped request) throws Exception {
     // reply
     return registerOutput(request.read(RegisterOutputRequest.class));
   }
 
   protected AckResponse registerOutput(RegisterOutputRequest payload) throws Exception {
-    // signing
-    byte[] unblindedSignedBordereau =
-        WhirlpoolProtocol.decodeBytes(payload.unblindedSignedBordereau64);
-    byte[] bordereau = WhirlpoolProtocol.decodeBytes(payload.bordereau64);
-
     // find mix
     if (!mix.computeInputsHash().equals(payload.inputsHash)) {
       log.warn("REGISTER_OUTPUT rejected: no current mix for inputsHash=" + payload.inputsHash);
@@ -55,12 +49,18 @@ public class RegisterOutputControllerSoroban extends AbstractPerMixControllerSor
       // client disconnected during the mix)
       throw new MixException("Mix not found");
     }
-    if (log.isDebugEnabled()) {
-      log.debug("(<) MIX_REGISTER_OUTPUT_SOROBAN " + mix.getMixId() + " " + payload.receiveAddress);
-    }
 
-    registerOutputService.registerOutput(
-        mix, unblindedSignedBordereau, payload.receiveAddress, bordereau);
+    byte[] bordereau = WhirlpoolProtocol.decodeBytes(payload.bordereau64);
+    if (!mix.hasBordereau(bordereau)) { // ignore duplicate requests
+      if (log.isDebugEnabled()) {
+        log.debug(
+            "(<) MIX_REGISTER_OUTPUT_SOROBAN " + mix.getMixId() + " " + payload.receiveAddress);
+      }
+      byte[] unblindedSignedBordereau =
+          WhirlpoolProtocol.decodeBytes(payload.unblindedSignedBordereau64);
+      registerOutputService.registerOutput(
+          mix, unblindedSignedBordereau, payload.receiveAddress, bordereau);
+    }
 
     // reply ACK
     return new AckResponse();

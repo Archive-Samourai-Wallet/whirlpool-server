@@ -121,6 +121,7 @@ public class ConfirmInputService {
       mix.setSurge();
       // surges will be invited soon by mixLimitsService
     }
+    registeredInput.setSignedBordereau(signedBordereau);
     return signedBordereau;
   }
 }

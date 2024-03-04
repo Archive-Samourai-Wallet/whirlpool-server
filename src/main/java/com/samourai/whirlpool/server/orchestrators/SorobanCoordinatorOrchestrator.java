@@ -49,8 +49,8 @@ public class SorobanCoordinatorOrchestrator extends AbstractOrchestrator {
       // register coordinator
       long mixFeePerB = minerFeeService.getMixFeePerB();
       Collection<PoolInfo> poolInfosSoroban = poolService.computePoolInfosSoroban(mixFeePerB);
-      if (log.isDebugEnabled()) {
-        log.debug("registering coordinator: " + poolInfosSoroban.size() + " pools");
+      if (log.isTraceEnabled()) {
+        log.trace("registering coordinator: " + poolInfosSoroban.size() + " pools");
       }
       CoordinatorInfo coordinatorInfo =
           new CoordinatorInfo(serverConfig.getCoordinatorName(), COORDINATOR_PRIORITY);

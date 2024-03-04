@@ -128,7 +128,7 @@ public class PoolService {
     // queue input
     getPoolQueue(registeredInput).register(registeredInput);
     if (log.isDebugEnabled()) {
-      log.debug("+INPUT_QUEUE " + registeredInput.getPoolId() + " " + registeredInput.toString());
+      log.debug("+INPUT_QUEUE_CLASSIC " + registeredInput.getPoolId() + " " + registeredInput);
     }
 
     // log activity
@@ -170,7 +170,7 @@ public class PoolService {
           pool.getLiquidityQueue().removeByUsername(username);
       if (liquidityRemoved.isPresent()) {
         if (log.isDebugEnabled()) {
-          log.debug("[" + pool.getPoolId() + "] " + username + " removed 1 liquidity from pool");
+          log.debug("-INPUT_QUEUE_CLASSIC " + pool.getPoolId() + " " + liquidityRemoved.get());
         }
 
         // log activity
@@ -183,7 +183,7 @@ public class PoolService {
       // remove queued mustMix
       Optional<RegisteredInput> mustMixRemoved = pool.getMustMixQueue().removeByUsername(username);
       if (mustMixRemoved.isPresent()) {
-        log.info("[" + pool.getPoolId() + "] " + username + " removed 1 mustMix from pool");
+        log.info("-INPUT_QUEUE_CLASSIC " + pool.getPoolId() + " " + mustMixRemoved.get());
 
         // log activity
         ActivityCsv activityCsv =

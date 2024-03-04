@@ -32,8 +32,7 @@ public class SigningControllerSoroban extends AbstractPerMixControllerSoroban {
   }
 
   @Override
-  protected SorobanPayloadable doComputeReplyOnRequestNewForCaching(SorobanItemTyped request)
-      throws Exception {
+  protected SorobanPayloadable doComputeReply(SorobanItemTyped request) throws Exception {
     // update last seen
     RegisteredInput registeredInput = setMixInputLastSeen(request.getMetaSender());
 
@@ -43,8 +42,11 @@ public class SigningControllerSoroban extends AbstractPerMixControllerSoroban {
 
   protected AckResponse signing(RegisteredInput registeredInput, SigningRequest payload)
       throws Exception {
-    // signing
-    signingService.signing(payload.witnesses64, mix, registeredInput);
+
+    if (!mix.isSigned(registeredInput)) { // ignore duplicate requests
+      // signing
+      signingService.signing(payload.witnesses64, mix, registeredInput);
+    }
 
     // reply ACK
     return new AckResponse();

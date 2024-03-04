@@ -32,8 +32,7 @@ public class RevealOutputControllerSoroban extends AbstractPerMixControllerSorob
   }
 
   @Override
-  protected SorobanPayloadable doComputeReplyOnRequestNewForCaching(SorobanItemTyped request)
-      throws Exception {
+  protected SorobanPayloadable doComputeReply(SorobanItemTyped request) throws Exception {
     // update last seen
     RegisteredInput registeredInput = setMixInputLastSeen(request.getMetaSender());
 
@@ -43,8 +42,11 @@ public class RevealOutputControllerSoroban extends AbstractPerMixControllerSorob
 
   protected AckResponse revealOutput(RegisteredInput registeredInput, RevealOutputRequest payload)
       throws Exception {
-    // reveal output
-    revealOutputService.revealOutput(payload.receiveAddress, mix, registeredInput);
+
+    if (!mix.hasRevealedOutput(registeredInput)) { // ignore duplicate requests
+      // reveal output
+      revealOutputService.revealOutput(payload.receiveAddress, mix, registeredInput);
+    }
 
     // reply ACK
     return new AckResponse();

@@ -1,13 +1,11 @@
 package com.samourai.whirlpool.server.controllers.soroban;
 
-import com.samourai.soroban.client.endpoint.controller.SorobanControllerTypedWithCachedReply;
+import com.samourai.soroban.client.endpoint.controller.SorobanControllerTyped;
 import com.samourai.soroban.client.endpoint.meta.typed.SorobanEndpointTyped;
 import com.samourai.soroban.client.endpoint.meta.typed.SorobanItemTyped;
 import com.samourai.wallet.bip47.rpc.PaymentCode;
 import com.samourai.wallet.sorobanClient.SorobanPayloadable;
 import com.samourai.whirlpool.protocol.WhirlpoolErrorCode;
-import com.samourai.whirlpool.protocol.soroban.payload.mix.ConfirmInputRequest;
-import com.samourai.whirlpool.protocol.soroban.payload.mix.RegisterOutputRequest;
 import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.beans.MixStatus;
 import com.samourai.whirlpool.server.beans.RegisteredInput;
@@ -20,12 +18,10 @@ import java.util.LinkedList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class AbstractPerMixControllerSoroban
-    extends SorobanControllerTypedWithCachedReply {
+public abstract class AbstractPerMixControllerSoroban extends SorobanControllerTyped {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   protected Mix mix;
-  protected String controllerName;
 
   public AbstractPerMixControllerSoroban(
       WhirlpoolServerContext serverContext,
@@ -38,7 +34,6 @@ public abstract class AbstractPerMixControllerSoroban
         serverContext.getRpcSession(),
         sorobanEndpoint);
     this.mix = mix;
-    this.controllerName = controllerName;
   }
 
   @Override
@@ -56,29 +51,6 @@ public abstract class AbstractPerMixControllerSoroban
 
     // fetch from Soroban
     return super.fetch();
-  }
-
-  @Override
-  protected final void onRequestExisting(SorobanItemTyped request, String key) throws Exception {
-    super.onRequestExisting(request, key);
-
-    if (log.isDebugEnabled()) {
-      log.debug(
-          "(<) MIX_INPUT_SOROBAN_CONTROLLER "
-              + controllerName
-              + " "
-              + request.getType()
-              + " mixId="
-              + mix.getMixId()
-              + " sender="
-              + request.getMetaSender());
-    }
-
-    if (!request.isTyped(ConfirmInputRequest.class)
-        && !request.isTyped(RegisterOutputRequest.class)) {
-      // update last seen
-      setMixInputLastSeen(request.getMetaSender());
-    }
   }
 
   protected RegisteredInput setMixInputLastSeen(PaymentCode sender) throws Exception {
@@ -101,43 +73,14 @@ public abstract class AbstractPerMixControllerSoroban
   }
 
   @Override
-  protected final SorobanPayloadable computeReplyOnRequestNewForCaching(
-      SorobanItemTyped request, String key) {
-    if (log.isDebugEnabled()) {
-      log.debug(
-          "(<) MIX_INPUT_SOROBAN_CONTROLLER "
-              + controllerName
-              + " mixId="
-              + mix.getMixId()
-              + "sender="
-              + request.getMetaSender());
-    }
-    // input is not confirmed yet
+  protected final SorobanPayloadable computeReply(SorobanItemTyped request) {
     try {
-      return doComputeReplyOnRequestNewForCaching(request);
+      return doComputeReply(request);
     } catch (Exception e) {
       log.error("error processing " + request.getType(), e);
       return Utils.computeSorobanErrorMessage(e);
     }
   }
 
-  protected abstract SorobanPayloadable doComputeReplyOnRequestNewForCaching(
-      SorobanItemTyped request) throws Exception;
-
-  @Override
-  protected void sendReply(SorobanItemTyped request, SorobanPayloadable response) throws Exception {
-    super.sendReply(request, response);
-
-    if (log.isDebugEnabled()) {
-      log.debug(
-          "(>) MIX_INPUT_SOROBAN_CONTROLLER "
-              + controllerName
-              + " mixId="
-              + mix.getMixId()
-              + " "
-              + response.getClass().getName()
-              + " sender="
-              + request.getMetaSender());
-    }
-  }
+  protected abstract SorobanPayloadable doComputeReply(SorobanItemTyped request) throws Exception;
 }

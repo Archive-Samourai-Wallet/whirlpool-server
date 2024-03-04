@@ -299,11 +299,12 @@ public class Mix {
   public String getLogStatus() {
     int liquiditiesQueued = pool.getLiquidityQueue().getSize();
     int mustMixQueued = pool.getMustMixQueue().getSize();
-    return "anonymitySet "
+    return getMixStatus()
+        + " "
         + getNbInputs()
         + "/"
         + getAnonymitySetWithSurge()
-        + ": "
+        + " inputs, "
         + getNbInputsMustMix()
         + "/"
         + getPool().getMinMustMix()
@@ -322,13 +323,12 @@ public class Mix {
         + "sat"
         + ", "
         + getNbConfirmingInputs()
-        + " confirming, mixStatus="
-        + getMixStatus()
-        + " (pool: "
+        + " confirming"
+        + ", "
         + liquiditiesQueued
-        + " liquidities + "
+        + "+"
         + mustMixQueued
-        + " mustMixs)";
+        + " queued";
   }
 
   public AsymmetricCipherKeyPair getKeyPair() {
@@ -410,7 +410,7 @@ public class Mix {
               + " "
               + mixId
               + " "
-              + confirmingInput.get().toString());
+              + confirmingInput.get());
       confirmingInput.get().setConfirmingSince(null);
     }
     return confirmingInput;
@@ -502,6 +502,7 @@ public class Mix {
   public synchronized void unregisterInput(RegisteredInput confirmedInput) {
     log.info("MIX_REMOVE_INPUT " + mixId + " " + confirmedInput);
     confirmedInputs.remove(confirmedInput);
+    confirmedInput.setSignedBordereau(null);
   }
 
   public String computeInputsHash() {

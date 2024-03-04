@@ -28,9 +28,6 @@ public class SorobanInput {
   }
 
   public void setSorobanLastSeen() {
-    if (log.isDebugEnabled()) {
-      log.debug("INPUT_SOROBAN_LASTSEEN " + sender);
-    }
     this.sorobanLastSeen = System.currentTimeMillis();
   }
 

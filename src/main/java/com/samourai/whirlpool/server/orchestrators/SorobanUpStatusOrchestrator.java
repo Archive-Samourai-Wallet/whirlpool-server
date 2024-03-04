@@ -85,7 +85,9 @@ public class SorobanUpStatusOrchestrator extends AbstractOrchestrator {
                     sorobanClient -> whirlpoolApiCoordinator.upStatusSend(sorobanClient, checkId),
                     sorobanUrl));
       } catch (Exception e) {
-        log.error("upStatusSend() failed: " + e.getMessage() + ", sorobanUrl=" + sorobanUrl);
+        if (log.isTraceEnabled()) {
+          log.error("upStatusSend() failed: " + e.getMessage() + ", sorobanUrl=" + sorobanUrl);
+        }
       }
     }
 

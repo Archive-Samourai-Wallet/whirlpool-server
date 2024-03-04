@@ -84,7 +84,13 @@ public class Tx0Service {
       Map<String, String> clientDetails)
       throws Exception {
     if (log.isDebugEnabled()) {
-      log.debug("(<) TX0_DATA (" + tx0DataRequest.partnerId + ")");
+      log.debug(
+          "(<) TX0_DATA ("
+              + tx0DataRequest.partnerId
+              + ") scode="
+              + (tx0DataRequest.scode != null ? Util.maskString(tx0DataRequest.scode, 2) : "null")
+              + " opReturnV0="
+              + opReturnV0);
     }
 
     String scode = tx0DataRequest.scode;
@@ -98,16 +104,6 @@ public class Tx0Service {
     }
 
     Partner partner = partnerService.getById(partnerId); // validate partner
-
-    if (log.isDebugEnabled()) {
-      log.debug(
-          "Tx0Data: scode="
-              + (scode != null ? Util.maskString(scode, 2) : "null")
-              + ", partnerId="
-              + partner.getId()
-              + ", opReturnV0="
-              + opReturnV0);
-    }
 
     WhirlpoolServerConfig.ScodeSamouraiFeeConfig scodeConfig = null;
     if (tx0DataRequest.cascading) {
@@ -235,8 +231,8 @@ public class Tx0Service {
             feeValue,
             serverConfig.getNetworkParameters(),
             serverContext.getSigningWallet());
-    if (log.isDebugEnabled()) {
-      log.debug("feeAddress=" + feeAddress + ", feeValue=" + feeValue + ", " + txOutSignature);
+    if (log.isTraceEnabled()) {
+      log.trace("feeAddress=" + feeAddress + ", feeValue=" + feeValue + ", " + txOutSignature);
     }
     return txOutSignature;
   }

@@ -14,6 +14,7 @@ public class RegisteredInput {
   private SorobanInput sorobanInput; // null for non-Soroban clients
   private Long confirmingSince; // null until confirming
   private String quarantineReason; // only set when on "quarantine" for current mix
+  private byte[] signedBordereau; // after input confirmation
 
   public RegisteredInput(
       String poolId,
@@ -109,6 +110,14 @@ public class RegisteredInput {
 
   public void clearQuarantine() {
     this.quarantineReason = null;
+  }
+
+  public byte[] getSignedBordereau() {
+    return signedBordereau;
+  }
+
+  public void setSignedBordereau(byte[] signedBordereau) {
+    this.signedBordereau = signedBordereau;
   }
 
   @Override

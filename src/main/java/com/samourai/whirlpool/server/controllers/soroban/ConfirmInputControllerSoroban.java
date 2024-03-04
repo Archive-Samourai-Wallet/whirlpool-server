@@ -38,8 +38,7 @@ public class ConfirmInputControllerSoroban extends AbstractPerMixControllerSorob
   }
 
   @Override
-  protected SorobanPayloadable doComputeReplyOnRequestNewForCaching(SorobanItemTyped request)
-      throws Exception {
+  protected SorobanPayloadable doComputeReply(SorobanItemTyped request) throws Exception {
     try {
       return confirmInput(request, request.read(ConfirmInputRequest.class));
     } catch (QueueInputException e) {
@@ -52,22 +51,31 @@ public class ConfirmInputControllerSoroban extends AbstractPerMixControllerSorob
   protected ConfirmInputResponse confirmInput(SorobanItemTyped request, ConfirmInputRequest payload)
       throws Exception {
     PaymentCode sender = request.getMetaSender();
-    RegisteredInput registeredInput =
+
+    // check if already confirmed?
+    RegisteredInput confirmedInput = mix.getInputs().findBySorobanSender(sender).orElse(null);
+    if (confirmedInput != null) {
+      // already confirmed (duplicate request)
+      return confirmInputResponse(confirmedInput);
+    }
+
+    // check if confirming
+    RegisteredInput confirmingInput =
         mix.removeConfirmingInputBySender(sender)
             .orElseThrow(
                 () ->
                     new IllegalInputException(
                         WhirlpoolErrorCode.SERVER_ERROR,
                         "Confirming input not found: sender=" + sender.toString()));
-    registeredInput.getSorobanInput().setSorobanLastSeen();
-
-    // confirm input and send back signed bordereau, or enqueue back to pool
+    // confirming => confirm input
     byte[] blindedBordereau = WhirlpoolProtocol.decodeBytes(payload.blindedBordereau64);
-    byte[] signedBordereau =
-        confirmInputService.confirmInput(mix, registeredInput, blindedBordereau, payload.userHash);
+    confirmInputService.confirmInput(mix, confirmingInput, blindedBordereau, payload.userHash);
+    return confirmInputResponse(confirmingInput);
+  }
 
-    // reply confirmInputResponse with signedBordereau
-    String signedBordereau64 = WhirlpoolProtocol.encodeBytes(signedBordereau);
+  private ConfirmInputResponse confirmInputResponse(RegisteredInput confirmedInput) {
+    confirmedInput.getSorobanInput().setSorobanLastSeen();
+    String signedBordereau64 = WhirlpoolProtocol.encodeBytes(confirmedInput.getSignedBordereau());
     return new ConfirmInputResponse(signedBordereau64);
   }
 }
