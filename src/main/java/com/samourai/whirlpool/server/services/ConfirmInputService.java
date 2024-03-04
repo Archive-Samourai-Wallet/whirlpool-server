@@ -107,7 +107,7 @@ public class ConfirmInputService {
     byte[] signedBordereau = cryptoService.signBlindedOutput(blindedBordereau, mix.getKeyPair());
 
     // add to mix inputs
-    mix.registerInput(registeredInput);
+    mix.registerInput(registeredInput, signedBordereau);
     mixService.logMixStatus(mix);
 
     // log activity
@@ -121,7 +121,6 @@ public class ConfirmInputService {
       mix.setSurge();
       // surges will be invited soon by mixLimitsService
     }
-    registeredInput.setSignedBordereau(signedBordereau);
     return signedBordereau;
   }
 }

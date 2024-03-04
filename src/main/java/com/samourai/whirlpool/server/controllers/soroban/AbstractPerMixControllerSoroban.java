@@ -46,6 +46,9 @@ public abstract class AbstractPerMixControllerSoroban extends SorobanControllerT
             // no SorobanInput confirming yet
             || mix.getConfirmingInputs().getListBySoroban(true).isEmpty())) {
       // no mixing input from Soroban yet
+      if (log.isTraceEnabled()) {
+        log.trace("MIX_INPUT_NONE_SOROBAN " + mix.getMixId() + " " + mix.getLogStatus());
+      }
       return new LinkedList<>();
     }
 

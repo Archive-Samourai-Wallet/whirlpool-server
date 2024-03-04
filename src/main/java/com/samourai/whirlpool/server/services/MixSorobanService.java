@@ -21,7 +21,6 @@ public class MixSorobanService {
 
   private WhirlpoolServerContext serverContext;
   private SorobanAppWhirlpool sorobanAppWhirlpool;
-  private MixService mixService;
   private ConfirmInputService confirmInputService;
   private RegisterOutputService registerOutputService;
   private SigningService signingService;
@@ -39,7 +38,6 @@ public class MixSorobanService {
       Tx0Service tx0Service) {
     this.serverContext = serverContext;
     this.sorobanAppWhirlpool = sorobanAppWhirlpool;
-    this.mixService = mixService;
     this.confirmInputService = confirmInputService;
     this.registerOutputService = registerOutputService;
     this.signingService = signingService;
@@ -50,7 +48,7 @@ public class MixSorobanService {
     // TODO MixSorobanService is instanciated *AFTER* MixService has pushed initial events
     //  so we need this to manage initial mixs on startup
     for (Pool pool : poolService.getPools()) {
-      log.info("Starting Soroban pool: " + pool.getPoolId());
+      log.info("POOL_START " + pool.getPoolId());
       onMixStart(new MixStartEvent(pool.getCurrentMix()));
 
       // start TX0 controller per pool
@@ -69,7 +67,7 @@ public class MixSorobanService {
       return;
     }
     if (log.isDebugEnabled()) {
-      log.debug("Managing mix: " + mix.getMixId());
+      log.debug("MIX_MANAGE " + mix.getMixId());
     }
 
     // start mixStatus
@@ -79,22 +77,37 @@ public class MixSorobanService {
     mix.setSorobanControllerMixStatus(mixStatusController);
 
     // start mixStep
-    AbstractPerMixControllerSoroban mixStepController = computeMixStepControllerSoroban(mix);
-    if (mixStepController != null) {
-      mixStepController.start(true);
-      mix.setSorobanControllerMixStep(mixStepController);
-    }
+    startMixStepControllerSoroban(mix);
   }
 
-  private void startMixStepControllerSoroban(Mix mix) throws Exception {
+  private void startMixStepControllerSoroban(Mix mix) {
     if (mix.getSorobanControllerMixStep() != null) {
       mix.getSorobanControllerMixStep().stop();
+      mix.setSorobanControllerMixStep(null);
     }
 
     AbstractPerMixControllerSoroban mixStepController = computeMixStepControllerSoroban(mix);
     if (mixStepController != null) {
+      if (log.isDebugEnabled()) {
+        log.debug(
+            "MIX_START_SOROBAN_CONTROLER "
+                + mixStepController.getClass().getSimpleName()
+                + " mixId="
+                + mix.getMixId()
+                + ", mixStatus="
+                + mix.getMixStatus());
+      }
       mixStepController.start(true);
       mix.setSorobanControllerMixStep(mixStepController);
+    } else {
+      if (log.isDebugEnabled()) {
+        log.debug(
+            "MIX_NO_SOROBAN_CONTROLER "
+                + " mixId="
+                + mix.getMixId()
+                + ", mixStatus="
+                + mix.getMixStatus());
+      }
     }
   }
 
@@ -107,14 +120,14 @@ public class MixSorobanService {
   @Subscribe
   public void onMixEnd(MixStopEvent event) {
     Mix mix = event.getMix();
-    if (mix.getSorobanControllerMixStatus() == null) {
-      log.error("Unmanaging mix not found: " + mix.getMixId());
-      return;
-    }
     if (log.isDebugEnabled()) {
-      log.debug("Unmanaging mix: " + mix.getMixId());
+      log.debug("MIX_UNMANAGE " + mix.getMixId());
     }
-    mix.getSorobanControllerMixStatus().stop();
+    if (mix.getSorobanControllerMixStatus() != null) {
+      mix.getSorobanControllerMixStatus().stop();
+    } else {
+      log.error("Unmanaging mix not found: " + mix.getMixId());
+    }
     if (mix.getSorobanControllerMixStep() != null) {
       mix.getSorobanControllerMixStep().stop();
     }

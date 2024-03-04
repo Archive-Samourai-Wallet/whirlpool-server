@@ -747,14 +747,15 @@ public class MixService {
     mix.setBlameInputs(blameInputs, blameReason);
 
     // reset mix
-    String outpointKeysToBlame = computeOutpointKeysToBlame(blameInputs);
-    goFail(mix, failReason, outpointKeysToBlame);
+    String failInfo = computeFailInfoBlame(blameInputs);
+    goFail(mix, failReason, failInfo);
   }
 
-  private String computeOutpointKeysToBlame(Collection<RegisteredInput> confirmedInputsToBlame) {
+  private String computeFailInfoBlame(Collection<RegisteredInput> confirmedInputsToBlame) {
     List<String> outpointKeysToBlame = new ArrayList<>();
     for (RegisteredInput confirmedInputToBlame : confirmedInputsToBlame) {
-      outpointKeysToBlame.add(confirmedInputToBlame.getOutPoint().toKey());
+      String inputType = confirmedInputToBlame.getTypeStr();
+      outpointKeysToBlame.add(confirmedInputToBlame.getOutPoint().toKey() + "(" + inputType + ")");
     }
     String outpointKeysToBlameStr = StringUtils.join(outpointKeysToBlame, ";");
     return outpointKeysToBlameStr;
@@ -793,7 +794,7 @@ public class MixService {
   }
 
   private void onMixInputDisconnect(RegisteredInput confirmedInput, Mix mix) {
-    log.info("MIX_INPUT_DISCONNECT " + mix.getMixId() + " " + confirmedInput);
+    log.info("MIX_INPUT_DISCONNECT_"+confirmedInput.getTypeStr()+" " + mix.getMixId() + " " + confirmedInput);
     if (mix.isBlamableStatus()) {
       // don't unregister input to preserve original mix metrics
 
@@ -803,7 +804,7 @@ public class MixService {
       blameService.blame(confirmedInput, blameReason, mix, lastReceiveAddressRejected);
 
       // restart mix
-      String failInfo = computeOutpointKeysToBlame(Arrays.asList(confirmedInput));
+      String failInfo = computeFailInfoBlame(Arrays.asList(confirmedInput));
       FailReason failReason = FailReason.DISCONNECT;
       if (lastReceiveAddressRejected != null) {
         failInfo += " " + lastReceiveAddressRejected;

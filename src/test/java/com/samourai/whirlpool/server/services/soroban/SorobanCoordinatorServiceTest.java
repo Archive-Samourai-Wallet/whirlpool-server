@@ -48,7 +48,7 @@ public class SorobanCoordinatorServiceTest extends AbstractIntegrationTest {
     // fetch pools from Soroban
     MockMinerFeeSupplier minerFeeSupplier = new MockMinerFeeSupplier();
     ITx0PreviewServiceConfig tx0PreviewServiceConfig =
-        new MockTx0PreviewServiceConfig(serverConfig.getWhirlpoolNetwork());
+        new MockTx0PreviewServiceConfig(serverConfig.getSamouraiNetwork());
     Tx0PreviewService tx0PreviewService =
         new MockTx0PreviewService(minerFeeSupplier, tx0PreviewServiceConfig);
     ExpirableCoordinatorSupplier coordinatorSupplier =

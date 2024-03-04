@@ -376,8 +376,8 @@ public class Mix {
     registeredInput.setConfirmingSince(System.currentTimeMillis());
     confirmingInputs.register(registeredInput);
     log.info(
-        "MIX_ADD_CONFIRMING "
-            + (registeredInput.isSoroban() ? "SOROBAN" : "CLASSIC")
+        "MIX_ADD_CONFIRMING_"
+            + registeredInput.getTypeStr()
             + " "
             + mixId
             + " "
@@ -405,8 +405,8 @@ public class Mix {
       Optional<RegisteredInput> confirmingInput) {
     if (confirmingInput.isPresent()) {
       log.info(
-          "MIX_REMOVE_CONFIRMING "
-              + (confirmingInput.get().isSoroban() ? "SOROBAN" : "CLASSIC")
+          "MIX_REMOVE_CONFIRMING_"
+              + confirmingInput.get().getTypeStr()
               + " "
               + mixId
               + " "
@@ -476,20 +476,15 @@ public class Mix {
         .reduce(0L, Long::sum);
   }
 
-  public synchronized void registerInput(RegisteredInput registeredInput)
+  public synchronized void registerInput(RegisteredInput registeredInput, byte[] signedBordereau)
       throws IllegalInputException {
     if (confirmedInputs.find(registeredInput).isPresent()) {
       throw new IllegalInputException(
           WhirlpoolErrorCode.INPUT_ALREADY_REGISTERED, "input already registered");
     }
+    registeredInput.setSignedBordereau(signedBordereau);
     confirmedInputs.register(registeredInput);
-    log.info(
-        "MIX_ADD_INPUT "
-            + (registeredInput.isSoroban() ? "SOROBAN" : "CLASSIC")
-            + " "
-            + mixId
-            + " "
-            + registeredInput);
+    log.info("MIX_ADD_INPUT_" + registeredInput.getTypeStr() + " " + mixId + " " + registeredInput);
   }
 
   public synchronized void unregisterInputLiquidities(int limit) {

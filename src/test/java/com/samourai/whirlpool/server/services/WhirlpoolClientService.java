@@ -60,7 +60,7 @@ public class WhirlpoolClientService {
           Bip47UtilJava.getInstance(),
           cryptoUtil,
           null,
-          serverConfig.getWhirlpoolNetwork(),
+          serverConfig.getSamouraiNetwork(),
           IndexRange.FULL,
           false);
     } catch (Exception e) {

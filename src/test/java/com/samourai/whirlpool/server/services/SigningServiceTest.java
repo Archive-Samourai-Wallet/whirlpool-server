@@ -122,7 +122,8 @@ public class SigningServiceTest extends AbstractIntegrationTest {
             firstTxOutPoint,
             false,
             "userHash1",
-            null));
+            null),
+        bordereau);
     mix.registerOutput(testUtils.generateSegwitAddress().getBech32AsString(), bordereau);
 
     // prepare input

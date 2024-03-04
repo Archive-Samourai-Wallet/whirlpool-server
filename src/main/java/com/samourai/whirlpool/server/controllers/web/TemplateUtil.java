@@ -25,7 +25,7 @@ public class TemplateUtil {
                       input ->
                           input.getOutPoint().toKey()
                               + " "
-                              + (input.isSoroban() ? "soroban" : "classic")
+                              + input.getTypeStr()
                               + (input.isQuarantine() ? ": " + input.getQuarantineReason() : ""))
                   .collect(Collectors.joining("\n"));
     }

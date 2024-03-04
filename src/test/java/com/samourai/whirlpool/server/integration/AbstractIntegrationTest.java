@@ -13,7 +13,7 @@ import com.samourai.wallet.bip47.rpc.PaymentCode;
 import com.samourai.wallet.bip47.rpc.java.Bip47UtilJava;
 import com.samourai.wallet.bip47.rpc.java.SecretPointFactoryJava;
 import com.samourai.wallet.bipFormat.BIP_FORMAT;
-import com.samourai.wallet.constants.WhirlpoolNetwork;
+import com.samourai.wallet.constants.SamouraiNetwork;
 import com.samourai.wallet.crypto.CryptoUtil;
 import com.samourai.wallet.hd.HD_Wallet;
 import com.samourai.wallet.hd.HD_WalletFactoryGeneric;
@@ -360,7 +360,7 @@ public abstract class AbstractIntegrationTest {
             sorobanWalletService,
             multiUsageHttpClientService,
             bip47Util,
-            WhirlpoolNetwork.TESTNET,
+            SamouraiNetwork.TESTNET,
             false,
             false);
     return config;

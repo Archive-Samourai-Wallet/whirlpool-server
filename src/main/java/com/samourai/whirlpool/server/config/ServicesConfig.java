@@ -149,8 +149,7 @@ public class ServicesConfig extends ServerServicesConfig {
       WhirlpoolServerConfig serverConfig, WhirlpoolServerContext serverContext) {
     String senderSignedBySigningAddress =
         serverContext.getCoordinatorSenderSignedBySigningAddress();
-    return new SorobanAppWhirlpool(
-        serverConfig.getWhirlpoolNetwork(), senderSignedBySigningAddress);
+    return new SorobanAppWhirlpool(serverConfig.getSamouraiNetwork(), senderSignedBySigningAddress);
   }
 
   @Bean

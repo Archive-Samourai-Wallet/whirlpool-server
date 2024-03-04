@@ -305,7 +305,7 @@ public class Tx0ValidationServiceV0Test extends AbstractIntegrationTest {
                 Arrays.asList(pool),
                 Tx0FeeTarget.BLOCKS_2,
                 Tx0FeeTarget.BLOCKS_2,
-                WhirlpoolAccount.DEPOSIT),
+                SamouraiAccount.DEPOSIT),
             tx0Preview,
             utxoKeyProvider);
 
@@ -432,7 +432,7 @@ public class Tx0ValidationServiceV0Test extends AbstractIntegrationTest {
                 Arrays.asList(pool),
                 Tx0FeeTarget.BLOCKS_2,
                 Tx0FeeTarget.BLOCKS_2,
-                WhirlpoolAccount.DEPOSIT),
+                SamouraiAccount.DEPOSIT),
             tx0Preview,
             utxoKeyProvider);
 
@@ -575,7 +575,7 @@ public class Tx0ValidationServiceV0Test extends AbstractIntegrationTest {
                 Arrays.asList(pool),
                 Tx0FeeTarget.BLOCKS_2,
                 Tx0FeeTarget.BLOCKS_2,
-                WhirlpoolAccount.DEPOSIT),
+                SamouraiAccount.DEPOSIT),
             tx0Preview,
             utxoKeyProvider);
 
@@ -698,7 +698,7 @@ public class Tx0ValidationServiceV0Test extends AbstractIntegrationTest {
                 Arrays.asList(pool),
                 Tx0FeeTarget.BLOCKS_2,
                 Tx0FeeTarget.BLOCKS_2,
-                WhirlpoolAccount.DEPOSIT),
+                SamouraiAccount.DEPOSIT),
             tx0Preview,
             utxoKeyProvider);
 

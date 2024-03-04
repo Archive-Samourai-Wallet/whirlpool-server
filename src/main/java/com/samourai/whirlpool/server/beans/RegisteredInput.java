@@ -72,6 +72,10 @@ public class RegisteredInput {
     return sorobanInput != null;
   }
 
+  public String getTypeStr() {
+    return isSoroban() ? "SOROBAN" : "CLASSIC";
+  }
+
   public String getLastUserHash() {
     return lastUserHash;
   }
