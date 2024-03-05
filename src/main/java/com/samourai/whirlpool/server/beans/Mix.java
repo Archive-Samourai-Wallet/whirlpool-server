@@ -560,7 +560,13 @@ public class Mix {
   }
 
   public void addRevealedOutput(RegisteredInput registeredInput, String receiveAddress) {
-    log.info("MIX_REVEAL_OUTPUT " + mixId + " " + registeredInput.toString());
+    log.info(
+        "MIX_REVEAL_OUTPUT_"
+            + registeredInput.getTypeStr()
+            + " "
+            + mixId
+            + " "
+            + registeredInput.toString());
     revealedReceiveAddressesByUsername.put(registeredInput.getUsername(), receiveAddress);
   }
 

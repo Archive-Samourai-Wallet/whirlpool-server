@@ -683,12 +683,6 @@ public class MixService {
   private void blameForRevealOutputAndResetMix(Mix mix) {
     // blame users who didn't register outputs
     List<RegisteredInput> confirmedInputsToBlame = mix.getInputsNotRevealedOutput();
-    log.info(
-        "MIX_FAILED "
-            + mix.getMixId()
-            + " REVEAL_OUTPUT time over, mix failed. Blaming "
-            + confirmedInputsToBlame.size()
-            + " who didn't sign...");
     blameAndResetMix(
         mix, confirmedInputsToBlame, BlameReason.REGISTER_OUTPUT, FailReason.FAIL_REGISTER_OUTPUTS);
   }
@@ -696,12 +690,6 @@ public class MixService {
   public void onTimeoutSigning(Mix mix) {
     // blame users who didn't sign
     List<RegisteredInput> confirmedInputsToBlame = mix.getInputsNotSigned();
-    log.info(
-        "MIX_FAILED "
-            + mix.getMixId()
-            + " SIGNING time over, mix failed. Blaming "
-            + confirmedInputsToBlame.size()
-            + " who didn't sign...");
     blameAndResetMix(mix, confirmedInputsToBlame, BlameReason.SIGNING, FailReason.FAIL_SIGNING);
   }
 
@@ -740,6 +728,13 @@ public class MixService {
 
   public void blameAndResetMix(
       Mix mix, List<RegisteredInput> blameInputs, BlameReason blameReason, FailReason failReason) {
+    log.info(
+        "MIX_FAILED "
+            + mix.getMixId()
+            + " blameReason="
+            + blameReason
+            + ", blameInputs="
+            + blameInputs);
     // blame inputs
     for (RegisteredInput spentInput : blameInputs) {
       blameService.blame(spentInput, blameReason, mix);
@@ -755,7 +750,7 @@ public class MixService {
     List<String> outpointKeysToBlame = new ArrayList<>();
     for (RegisteredInput confirmedInputToBlame : confirmedInputsToBlame) {
       String inputType = confirmedInputToBlame.getTypeStr();
-      outpointKeysToBlame.add(confirmedInputToBlame.getOutPoint().toKey() + "(" + inputType + ")");
+      outpointKeysToBlame.add(inputType + ":" + confirmedInputToBlame.getOutPoint().toKey());
     }
     String outpointKeysToBlameStr = StringUtils.join(outpointKeysToBlame, ";");
     return outpointKeysToBlameStr;
@@ -794,7 +789,13 @@ public class MixService {
   }
 
   private void onMixInputDisconnect(RegisteredInput confirmedInput, Mix mix) {
-    log.info("MIX_INPUT_DISCONNECT_"+confirmedInput.getTypeStr()+" " + mix.getMixId() + " " + confirmedInput);
+    log.info(
+        "MIX_INPUT_DISCONNECT_"
+            + confirmedInput.getTypeStr()
+            + " "
+            + mix.getMixId()
+            + " "
+            + confirmedInput);
     if (mix.isBlamableStatus()) {
       // don't unregister input to preserve original mix metrics
 

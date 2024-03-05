@@ -8,6 +8,8 @@
 	<properties>
 		<spring-boot.version>2.6.2</spring-boot.version>
 		<project.scm.id>samourai</project.scm.id>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -18,29 +20,17 @@
 		<dependency>
 			<groupId>io.samourai.code.whirlpool</groupId>
 			<artifactId>whirlpool-client</artifactId>
-			<version>1.0.0-dexwp-beta7-SNAPSHOT</version>
-		</dependency>
-		<!-- old protocol for old clients over websocket -->
-		<dependency>
-			<groupId>io.samourai.code.whirlpool</groupId>
-			<artifactId>whirlpool-protocol-v0</artifactId>
-			<version>0.23.11-SNAPSHOT</version>
-			<exclusions>
-				<exclusion>
-					<groupId>io.samourai.code.wallet</groupId>
-					<artifactId>extlibj</artifactId>
-				</exclusion>
-			</exclusions>
+			<version>1.0.0-beta3</version>
 		</dependency>
 		<dependency>
 			<groupId>io.samourai.code.wallet</groupId>
 			<artifactId>java-websocket-server</artifactId>
-			<version>1.0.5-SNAPSHOT</version>
+			<version>1.0.5</version>
 		</dependency>
 		<dependency>
 			<groupId>io.samourai.code.wallet</groupId>
 			<artifactId>extlibj</artifactId>
-			<version>0.0.43-dexwp-beta2-SNAPSHOT</version>
+			<version>1.0.0-dexwp-beta3</version>
 		</dependency>
 		<dependency>
 			<groupId>io.samourai.code.wallet</groupId>
@@ -50,7 +40,7 @@
 		<dependency>
 			<groupId>io.samourai.code.wallet</groupId>
 			<artifactId>java-http-client</artifactId>
-			<version>1.0.8-SNAPSHOT</version>
+			<version>2.0.0-beta3</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -127,14 +117,12 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.22.1</version>
+				<version>3.2.5</version>
 			</plugin>
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
-				</configuration>
+				<version>3.12.1</version>
 			</plugin>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
@@ -182,7 +170,7 @@
 		</repository>
 	</repositories>
 	<scm>
-		<connection>scm:git:git@code.samourai.io:whirlpool/whirlpool-server.git</connection>
+		<connection>scm:git:https://code.samourai.io/whirlpool/whirlpool-server.git</connection>
 		<tag>0.23.31</tag>
 	</scm>
 </project>

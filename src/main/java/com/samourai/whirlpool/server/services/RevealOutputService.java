@@ -42,7 +42,13 @@ public class RevealOutputService {
   public synchronized void revealOutput(
       String receiveAddress, Mix mix, RegisteredInput confirmedInput) throws Exception {
     if (log.isDebugEnabled()) {
-      log.debug("(<) MIX_REVEAL_OUTPUT " + mix.getMixId() + " " + confirmedInput.toString());
+      log.debug(
+          "(<) MIX_REVEAL_OUTPUT_"
+              + confirmedInput.getTypeStr()
+              + " "
+              + mix.getMixId()
+              + " "
+              + confirmedInput.toString());
     }
 
     // verify this username didn't already reveal his output

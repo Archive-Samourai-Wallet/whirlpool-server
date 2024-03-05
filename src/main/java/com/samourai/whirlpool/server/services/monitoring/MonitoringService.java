@@ -43,7 +43,7 @@ public class MonitoringService {
   }
 
   public void notify(String info) {
-    String hookUrl = "";
+    String hookUrl = serverConfig.getMonitoringHookUrl();
     info = "(" + serverConfig.getCoordinatorName() + ") " + info;
     if (log.isDebugEnabled()) {
       log.debug("notify -> " + info);
