@@ -65,7 +65,7 @@ public class ConfirmInputControllerSoroban extends AbstractPerMixControllerSorob
             .orElseThrow(
                 () ->
                     new IllegalInputException(
-                        WhirlpoolErrorCode.SERVER_ERROR,
+                        WhirlpoolErrorCode.MIX_OVER,
                         "Confirming input not found: sender=" + sender.toString()));
     // confirming => confirm input
     byte[] blindedBordereau = WhirlpoolProtocol.decodeBytes(payload.blindedBordereau64);
