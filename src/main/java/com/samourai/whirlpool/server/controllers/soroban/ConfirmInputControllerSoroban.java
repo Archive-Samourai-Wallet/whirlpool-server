@@ -61,7 +61,8 @@ public class ConfirmInputControllerSoroban extends AbstractPerMixControllerSorob
 
     // check if confirming
     RegisteredInput confirmingInput =
-        mix.removeConfirmingInputBySender(sender)
+        mix.getConfirmingInputs()
+            .findBySorobanSender(sender)
             .orElseThrow(
                 () ->
                     new IllegalInputException(
@@ -70,6 +71,11 @@ public class ConfirmInputControllerSoroban extends AbstractPerMixControllerSorob
     // confirming => confirm input
     byte[] blindedBordereau = WhirlpoolProtocol.decodeBytes(payload.blindedBordereau64);
     confirmInputService.confirmInput(mix, confirmingInput, blindedBordereau, payload.userHash);
+
+    // remove confirming input AFTER it was confirmed, to avoid SorobanController "confirming input
+    // not found"
+    mix.removeConfirmingInputBySender(sender);
+
     return confirmInputResponse(confirmingInput);
   }
 

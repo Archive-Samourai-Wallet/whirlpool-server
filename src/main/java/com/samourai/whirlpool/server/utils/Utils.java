@@ -110,8 +110,6 @@ public class Utils {
     serverUtils.setLoggerDebug("com.samourai.whirlpool");
     serverUtils.setLoggerDebug("com.samourai.wallet");
     serverUtils.setLoggerDebug("com.samourai.soroban.client");
-    LogbackUtils.setLogLevel(
-        "com.samourai.soroban.client.rpc.RpcClient", org.slf4j.event.Level.TRACE.toString());
 
     // skip noisy logs
     LogbackUtils.setLogLevel(
