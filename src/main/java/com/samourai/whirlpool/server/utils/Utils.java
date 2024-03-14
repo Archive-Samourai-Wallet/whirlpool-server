@@ -21,10 +21,7 @@ import com.samourai.whirlpool.server.services.rpc.JSONRpcClientServiceImpl;
 import com.samourai.whirlpool.server.services.rpc.RpcClientService;
 import java.lang.invoke.MethodHandles;
 import java.math.BigDecimal;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.text.CharacterPredicates;
@@ -33,6 +30,9 @@ import org.bitcoinj.core.*;
 import org.bitcoinj.script.Script;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 
 public class Utils {
@@ -104,6 +104,12 @@ public class Utils {
 
   public static String computeInputId(String utxoHash, long utxoIndex, String username) {
     return utxoHash + ":" + utxoIndex + "_" + username;
+  }
+
+  public static <T> Page<T> paginateList(final Pageable pageable, List<T> list) {
+    int first = Math.min(new Long(pageable.getOffset()).intValue(), list.size());
+    int last = Math.min(first + pageable.getPageSize(), list.size());
+    return new PageImpl<>(list.subList(first, last), pageable, list.size());
   }
 
   public static void setLoggerDebug() {

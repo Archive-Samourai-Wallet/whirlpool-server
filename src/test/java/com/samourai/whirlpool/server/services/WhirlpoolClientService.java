@@ -13,6 +13,7 @@ import com.samourai.whirlpool.client.wallet.beans.IndexRange;
 import com.samourai.whirlpool.client.wallet.data.coordinator.CoordinatorSupplier;
 import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientConfig;
 import com.samourai.whirlpool.protocol.SorobanAppWhirlpool;
+import com.samourai.whirlpool.protocol.soroban.WhirlpoolApiClient;
 import com.samourai.whirlpool.server.beans.Pool;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.services.rpc.RpcClientServiceServer;
@@ -56,7 +57,6 @@ public class WhirlpoolClientService {
     try {
       return new WhirlpoolClientConfig(
           httpClientService,
-          rpcClientServiceServer,
           Bip47UtilJava.getInstance(),
           cryptoUtil,
           null,
@@ -99,6 +99,7 @@ public class WhirlpoolClientService {
         };
     ChainSupplier chainSupplier = blockchainDataService.computeChainSupplier();
     RpcSession rpcSession = rpcClientServiceServer.generateRpcWallet().createRpcSession();
+    WhirlpoolApiClient whirlpoolApiClient = new WhirlpoolApiClient(rpcSession, sorobanAppWhirlpool);
     MixParams mixParams =
         new MixParams(
             pool.getPoolId(),
@@ -110,7 +111,7 @@ public class WhirlpoolClientService {
             postmixHandler,
             chainSupplier,
             coordinatorSupplier,
-            rpcSession);
+            whirlpoolApiClient);
     return mixParams;
   }
 }

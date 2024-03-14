@@ -21,59 +21,76 @@
 
         <strong th:text="${nbClientsTotal}"/> clients: <strong th:text="${nbClientsClassic}"/> classic + <strong th:text="${nbClientsSoroban}"/> Soroban.
 
-        <table class="table table-sm">
-            <thead>
-                <th class="align-middle">PoolId</th>
-                <th class="align-middle">Status</th>
-                <th class="align-middle">Canal</th>
-                <th class="align-middle">Utxo</th>
-                <th class="align-middle">Amount</th>
-                <th class="align-middle">Liquidity</th>
-                <th class="align-middle">Tor</th>
-                <th class="align-middle">Since</th>
-                <th class="align-middle">Last seen</th>
-                <th class="align-middle">Username / userhash</th>
-            </thead>
-            <tbody>
-            <div th:each="input,inputIter : *{registeredInputs}">
-                <tr>
-                <td class="align-middle">
-                    <span th:text="${input.right.poolId}"/>
-                </td>
-                    <td class="align-middle">
-                        <small th:text="${input.left}"/>
-                    </td>
-                    <td class="align-middle">
-                        <span th:text="${input.right.isSoroban()?'SOROBAN':'CLASSIC'}"/>
-                    </td>
-                    <td class="align-middle">
-                        <small th:text="${input.right.outPoint.toKey()}"/>
-                    </td>
-                    <td class="align-middle">
-                        <small th:text="${@templateUtil.satoshisToBtc(input.right.outPoint.value)}"/>
-                    </td>
-                    <td class="align-middle">
-                        <span th:text="${input.right.liquidity?'LIQUIDITY':'MUSTMIX'}"/>
-                    </td>
-                    <td class="align-middle">
-                        <span th:text="${input.right.tor!=null?(input.right.tor?'Yes':'No'):'n/a'}"/>
-                    </td>
-                    <td class="align-middle">
-                        <span th:text="${@templateUtil.durationFromNow(input.right.since)}"/>
-                    </td>
-                    <td class="align-middle">
-                        <span th:if="${input.right.isSoroban()}">
-                            <span th:text="${@templateUtil.durationFromNow(input.right.sorobanInput.sorobanLastSeen)}"/>
-                        </span>
-                    </td>
-                    <td class="align-middle">
-                        <small th:text="${input.right.username}"/><br/>
-                        <small th:text="${input.right.lastUserHash!=null?input.right.lastUserHash:'-'}"/>
-                    </td>
-                </tr>
-            </div>
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead>
+                <th class="align-middle"><a href="?sort=poolId">PoolId</a></th>
+                    <th class="align-middle"><a href="?sort=mixId">MixId</a></th>
+                    <th class="align-middle"><a href="?sort=status">Status</a></th>
+                    <th class="align-middle"><a href="?sort=typeStr">Canal</a></th>
+                    <th class="align-middle"><a href="?sort=utxoStr">Utxo</a></th>
+                    <th class="align-middle"><a href="?sort=utxoValue">Amount</a></th>
+                    <th class="align-middle"><a href="?sort=liquidity">Liquidity</a></th>
+                    <th class="align-middle"><a href="?sort=since">Since</a></th>
+                    <th class="align-middle"><a href="?sort=lastSeen">Last seen</a></th>
+                    <th class="align-middle"><a href="?sort=userName">Username / userhash</a></th>
+                </thead>
+                <tbody>
+                    <tr th:each="input : ${page.content}">
+                        <td class="align-middle">
+                            <span th:text="${input.poolId}"/>
+                        </td>
+                        <td class="align-middle">
+                            <small th:text="${input.mixId!=null?input.mixId:'-'}"/>
+                        </td>
+                        <td class="align-middle">
+                            <small th:text="${input.status}"/>
+                        </td>
+                        <td class="align-middle">
+                            <span th:text="${input.typeStr}"/>
+                        </td>
+                        <td class="align-middle">
+                            <small th:text="${input.utxoStr}"/>
+                        </td>
+                        <td class="align-middle">
+                            <small th:text="${@templateUtil.satoshisToBtc(input.utxoValue)}"/>
+                        </td>
+                        <td class="align-middle">
+                            <span th:text="${input.liquidity?'LIQUIDITY':'MUSTMIX'}"/>
+                        </td>
+                        <td class="align-middle">
+                            <span th:text="${@templateUtil.durationFromNow(input.since)}"/>
+                        </td>
+                        <td class="align-middle">
+                            <span th:text="${input.lastSeen!=null ? @templateUtil.durationFromNow(input.lastSeen) : '-'}"/>
+                        </td>
+                        <td class="align-middle">
+                            <small th:text="${input.userName}"/><br/>
+                            <small th:text="${input.lastUserHash!=null?input.lastUserHash:'-'}"/>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <nav>
+            <ul class="pagination">
+                <li class="page-item" th:if="${page.hasPrevious()}">
+                    <a class="page-link" th:href="@{${ENDPOINT}(page=${page.number-1},size=${page.size})}">
+                        <span>&laquo;</span>
+                    </a>
+                </li>
+                <th:block th:each="i: ${#numbers.sequence(0, page.totalPages - 1)}">
+                    <li th:class="${'page-item' + (page.number == i?' active':'')}">
+                        <a class="page-link" th:href="@{${ENDPOINT}(page=${i},size=${page.size})}">[[${i}+1]]</a>
+                    </li>
+                </th:block>
+                <li class="page-item" th:if="${page.hasNext()}">
+                    <a class="page-link" th:href="@{${ENDPOINT}(page=${page.number+1},size=${page.size})}">
+                        <span>&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
     </div>
 </body>
 </html>

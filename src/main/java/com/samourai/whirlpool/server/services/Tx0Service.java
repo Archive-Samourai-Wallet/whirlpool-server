@@ -105,12 +105,8 @@ public class Tx0Service {
 
     Partner partner = partnerService.getById(partnerId); // validate partner
 
-    WhirlpoolServerConfig.ScodeSamouraiFeeConfig scodeConfig = null;
-    if (tx0DataRequest.cascading) {
-      scodeConfig = scodeService.getScodeCascading();
-    } else {
-      scodeConfig = scodeService.getByScode(scode, System.currentTimeMillis());
-    }
+    WhirlpoolServerConfig.ScodeSamouraiFeeConfig scodeConfig =
+        scodeService.getByScode(scode, System.currentTimeMillis());
 
     if (scodeConfig == null && scode != null) {
       log.warn("Tx0Data: Invalid SCODE: " + scode);
@@ -179,10 +175,17 @@ public class Tx0Service {
       feeChange = computeRandomFeeChange(poolFee);
     }
 
+    // feePayload
     byte[] feePayload =
         feePayloadService.computeFeePayload(
             feeIndex, scodePayload, partner.getPayload(), opReturnV0);
     String feePayload64 = WhirlpoolProtocol.encodeBytes(feePayload);
+
+    // feePayloadCascading
+    byte[] feePayloadCascading =
+        feePayloadService.computeFeePayload(
+            0, ScodeService.SCODE_CASCADING_PAYLOAD, partner.getPayload(), opReturnV0);
+    String feePayloadCascading64 = WhirlpoolProtocol.encodeBytes(feePayloadCascading);
 
     /*if (log.isDebugEnabled()) {
       log.debug(
@@ -219,6 +222,7 @@ public class Tx0Service {
         feeDiscountPercent,
         message,
         feePayload64,
+        feePayloadCascading64,
         feeAddress,
         feeOutputSignature);
   }

@@ -942,18 +942,6 @@ public class MixServiceTest extends AbstractIntegrationTest {
     Assertions.assertEquals(dbService.findBlames(blameIdentifierMustMix3).size(), 1);
   }
 
-  private TxOutPoint generateOutPoint(long value) {
-    TxOutPoint txOutPoint =
-        new TxOutPoint(
-            Utils.getRandomString(65),
-            0,
-            value,
-            99,
-            null,
-            testUtils.generateSegwitAddress().getBech32AsString());
-    return txOutPoint;
-  }
-
   private void checkAccepts(boolean mustMix, boolean liquidity, Mix mix) {
     // try mustMix
     try {

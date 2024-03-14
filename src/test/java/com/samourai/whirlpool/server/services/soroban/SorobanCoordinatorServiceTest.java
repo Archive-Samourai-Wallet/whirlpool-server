@@ -4,7 +4,6 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 
 import com.samourai.soroban.client.rpc.RpcSession;
 import com.samourai.whirlpool.client.tx0.ITx0PreviewServiceConfig;
-import com.samourai.whirlpool.client.tx0.MockTx0PreviewService;
 import com.samourai.whirlpool.client.tx0.MockTx0PreviewServiceConfig;
 import com.samourai.whirlpool.client.tx0.Tx0PreviewService;
 import com.samourai.whirlpool.client.wallet.data.coordinator.ExpirableCoordinatorSupplier;
@@ -50,7 +49,7 @@ public class SorobanCoordinatorServiceTest extends AbstractIntegrationTest {
     ITx0PreviewServiceConfig tx0PreviewServiceConfig =
         new MockTx0PreviewServiceConfig(serverConfig.getSamouraiNetwork());
     Tx0PreviewService tx0PreviewService =
-        new MockTx0PreviewService(minerFeeSupplier, tx0PreviewServiceConfig);
+        new Tx0PreviewService(minerFeeSupplier, tx0PreviewServiceConfig);
     ExpirableCoordinatorSupplier coordinatorSupplier =
         new ExpirableCoordinatorSupplier(
             30000, whirlpoolApiClient, tx0PreviewService, computeWhirlpoolWalletConfig());

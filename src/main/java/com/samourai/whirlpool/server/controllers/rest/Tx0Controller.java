@@ -67,7 +67,7 @@ public class Tx0Controller extends AbstractRestController {
     Boolean tor = Utils.getTor(request);
     Map<String, String> clientDetails = ActivityCsv.computeClientDetails(request);
 
-    Tx0DataRequest tx0DataRequest = new Tx0DataRequest(req.scode, req.partnerId, req.cascading);
+    Tx0DataRequest tx0DataRequest = new Tx0DataRequest(req.scode, req.partnerId);
     Tx0DataResponse tx0DataResponse =
         tx0Service.tx0Data(tx0DataRequest, opReturnV0, tor, clientDetails);
     return new Tx0DataResponseV2(

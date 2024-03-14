@@ -1,15 +1,15 @@
 package com.samourai.whirlpool.server.utils;
 
-import com.samourai.soroban.client.rpc.RpcWalletImpl;
 import com.samourai.wallet.bipWallet.BipWallet;
 import com.samourai.wallet.chain.ChainSupplier;
-import com.samourai.wallet.hd.BIP_WALLET;
+import com.samourai.wallet.constants.BIP_WALLET;
 import com.samourai.wallet.segwit.SegwitAddress;
 import com.samourai.wallet.sorobanClient.RpcWallet;
 import com.samourai.wallet.util.TxUtil;
 import com.samourai.whirlpool.client.WhirlpoolClient;
 import com.samourai.whirlpool.client.mix.MixParams;
 import com.samourai.whirlpool.client.mix.handler.*;
+import com.samourai.whirlpool.client.mix.listener.MixFailReason;
 import com.samourai.whirlpool.client.wallet.beans.IndexRange;
 import com.samourai.whirlpool.client.wallet.data.coordinator.CoordinatorSupplier;
 import com.samourai.whirlpool.client.whirlpool.WhirlpoolClientConfig;
@@ -175,7 +175,7 @@ public class AssertMultiClientManager extends MultiClientManager {
             postmixHandler,
             chainSupplier,
             coordinatorSupplier,
-            ((RpcWalletImpl) rpcWallet).createRpcSession());
+            null);
 
     whirlpoolClient.whirlpool(mixParams, listener);
   }
@@ -329,7 +329,7 @@ public class AssertMultiClientManager extends MultiClientManager {
   public void exit() {
     for (WhirlpoolClient whirlpoolClient : clients) {
       if (whirlpoolClient != null) {
-        whirlpoolClient.stop(true);
+        whirlpoolClient.stop(MixFailReason.STOP_MIXING);
       }
     }
   }

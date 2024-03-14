@@ -13,6 +13,7 @@ import com.samourai.wallet.bip47.rpc.PaymentCode;
 import com.samourai.wallet.bip47.rpc.java.Bip47UtilJava;
 import com.samourai.wallet.bip47.rpc.java.SecretPointFactoryJava;
 import com.samourai.wallet.bipFormat.BIP_FORMAT;
+import com.samourai.wallet.constants.BIP_WALLETS;
 import com.samourai.wallet.constants.SamouraiNetwork;
 import com.samourai.wallet.crypto.CryptoUtil;
 import com.samourai.wallet.hd.HD_Wallet;
@@ -348,7 +349,7 @@ public abstract class AbstractIntegrationTest {
 
   protected WhirlpoolWalletConfig computeWhirlpoolWalletConfig() {
     DataSourceFactory dataSourceFactory =
-        new DojoDataSourceFactory(BackendServer.TESTNET, false, null);
+        new DojoDataSourceFactory(BackendServer.TESTNET, false, null, BIP_WALLETS.WHIRLPOOL);
     IHttpClientService multiUsageHttpClientService = new JettyHttpClientService(30000);
     SorobanWalletService sorobanWalletService =
         new SorobanWalletService(bip47Util, BIP_FORMAT.PROVIDER, params, rpcClientServiceServer);
@@ -463,5 +464,17 @@ public abstract class AbstractIntegrationTest {
       poolService.registerInput(registeredInput, null);
     }
     return registeredInput;
+  }
+
+  protected TxOutPoint generateOutPoint(long value) {
+    TxOutPoint txOutPoint =
+        new TxOutPoint(
+            Utils.getRandomString(65),
+            0,
+            value,
+            99,
+            null,
+            testUtils.generateSegwitAddress().getBech32AsString());
+    return txOutPoint;
   }
 }

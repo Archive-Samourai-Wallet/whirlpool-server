@@ -1,6 +1,7 @@
 package com.samourai.whirlpool.server.utils;
 
 import com.samourai.whirlpool.client.WhirlpoolClient;
+import com.samourai.whirlpool.client.mix.listener.MixFailReason;
 import com.samourai.whirlpool.server.beans.MixStatus;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +33,7 @@ public class MultiClientManager {
   public void stop() {
     for (WhirlpoolClient whirlpoolClient : clients) {
       if (whirlpoolClient != null) {
-        whirlpoolClient.stop(false);
+        whirlpoolClient.stop(MixFailReason.STOP_MIXING);
       }
     }
   }

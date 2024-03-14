@@ -36,16 +36,8 @@ public class Tx0PerPoolControllerSorobanTest extends AbstractIntegrationTest {
 
   @Test
   public void tx0Data_noScode() throws Exception {
-    boolean cascading = false;
-    Tx0DataRequest tx0DataRequest = new Tx0DataRequest(null, null, cascading);
+    Tx0DataRequest tx0DataRequest = new Tx0DataRequest(null, null);
     tx0Controller.tx0Data(tx0DataRequest);
-  }
-
-  @Test
-  public void tx0Data_cascading_noFee() throws Exception {
-    boolean cascading = true;
-    Tx0DataRequest request = new Tx0DataRequest(null, null, cascading);
-    tx0Controller.tx0Data(request);
   }
 
   @Test

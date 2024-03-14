@@ -15,6 +15,7 @@ import com.samourai.whirlpool.protocol.soroban.payload.tx0.Tx0PushRequest;
 import com.samourai.whirlpool.protocol.soroban.payload.tx0.Tx0PushResponseError;
 import com.samourai.whirlpool.server.config.WhirlpoolServerContext;
 import com.samourai.whirlpool.server.services.Tx0Service;
+import com.samourai.whirlpool.server.utils.Utils;
 import java.lang.invoke.MethodHandles;
 import javax.annotation.PreDestroy;
 import org.slf4j.Logger;
@@ -54,11 +55,16 @@ public class Tx0PerPoolControllerSoroban extends SorobanControllerTyped {
 
   @Override
   protected SorobanPayloadable computeReply(SorobanItemTyped request) throws Exception {
-    if (request.isTyped(Tx0DataRequest.class)) {
-      return tx0Data(request.read(Tx0DataRequest.class));
-    }
-    if (request.isTyped(Tx0PushRequest.class)) {
-      return tx0Push(request.read(Tx0PushRequest.class));
+    try {
+      if (request.isTyped(Tx0DataRequest.class)) {
+        return tx0Data(request.read(Tx0DataRequest.class));
+      }
+      if (request.isTyped(Tx0PushRequest.class)) {
+        return tx0Push(request.read(Tx0PushRequest.class));
+      }
+    } catch (Exception e) {
+      log.error("error processing " + request.getType(), e);
+      return Utils.computeSorobanErrorMessage(e);
     }
     throw new Exception("Unexpected request type: " + request.getType());
   }

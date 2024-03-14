@@ -5,7 +5,7 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 import com.samourai.wallet.bip47.rpc.BIP47Wallet;
 import com.samourai.wallet.bip47.rpc.PaymentCode;
 import com.samourai.wallet.bipWallet.BipWallet;
-import com.samourai.wallet.hd.BIP_WALLET;
+import com.samourai.wallet.constants.BIP_WALLET;
 import com.samourai.wallet.hd.HD_Wallet;
 import com.samourai.wallet.segwit.SegwitAddress;
 import com.samourai.whirlpool.server.beans.Mix;
