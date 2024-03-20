@@ -20,28 +20,39 @@ public class ClientInput implements Comparable<ClientInput> {
   public static Comparator computeComparator(Pageable pageable) {
     Comparator comparator = Comparator.comparing(ClientInput::getSince);
     if (pageable.getSort().isSorted()) {
+      Comparator nullSafe = Comparator.nullsLast(Comparator.naturalOrder());
       Sort.Order order = pageable.getSort().get().iterator().next();
       switch (ClientInputSort.valueOf(order.getProperty())) {
         case poolId:
-          comparator = Comparator.comparing(ClientInput::getPoolId);
+          comparator = Comparator.comparing(ClientInput::getPoolId, nullSafe);
+          break;
         case mixId:
-          comparator = Comparator.comparing(ClientInput::getMixId);
+          comparator = Comparator.comparing(ClientInput::getMixId, nullSafe);
+          break;
         case status:
-          comparator = Comparator.comparing(ClientInput::getStatus);
+          comparator = Comparator.comparing(ClientInput::getStatus, nullSafe);
+          break;
         case typeStr:
-          comparator = Comparator.comparing(ClientInput::getTypeStr);
+          comparator = Comparator.comparing(ClientInput::getTypeStr, nullSafe);
+          break;
         case utxoStr:
-          comparator = Comparator.comparing(ClientInput::getUtxoStr);
+          comparator = Comparator.comparing(ClientInput::getUtxoStr, nullSafe);
+          break;
         case utxoValue:
-          comparator = Comparator.comparing(ClientInput::getUtxoValue);
+          comparator = Comparator.comparing(ClientInput::getUtxoValue, nullSafe);
+          break;
         case liquidity:
-          comparator = Comparator.comparing(ClientInput::isLiquidity);
+          comparator = Comparator.comparing(ClientInput::isLiquidity, nullSafe);
+          break;
         case lastSeen:
-          comparator = Comparator.comparing(ClientInput::getLastSeen);
+          comparator = Comparator.comparing(ClientInput::getLastSeen, nullSafe);
+          break;
         case userName:
-          comparator = Comparator.comparing(ClientInput::getUserName);
+          comparator = Comparator.comparing(ClientInput::getUserName, nullSafe);
+          break;
         case lastUserHash:
-          comparator = Comparator.comparing(ClientInput::getLastUserHash);
+          comparator = Comparator.comparing(ClientInput::getLastUserHash, nullSafe);
+          break;
       }
       if (order.getDirection().isDescending()) {
         comparator = comparator.reversed();
