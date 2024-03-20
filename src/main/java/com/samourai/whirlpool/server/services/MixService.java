@@ -283,7 +283,7 @@ public class MixService {
     InputPoolQueue queue =
         (liquidity ? mix.getPool().getLiquidityQueue() : mix.getPool().getMustMixQueue());
     try {
-      queue.refreshSorobanInputs();
+      queue.refreshSorobanInputs(registerInputService);
     } catch (Exception e) {
       log.error("error refreshing soroban inputs", e);
     }
@@ -301,7 +301,7 @@ public class MixService {
       // invite
       try {
         Optional<RegisteredInput> registeredInputOpt =
-            queue.removeRandomClassicOrSoroban(filterInputMixable, registerInputService);
+            queue.removeRandomClassicOrSoroban(filterInputMixable);
         if (!registeredInputOpt.isPresent()) {
           // stop when no more input to invite
           break;

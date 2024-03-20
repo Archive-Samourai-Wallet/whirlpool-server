@@ -63,9 +63,7 @@ public class ClientsWebController {
           Stream.of(pool.getMustMixQueue(), pool.getLiquidityQueue())
               .flatMap(
                   queue ->
-                      Stream.of(
-                          queue._getInputsSoroban(registerInputService).stream(),
-                          queue._getInputs().stream()))
+                      Stream.of(queue._getInputsSoroban().stream(), queue._getInputs().stream()))
               .flatMap(stream -> stream)
               .map(input -> new ClientInput(input, null, false))
               .collect(Collectors.toList()));

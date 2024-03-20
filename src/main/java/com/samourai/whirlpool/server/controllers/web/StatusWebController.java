@@ -29,7 +29,6 @@ public class StatusWebController {
   private WhirlpoolServerConfig serverConfig;
   private PoolService poolService;
   private MixLimitsService mixLimitsService;
-  private RegisterInputService registerInputService;
 
   @Autowired
   public StatusWebController(
@@ -40,7 +39,6 @@ public class StatusWebController {
     this.serverConfig = serverConfig;
     this.poolService = poolService;
     this.mixLimitsService = mixLimitsService;
-    this.registerInputService = registerInputService;
   }
 
   @RequestMapping(value = ENDPOINT, method = RequestMethod.GET)
@@ -112,7 +110,7 @@ public class StatusWebController {
                   mix.getPool().getMustMixQueue().findByQuarantine(false));
               poolAttributes.put(
                   "mustMixQueuedSorobanInputs",
-                  mix.getPool().getMustMixQueue()._getInputsSoroban(registerInputService));
+                  mix.getPool().getMustMixQueue()._getInputsSoroban());
               poolAttributes.put(
                   "mustMixQueuedQuarantine",
                   mix.getPool().getMustMixQueue().findByQuarantine(true));
@@ -121,7 +119,7 @@ public class StatusWebController {
                   mix.getPool().getLiquidityQueue().findByQuarantine(false));
               poolAttributes.put(
                   "liquiditiesQueuedSorobanInputs",
-                  mix.getPool().getLiquidityQueue()._getInputsSoroban(registerInputService));
+                  mix.getPool().getLiquidityQueue()._getInputsSoroban());
               poolAttributes.put(
                   "liquiditiesQueuedQuarantine",
                   mix.getPool().getLiquidityQueue().findByQuarantine(true));

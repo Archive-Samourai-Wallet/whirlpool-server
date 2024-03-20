@@ -150,12 +150,19 @@ public class MetricService {
         Arrays.asList(Tag.of("poolId", pool.getPoolId()), Tag.of("tor", Boolean.toString(true)));
     Iterable<Tag> tagsClearnet =
         Arrays.asList(Tag.of("poolId", pool.getPoolId()), Tag.of("tor", Boolean.toString(false)));
+    Iterable<Tag> tagsSoroban =
+        Arrays.asList(
+            Tag.of("poolId", pool.getPoolId()), Tag.of("soroban", Boolean.toString(true)));
     Metrics.gauge(
         GAUGE_POOL_QUEUE_MUSTMIX, tagsTor, pool, p -> p.getMustMixQueue().getSizeByTor(true));
     Metrics.gauge(
         GAUGE_POOL_QUEUE_MUSTMIX, tagsClearnet, pool, p -> p.getMustMixQueue().getSizeByTor(false));
+    Metrics.gauge(
+        GAUGE_POOL_QUEUE_MUSTMIX,
+        tagsSoroban,
+        pool,
+        p -> p.getMustMixQueue()._getInputsSoroban().size());
 
-    // queue-liquidity
     Metrics.gauge(
         GAUGE_POOL_QUEUE_LIQUIDITY, tagsTor, pool, p -> p.getLiquidityQueue().getSizeByTor(true));
     Metrics.gauge(
@@ -163,6 +170,11 @@ public class MetricService {
         tagsClearnet,
         pool,
         p -> p.getLiquidityQueue().getSizeByTor(false));
+    Metrics.gauge(
+        GAUGE_POOL_QUEUE_LIQUIDITY,
+        tagsSoroban,
+        pool,
+        p -> p.getLiquidityQueue()._getInputsSoroban().size());
 
     // mixing-mustMix
     Iterable<Tag> tags = Arrays.asList(Tag.of("poolId", pool.getPoolId()));

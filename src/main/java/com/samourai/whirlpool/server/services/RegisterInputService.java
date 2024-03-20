@@ -149,12 +149,8 @@ public class RegisterInputService {
             WhirlpoolErrorCode.INPUT_REJECTED, "Input is not confirmed");
       }
 
-      // register input to pool
-      RegisteredInput registeredInput =
-          new RegisteredInput(
-              poolId, username, liquidity, txOutPoint, tor, null, sorobanInputOrNull);
-
-      return registeredInput;
+      return new RegisteredInput(
+          poolId, username, liquidity, txOutPoint, tor, null, sorobanInputOrNull);
     } catch (NotifiableException e) { // validation error or input rejected
       log.warn("Input rejected (" + utxoHash + ":" + utxoIndex + "): " + e.getMessage());
       throw e;

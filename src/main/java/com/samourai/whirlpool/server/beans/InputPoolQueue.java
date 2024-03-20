@@ -24,7 +24,7 @@ public class InputPoolQueue extends InputPool {
   private Pool pool;
   private boolean liquidity;
   private WhirlpoolApiCoordinator whirlpoolApiCoordinator;
-  private List<SorobanItemTyped> sorobanInputs;
+  private List<RegisteredInput> sorobanInputs;
 
   public InputPoolQueue(
       Pool pool, boolean liquidity, WhirlpoolApiCoordinator whirlpoolApiCoordinator) {
@@ -39,19 +39,35 @@ public class InputPoolQueue extends InputPool {
     return super.hasInputs() || !sorobanInputs.isEmpty();
   }
 
-  public void refreshSorobanInputs() throws Exception {
-    // refresh
-    this.sorobanInputs =
+  public synchronized void refreshSorobanInputs(RegisterInputService registerInputService)
+      throws Exception {
+    // fetch
+    List<SorobanItemTyped> sorobanItems =
         asyncUtil.blockingGet(
             whirlpoolApiCoordinator.registerInputFetchRequests(pool.getPoolId(), liquidity));
-    Collections.shuffle(sorobanInputs);
+
+    // validate
+    List<RegisteredInput> freshSorobanInputs = new LinkedList<>();
+    for (SorobanItemTyped sorobanItemTyped : sorobanItems) {
+      try {
+        RegisteredInput registeredInput =
+            validateSorobanInput(sorobanItemTyped, registerInputService);
+        freshSorobanInputs.add(registeredInput);
+      } catch (Exception e) {
+        log.warn("Error reading soroban input: " + e.getMessage());
+      }
+    }
+    Collections.shuffle(freshSorobanInputs);
+
+    // update
+    this.sorobanInputs = freshSorobanInputs;
   }
 
   public synchronized Optional<RegisteredInput> removeRandomClassicOrSoroban(
-      Predicate<RegisteredInput> filter, RegisterInputService registerInputService) {
+      Predicate<RegisteredInput> filter) {
     if (randomUtil.nextInt(10) % 2 == 0) {
       // find soroban input
-      Optional<RegisteredInput> inputOpt = removeRandomSorobanInput(filter, registerInputService);
+      Optional<RegisteredInput> inputOpt = removeRandomSorobanInput(filter);
       if (inputOpt.isPresent()) {
         return inputOpt;
       }
@@ -62,18 +78,11 @@ public class InputPoolQueue extends InputPool {
   }
 
   private synchronized Optional<RegisteredInput> removeRandomSorobanInput(
-      Predicate<RegisteredInput> filter, RegisterInputService registerInputService) {
-    for (SorobanItemTyped sorobanItemTyped : sorobanInputs) {
-      try {
-        RegisteredInput registeredInput =
-            validateSorobanInput(sorobanItemTyped, registerInputService);
-
-        // filter
-        if (filter.test(registeredInput)) {
-          return Optional.of(registeredInput);
-        }
-      } catch (Exception e) {
-        log.error("Error reading soroban input: " + e.getMessage());
+      Predicate<RegisteredInput> filter) {
+    for (RegisteredInput registeredInput : sorobanInputs) {
+      // filter
+      if (filter.test(registeredInput)) {
+        return Optional.of(registeredInput);
       }
     }
     return Optional.empty();
@@ -114,18 +123,7 @@ public class InputPoolQueue extends InputPool {
     }
   }
 
-  public Collection<RegisteredInput> _getInputsSoroban(RegisterInputService registerInputService) {
-    Collection<RegisteredInput> inputs = new LinkedList<>();
-
-    for (SorobanItemTyped sorobanItemTyped : sorobanInputs) {
-      try {
-        RegisteredInput registeredInput =
-            validateSorobanInput(sorobanItemTyped, registerInputService);
-        inputs.add(registeredInput);
-      } catch (Exception e) {
-        log.error("Error reading soroban input: " + e.getMessage());
-      }
-    }
-    return inputs;
+  public Collection<RegisteredInput> _getInputsSoroban() {
+    return sorobanInputs;
   }
 }
