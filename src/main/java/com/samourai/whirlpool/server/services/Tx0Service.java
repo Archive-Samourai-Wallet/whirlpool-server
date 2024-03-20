@@ -361,12 +361,13 @@ public class Tx0Service {
     return feeValue;
   }
 
-  public Tx0PushResponseSuccess pushTx0(Tx0PushRequest tx0PushRequest) throws Exception {
-    return pushTx0(tx0PushRequest, System.currentTimeMillis());
+  public Tx0PushResponseSuccess pushTx0(Tx0PushRequest tx0PushRequest, boolean soroban)
+      throws Exception {
+    return pushTx0(tx0PushRequest, System.currentTimeMillis(), soroban);
   }
 
-  protected Tx0PushResponseSuccess pushTx0(Tx0PushRequest tx0PushRequest, long txTime)
-      throws Exception {
+  protected Tx0PushResponseSuccess pushTx0(
+      Tx0PushRequest tx0PushRequest, long txTime, boolean soroban) throws Exception {
     if (log.isDebugEnabled()) {
       log.debug("(<) TX0_PUSH " + tx0PushRequest.poolId);
     }
@@ -434,7 +435,8 @@ public class Tx0Service {
           opReturnVersion,
           feePayloadVersion,
           scodeDiscountPercent,
-          partner);
+          partner,
+          soroban);
     } catch (Exception e) {
       log.error("", e);
     }

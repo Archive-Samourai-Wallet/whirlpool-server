@@ -112,7 +112,7 @@ public class Tx0Controller extends AbstractRestController {
       com.samourai.whirlpool.protocol.soroban.payload.tx0.Tx0PushRequest pushRequest =
           new com.samourai.whirlpool.protocol.soroban.payload.tx0.Tx0PushRequest(
               request.tx64, request.poolId);
-      Tx0PushResponseSuccess response = tx0Service.pushTx0(pushRequest);
+      Tx0PushResponseSuccess response = tx0Service.pushTx0(pushRequest, false);
       return new PushTxSuccessResponse(response.txid);
     } catch (BackendPushTxException e) {
       // forward PushTxException as PushTxErrorResponse

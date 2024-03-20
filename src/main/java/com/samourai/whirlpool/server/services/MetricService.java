@@ -126,7 +126,8 @@ public class MetricService {
       int opReturnVersion,
       int feePayloadVersion,
       int scodeDiscountPercent,
-      String partnerId) {
+      String partnerId,
+      boolean soroban) {
     Metrics.counter(
             COUNTER_TX0_TOTAL,
             "poolId",
@@ -138,7 +139,9 @@ public class MetricService {
             "scodeDiscountPercent",
             Integer.toString(scodeDiscountPercent),
             "partnerId",
-            partnerId)
+            partnerId,
+            "soroban",
+            Boolean.toString(soroban))
         .increment();
     Metrics.summary(SUMMARY_TX0_PREMIX_COUNT, "poolId", poolId).record(premixCount);
     Metrics.summary(SUMMARY_TX0_PREMIX_VOLUME, "poolId", poolId).record(premixVolume);
@@ -147,12 +150,20 @@ public class MetricService {
   public void manage(Pool pool) {
     // queue-mustMix
     Iterable<Tag> tagsTor =
-        Arrays.asList(Tag.of("poolId", pool.getPoolId()), Tag.of("tor", Boolean.toString(true)));
+        Arrays.asList(
+            Tag.of("poolId", pool.getPoolId()),
+            Tag.of("tor", Boolean.toString(true)),
+            Tag.of("soroban", Boolean.toString(false)));
     Iterable<Tag> tagsClearnet =
-        Arrays.asList(Tag.of("poolId", pool.getPoolId()), Tag.of("tor", Boolean.toString(false)));
+        Arrays.asList(
+            Tag.of("poolId", pool.getPoolId()),
+            Tag.of("tor", Boolean.toString(false)),
+            Tag.of("soroban", Boolean.toString(false)));
     Iterable<Tag> tagsSoroban =
         Arrays.asList(
-            Tag.of("poolId", pool.getPoolId()), Tag.of("soroban", Boolean.toString(true)));
+            Tag.of("poolId", pool.getPoolId()),
+            Tag.of("tor", "null"),
+            Tag.of("soroban", Boolean.toString(true)));
     Metrics.gauge(
         GAUGE_POOL_QUEUE_MUSTMIX, tagsTor, pool, p -> p.getMustMixQueue().getSizeByTor(true));
     Metrics.gauge(

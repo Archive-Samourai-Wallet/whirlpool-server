@@ -476,6 +476,6 @@ public class Tx0ServiceTest extends AbstractIntegrationTest {
   protected Tx0PushResponseSuccess pushTx0(byte[] tx, long txTime, String poolId) throws Exception {
     String tx64 = WhirlpoolProtocol.encodeBytes(tx);
     Tx0PushRequest request = new Tx0PushRequest(tx64, poolId);
-    return tx0Service.pushTx0(request, txTime);
+    return tx0Service.pushTx0(request, txTime, true);
   }
 }

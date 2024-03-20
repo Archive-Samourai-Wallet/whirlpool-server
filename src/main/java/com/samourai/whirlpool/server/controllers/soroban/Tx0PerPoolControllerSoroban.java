@@ -76,7 +76,7 @@ public class Tx0PerPoolControllerSoroban extends SorobanControllerTyped {
   protected SorobanPayloadable tx0Push(Tx0PushRequest tx0PushRequest) throws Exception {
     checkPoolId(tx0PushRequest.poolId);
     try {
-      return tx0Service.pushTx0(tx0PushRequest);
+      return tx0Service.pushTx0(tx0PushRequest, true);
     } catch (BackendPushTxException e) {
       return new Tx0PushResponseError(
           e.getMessage(), new PushTxError(e.getPushTxError(), e.getVoutsAddressReuse()));
