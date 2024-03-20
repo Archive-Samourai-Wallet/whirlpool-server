@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>io.samourai.code.whirlpool</groupId>
 	<artifactId>whirlpool-server</artifactId>
-	<version>1.0.0-SNAPSHOT</version>
+	<version>1.0.0</version>
 	<name>whirlpool-server</name>
 	<properties>
 		<spring-boot.version>2.6.2</spring-boot.version>
@@ -15,7 +15,7 @@
 		<dependency>
 			<groupId>io.samourai.code.whirlpool</groupId>
 			<artifactId>java-server</artifactId>
-			<version>1.0.9-SNAPSHOT</version>
+			<version>1.0.9</version>
 		</dependency>
 		<dependency>
 			<groupId>io.samourai.code.whirlpool</groupId>
@@ -170,6 +170,6 @@
 	</repositories>
 	<scm>
 		<connection>scm:git:https://code.samourai.io/whirlpool/whirlpool-server.git</connection>
-		<tag>0.23.31</tag>
+		<tag>1.0.0</tag>
 	</scm>
 </project>
