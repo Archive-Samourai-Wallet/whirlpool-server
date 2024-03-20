@@ -163,7 +163,8 @@ public class BanServiceTest extends AbstractIntegrationTest {
         expectedDuration * recidivismFactor, banTO2.getDuration()); // duration doubled
 
     // ban
-    BanTO banTO3 = banService.banTemporary(identifier, null, "test2");
+    Timestamp now = new Timestamp(System.currentTimeMillis());
+    BanTO banTO3 = banService.banTemporary(now, identifier, null, "test2");
     Assertions.assertEquals(
         expectedDuration * recidivismFactor * recidivismFactor,
         banTO3.getDuration()); // duration doubled

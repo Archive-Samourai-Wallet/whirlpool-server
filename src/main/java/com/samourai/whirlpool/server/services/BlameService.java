@@ -42,31 +42,35 @@ public class BlameService {
 
   public void blame(
       RegisteredInput registeredInput, BlameReason reason, Mix mix, String receiveAddress) {
-    // blame
-    String identifier = Utils.computeBlameIdentitifer(registeredInput);
-    dbService.saveBlame(identifier, reason, mix.getMixId(), registeredInput.getTor());
+    try {
+      // blame
+      String identifier = Utils.computeBlameIdentitifer(registeredInput);
+      dbService.saveBlame(identifier, reason, mix.getMixId(), registeredInput.getTor());
 
-    // notify banService
-    List<BlameTO> blames = dbService.findBlames(identifier);
-    banService.onBlame(registeredInput, identifier, blames);
+      // notify banService
+      List<BlameTO> blames = dbService.findBlames(identifier);
+      banService.onBlame(registeredInput, identifier, blames);
 
-    Map<String, String> detailsParam = new LinkedHashMap<>();
-    detailsParam.put("reason", reason.name());
-    if (receiveAddress != null) {
-      // we can't be sure that rejected output is related to disconnected input
-      // blameReason = BlameReason.REJECTED_OUTPUT;
-      detailsParam.put("receiveAddress", receiveAddress);
+      Map<String, String> detailsParam = new LinkedHashMap<>();
+      detailsParam.put("reason", reason.name());
+      if (receiveAddress != null) {
+        // we can't be sure that rejected output is related to disconnected input
+        // blameReason = BlameReason.REJECTED_OUTPUT;
+        detailsParam.put("receiveAddress", receiveAddress);
+      }
+
+      // log activity
+      Map<String, String> clientDetails = new LinkedHashMap<>();
+      if (registeredInput.getUsername() != null) {
+        ImmutableMap.of("u", registeredInput.getUsername());
+      }
+      ActivityCsv activityCsv =
+          new ActivityCsv(
+              "BLAME", mix.getPool().getPoolId(), registeredInput, detailsParam, clientDetails);
+      exportService.exportActivity(activityCsv);
+      metricService.onBlame(registeredInput);
+    } catch (Exception e) {
+      log.error("saveBlame failed", e);
     }
-
-    // log activity
-    Map<String, String> clientDetails = new LinkedHashMap<>();
-    if (registeredInput.getUsername() != null) {
-      ImmutableMap.of("u", registeredInput.getUsername());
-    }
-    ActivityCsv activityCsv =
-        new ActivityCsv(
-            "BLAME", mix.getPool().getPoolId(), registeredInput, detailsParam, clientDetails);
-    exportService.exportActivity(activityCsv);
-    metricService.onBlame(registeredInput);
   }
 }

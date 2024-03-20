@@ -39,9 +39,13 @@ public class BanService {
     this.metricService = metricService;
   }
 
-  public BanTO banTemporary(String identifier, String response, String notes) {
-    Timestamp created = new Timestamp(System.currentTimeMillis());
-    return banTemporary(created, identifier, response, notes);
+  public void banTemporary(String identifier, String response, String notes) {
+    try {
+      Timestamp created = new Timestamp(System.currentTimeMillis());
+      banTemporary(created, identifier, response, notes);
+    } catch (Exception e) {
+      log.error("banTemporary failed", e);
+    }
   }
 
   protected BanTO banTemporary(
