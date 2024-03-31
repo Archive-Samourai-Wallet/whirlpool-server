@@ -65,7 +65,8 @@ public abstract class AbstractPerMixControllerSoroban extends SorobanControllerT
                 () ->
                     new IllegalInputException(
                         WhirlpoolErrorCode.MIX_OVER,
-                        "Mix input not found: sender=" + sender.toString()));
+                        "Mix input not found",
+                        "sender=" + sender.toString()));
 
     // update last seen
     registeredInput.getSorobanInput().setSorobanLastSeen();
@@ -77,7 +78,6 @@ public abstract class AbstractPerMixControllerSoroban extends SorobanControllerT
     try {
       return doComputeReply(request);
     } catch (Exception e) {
-      log.error("error processing " + request.getType(), e);
       return Utils.computeSorobanErrorMessage(e);
     }
   }

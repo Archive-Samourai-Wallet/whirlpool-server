@@ -56,17 +56,20 @@ public class InputValidationService {
     }
 
     // verify input comes from a valid tx0 or previous mix
+    String inputInfo = "tx0=" + tx.getTx().getHashAsString() + ", liquidity=" + liquidity;
     boolean isLiquidity =
         checkInputProvenance(tx.getTx(), tx.getTxTime(), pool.getPoolFee(), hasMixTxid);
     if (!isLiquidity && liquidity) {
       throw new IllegalInputException(
           WhirlpoolErrorCode.INPUT_REJECTED,
-          "Input rejected: joined as liquidity but is a mustMix");
+          "Input rejected: joined as liquidity but is a mustMix",
+          inputInfo);
     }
     if (isLiquidity && !liquidity) {
       throw new IllegalInputException(
           WhirlpoolErrorCode.INPUT_REJECTED,
-          "Input rejected: joined as mustMix but is as a liquidity");
+          "Input rejected: joined as mustMix but is as a liquidity",
+          inputInfo);
     }
     return; // valid
   }
@@ -84,9 +87,12 @@ public class InputValidationService {
       }
 
       if (!hasMixTxid) { // not a whirlpool tx
-        log.error("Input rejected (not a premix or whirlpool input)", e);
+        log.error("Input rejected (not a premix or whirlpool input): " + e);
+        String inputInfo = "txid=" + tx.getHashAsString();
         throw new IllegalInputException(
-            WhirlpoolErrorCode.INPUT_REJECTED, "Input rejected (not a premix or whirlpool input)");
+            WhirlpoolErrorCode.INPUT_REJECTED,
+            "Input rejected (not a premix or whirlpool input)",
+            inputInfo);
       }
       return true; // liquidity
     }
@@ -102,14 +108,14 @@ public class InputValidationService {
       tx0Validation = tx0ValidationService.validate(tx, txTime, poolFee, feeData);
     } catch (Exception e) {
       // invalid fees
-      log.error(
-          "Input rejected (invalid fee for tx0="
+      String inputInfo =
+          "tx0="
               + tx.getHashAsString()
               + ", x="
               + feeData.getFeeIndice()
               + ", feeData={"
               + feeData
-              + "})");
+              + "}";
       throw new IllegalInputException(
           WhirlpoolErrorCode.INPUT_REJECTED,
           "Input rejected (invalid fee for tx0="
@@ -118,7 +124,8 @@ public class InputValidationService {
               + feeData.getFeeIndice()
               + ", scodePayload="
               + (feeData.getScodePayload() != FeePayloadService.SCODE_PAYLOAD_NONE ? "yes" : "no")
-              + ")");
+              + ")",
+          inputInfo);
     }
 
     WhirlpoolServerConfig.ScodeSamouraiFeeConfig scodeConfig = tx0Validation.getScodeConfig();
@@ -128,9 +135,11 @@ public class InputValidationService {
         validateTx0Cascading(tx);
       } catch (Exception e) {
         log.error("Input rejected (invalid cascading for tx0=" + tx.getHashAsString() + ")", e);
+        String inputInfo = "tx0=" + tx.getHashAsString();
         throw new IllegalInputException(
             WhirlpoolErrorCode.INPUT_REJECTED,
-            "Input rejected (invalid cascading for tx0=" + tx.getHashAsString() + ")");
+            "Input rejected (invalid cascading for tx0=" + tx.getHashAsString() + ")",
+            inputInfo);
       }
     }
     return false; // mustMix
@@ -203,7 +212,10 @@ public class InputValidationService {
               + signature
               + ", address="
               + txOutPoint.getToAddress());
-      throw new IllegalInputException(WhirlpoolErrorCode.INVALID_ARGUMENT, "Invalid signature");
+      String inputInfo =
+          "outpoint=" + txOutPoint.toKey() + ", address=" + txOutPoint.getToAddress();
+      throw new IllegalInputException(
+          WhirlpoolErrorCode.INVALID_ARGUMENT, "Invalid signature", inputInfo);
     }
 
     ECKey pubkey = messageSignUtil.signedMessageToKey(message, signature);
@@ -215,7 +227,10 @@ public class InputValidationService {
               + message
               + ", signature="
               + signature);
-      throw new IllegalInputException(WhirlpoolErrorCode.INVALID_ARGUMENT, "Invalid signature");
+      String inputInfo =
+          "outpoint=" + txOutPoint.toKey() + ", address=" + txOutPoint.getToAddress();
+      throw new IllegalInputException(
+          WhirlpoolErrorCode.INVALID_ARGUMENT, "Invalid signature", inputInfo);
     }
     return pubkey;
   }

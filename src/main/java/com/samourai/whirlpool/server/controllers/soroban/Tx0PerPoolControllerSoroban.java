@@ -63,7 +63,6 @@ public class Tx0PerPoolControllerSoroban extends SorobanControllerTyped {
         return tx0Push(request.read(Tx0PushRequest.class));
       }
     } catch (Exception e) {
-      log.error("error processing " + request.getType(), e);
       return Utils.computeSorobanErrorMessage(e);
     }
     throw new Exception("Unexpected request type: " + request.getType());

@@ -113,7 +113,6 @@ public class InputPoolQueue extends InputPool {
     } catch (Exception e) {
       // reply error
       SorobanErrorMessage sorobanErrorMessage = Utils.computeSorobanErrorMessage(e);
-      log.warn("REGISTER_INPUT ERROR SOROBAN_REPLY -> " + sorobanErrorMessage.toString());
       asyncUtil.blockingAwait(
           whirlpoolApiCoordinator
               .getRpcSession()

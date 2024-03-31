@@ -61,25 +61,29 @@ public class RegisterInputService {
       int blockHeight,
       SorobanInput sorobanInputOrNull)
       throws NotifiableException {
+    String utxoInfo = utxoHash + ":" + utxoIndex;
 
     // check blockHeight
     if (blockHeight > 0) { // check disabled for protocol < 0.23.9
       if (!blockchainDataService.checkBlockHeight(blockHeight)) {
         throw new IllegalInputException(
-            WhirlpoolErrorCode.INVALID_BLOCK_HEIGHT, "Invalid blockHeight: " + blockHeight);
+            WhirlpoolErrorCode.INVALID_BLOCK_HEIGHT,
+            "Invalid blockHeight: " + blockHeight,
+            utxoInfo);
       }
     }
 
     if (HEALTH_CHECK_UTXO.equals(utxoHash)) {
-      throw new IllegalInputException(WhirlpoolErrorCode.INPUT_REJECTED, HEALTH_CHECK_SUCCESS);
+      throw new IllegalInputException(
+          WhirlpoolErrorCode.INPUT_REJECTED, HEALTH_CHECK_SUCCESS, utxoInfo);
     }
     if (!formatsUtil.isValidTxHash(utxoHash)) {
       throw new IllegalInputException(
-          WhirlpoolErrorCode.INPUT_REJECTED, "Invalid utxoHash: " + utxoHash);
+          WhirlpoolErrorCode.INPUT_REJECTED, "Invalid utxoHash" + utxoHash, utxoInfo);
     }
     if (utxoIndex < 0) {
       throw new IllegalInputException(
-          WhirlpoolErrorCode.INPUT_REJECTED, "Invalid utxoIndex: " + utxoIndex);
+          WhirlpoolErrorCode.INPUT_REJECTED, "Invalid utxoIndex" + utxoIndex, utxoInfo);
     }
 
     // verify UTXO not banned
@@ -91,14 +95,13 @@ public class RegisterInputService {
               + "], tor="
               + BooleanUtils.toStringTrueFalse(tor));
       String banMessage = banTO.get().computeBanMessage();
-      throw new BannedInputException(banMessage);
+      throw new BannedInputException(banMessage, utxoInfo);
     }
 
     try {
       // fetch outPoint
       IllegalInputException notFoundException =
-          new IllegalInputException(
-              WhirlpoolErrorCode.INPUT_REJECTED, "UTXO not found: " + utxoHash + "-" + utxoIndex);
+          new IllegalInputException(WhirlpoolErrorCode.INPUT_REJECTED, "UTXO not found", utxoInfo);
       RpcTransaction rpcTransaction =
           blockchainDataService.getRpcTransaction(utxoHash).orElseThrow(() -> notFoundException);
       TxOutPoint txOutPoint =
@@ -115,7 +118,7 @@ public class RegisterInputService {
         // spent input being resubmitted by client = spending tx is missing in mempool backing CLI
         // we assume it's a mix tx which was removed from CLI mempool due to mempool congestion
         throw new IllegalInputException(
-            WhirlpoolErrorCode.INPUT_REJECTED, RegisterInputService.ERROR_ALREADY_SPENT);
+            WhirlpoolErrorCode.INPUT_REJECTED, RegisterInputService.ERROR_ALREADY_SPENT, utxoInfo);
       }
 
       // check tx0Whitelist
@@ -135,18 +138,19 @@ public class RegisterInputService {
         long balanceMax = pool.computePremixBalanceMax(liquidity);
         throw new IllegalInputException(
             WhirlpoolErrorCode.INPUT_REJECTED,
-            "Invalid input balance (expected: "
+            "Invalid input balance",
+            utxoInfo
+                + ", balanceExpected="
                 + balanceMin
                 + "-"
                 + balanceMax
-                + ", actual:"
-                + txOutPoint.getValue()
-                + ")");
+                + ", balanceActual="
+                + txOutPoint.getValue());
       }
       // verify confirmations
       if (!isUtxoConfirmed(txOutPoint, liquidity)) {
         throw new IllegalInputException(
-            WhirlpoolErrorCode.INPUT_REJECTED, "Input is not confirmed");
+            WhirlpoolErrorCode.INPUT_REJECTED, "Input is not confirmed", utxoInfo);
       }
 
       return new RegisteredInput(

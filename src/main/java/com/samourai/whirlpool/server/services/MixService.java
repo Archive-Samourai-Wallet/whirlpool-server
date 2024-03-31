@@ -117,7 +117,7 @@ public class MixService {
       whirlpoolServerConfig.checkFailMode(FailMode.CONFIRM_INPUT_BLAME);
     } catch (Exception e) {
       blameService.blame(registeredInput, BlameReason.DISCONNECT, mix);
-      throw new IllegalInputException(WhirlpoolErrorCode.INPUT_REJECTED, e.getMessage());
+      throw new IllegalInputException(WhirlpoolErrorCode.INPUT_REJECTED, e.getMessage(), registeredInput);
     }
 
     // check mix didn't start yet
@@ -179,7 +179,7 @@ public class MixService {
     if (mix.getInputs().findByOutPoint(registeredInput.getOutPoint()).isPresent()) {
       // input already confirmed => reject duplicate client
       throw new IllegalInputException(
-          WhirlpoolErrorCode.INPUT_ALREADY_REGISTERED, "Input already confirmed");
+          WhirlpoolErrorCode.INPUT_ALREADY_REGISTERED, "Input already confirmed", registeredInput);
     }
   }
 
@@ -497,9 +497,8 @@ public class MixService {
       // start next mix
       if (mixOver) {
         try {
-          // send mixResult to soroban
-          asyncUtil.blockingAwait(
-              whirlpoolApiCoordinator.mixResultSend(mixId, mixStatusNotificationSoroban));
+          // send mixResult to soroban (not blocking to avoid mixing issues on soroban downtimes)
+          whirlpoolApiCoordinator.mixResultSend(mixId, mixStatusNotificationSoroban);
         } catch (Exception e) {
           log.error("mixResultSend failed", e);
         }

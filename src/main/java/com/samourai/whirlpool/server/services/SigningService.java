@@ -40,7 +40,8 @@ public class SigningService {
                 () ->
                     new IllegalInputException(
                         WhirlpoolErrorCode.INPUT_REJECTED,
-                        "Input not found for signing username=" + username));
+                        "Mix input not found",
+                        "username=" + username));
 
     // signing
     signing(witness64, mix, confirmedInput);
@@ -55,7 +56,7 @@ public class SigningService {
     // check user
     if (mix.isSigned(confirmedInput)) {
       throw new IllegalInputException(
-          WhirlpoolErrorCode.INPUT_ALREADY_REGISTERED, "User already signed");
+          WhirlpoolErrorCode.INPUT_ALREADY_REGISTERED, "User already signed", confirmedInput);
     }
     TxOutPoint txOutPoint = confirmedInput.getOutPoint();
 
@@ -70,7 +71,8 @@ public class SigningService {
       txUtil.verifySignInput(tx, inputIndex, txOutPoint.getValue(), txOutPoint.getScriptBytes());
     } catch (Exception e) {
       log.error("Invalid signature: verifySignInput failed", e);
-      throw new IllegalInputException(WhirlpoolErrorCode.INVALID_ARGUMENT, "Invalid signature");
+      throw new IllegalInputException(
+          WhirlpoolErrorCode.INVALID_ARGUMENT, "Invalid signature", confirmedInput);
     }
 
     // signature success

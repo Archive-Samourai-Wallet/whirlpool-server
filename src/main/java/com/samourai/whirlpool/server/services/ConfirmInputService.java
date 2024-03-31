@@ -53,7 +53,8 @@ public class ConfirmInputService {
                   () ->
                       new IllegalInputException(
                           WhirlpoolErrorCode.SERVER_ERROR,
-                          "Confirming input not found: username=" + username));
+                          "Confirming input not found",
+                          "username=" + username));
       try {
         return Optional.of(confirmInput(mix, registeredInput, blindedBordereau, userHash));
       } catch (QueueInputException e) {

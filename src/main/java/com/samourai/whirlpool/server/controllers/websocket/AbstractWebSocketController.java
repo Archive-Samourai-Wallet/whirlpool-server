@@ -42,7 +42,8 @@ public abstract class AbstractWebSocketController {
           "Version mismatch: server="
               + WhirlpoolProtocolV0.PROTOCOL_VERSION
               + ", client="
-              + (clientProtocolVersion != null ? clientProtocolVersion : "unknown"));
+              + (clientProtocolVersion != null ? clientProtocolVersion : "unknown"),
+          "");
     }
   }
 

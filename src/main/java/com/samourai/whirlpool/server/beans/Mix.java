@@ -480,7 +480,7 @@ public class Mix {
       throws IllegalInputException {
     if (confirmedInputs.find(registeredInput).isPresent()) {
       throw new IllegalInputException(
-          WhirlpoolErrorCode.INPUT_ALREADY_REGISTERED, "input already registered");
+          WhirlpoolErrorCode.INPUT_ALREADY_REGISTERED, "input already registered", registeredInput);
     }
     registeredInput.setSignedBordereau(signedBordereau);
     confirmedInputs.register(registeredInput);

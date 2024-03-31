@@ -78,37 +78,43 @@ public class RegisterOutputService {
   private void doRegisterOutput(
       Mix mix, byte[] unblindedSignedBordereau, String receiveAddress, byte[] bordereau)
       throws Exception {
+    String inputInfo = "receiveAddress=" + receiveAddress;
 
     // verify bordereau not already registered
     if (bordereau == null) {
-      throw new IllegalInputException(WhirlpoolErrorCode.INVALID_ARGUMENT, "Invalid bordereau");
+      throw new IllegalInputException(
+          WhirlpoolErrorCode.INVALID_ARGUMENT, "Invalid bordereau", inputInfo);
     }
     if (mix.hasBordereau(bordereau)) {
       throw new IllegalInputException(
-          WhirlpoolErrorCode.INPUT_ALREADY_REGISTERED, "Bordereau already registered");
+          WhirlpoolErrorCode.INPUT_ALREADY_REGISTERED, "Bordereau already registered", inputInfo);
     }
 
     // verify receiveAddress not already registered
     if (StringUtils.isEmpty(receiveAddress)) {
       throw new IllegalInputException(
-          WhirlpoolErrorCode.INVALID_ARGUMENT, "Invalid receiveAddress");
+          WhirlpoolErrorCode.INVALID_ARGUMENT, "Invalid receiveAddress", inputInfo);
     }
     if (mix.hasReceiveAddress(receiveAddress)) {
       throw new IllegalInputException(
-          WhirlpoolErrorCode.INPUT_ALREADY_REGISTERED, "receiveAddress already registered");
+          WhirlpoolErrorCode.INPUT_ALREADY_REGISTERED,
+          "receiveAddress already registered",
+          inputInfo);
     }
 
     // verify unblindedSignedBordereau
     if (!cryptoService.verifyUnblindedSignedBordereau(
         bordereau, unblindedSignedBordereau, mix.getKeyPair())) {
       throw new IllegalInputException(
-          WhirlpoolErrorCode.INVALID_ARGUMENT, "Invalid unblindedSignedBordereau");
+          WhirlpoolErrorCode.INVALID_ARGUMENT, "Invalid unblindedSignedBordereau", inputInfo);
     }
 
     // verify no output address reuse with inputs
     if (mix.getInputs().findByAddress(receiveAddress).isPresent()) {
       throw new IllegalInputException(
-          WhirlpoolErrorCode.INPUT_ALREADY_REGISTERED, "output already registered as input");
+          WhirlpoolErrorCode.INPUT_ALREADY_REGISTERED,
+          "output already registered as input",
+          inputInfo);
     }
 
     mix.registerOutput(receiveAddress, bordereau);
@@ -134,9 +140,11 @@ public class RegisterOutputService {
   }
 
   private void validate(String receiveAddress) throws Exception {
+    String inputInfo = "receiveAddress=" + receiveAddress;
     // verify output
     if (!formatsUtil.isValidBech32(receiveAddress)) {
-      throw new IllegalInputException(WhirlpoolErrorCode.INPUT_REJECTED, "Invalid receiveAddress");
+      throw new IllegalInputException(
+          WhirlpoolErrorCode.INPUT_REJECTED, "Invalid receiveAddress", inputInfo);
     }
 
     // verify output not revoked
@@ -156,7 +164,7 @@ public class RegisterOutputService {
     }
     if (seen) {
       throw new IllegalInputException(
-          WhirlpoolErrorCode.INPUT_ALREADY_REGISTERED, "Output address already used");
+          WhirlpoolErrorCode.INPUT_ALREADY_REGISTERED, "Output address already used", inputInfo);
     }
   }
 }

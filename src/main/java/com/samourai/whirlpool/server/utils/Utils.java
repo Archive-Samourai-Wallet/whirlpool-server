@@ -238,12 +238,19 @@ public class Utils {
     if (e instanceof IllegalInputException) {
       errorCode = ((IllegalInputException) e).getErrorCode();
       message = e.getMessage();
+      log.warn(
+          "SOROBAN_REPLY_ERROR ILLEGAL_INPUT -> "
+              + message
+              + " "
+              + ((IllegalInputException) e).getInputInfo());
     } else if (e instanceof NotifiableException) {
       errorCode = ((NotifiableException) e).getErrorCode();
       message = e.getMessage();
+      log.warn("SOROBAN_REPLY_ERROR NOTIFIABLE -> " + message);
     } else {
       errorCode = WhirlpoolErrorCode.SERVER_ERROR;
       message = NotifiableException.computeNotifiableException(e).getMessage();
+      log.error("SOROBAN_REPLY_ERROR SERVER_ERROR -> " + message, e);
     }
     return new SorobanErrorMessage(errorCode, message);
   }

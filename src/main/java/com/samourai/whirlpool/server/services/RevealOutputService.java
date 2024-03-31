@@ -33,7 +33,8 @@ public class RevealOutputService {
                 () ->
                     new IllegalInputException(
                         WhirlpoolErrorCode.INPUT_REJECTED,
-                        "Input not found for revealOutput username=" + username));
+                        "Mix input not found",
+                        "username=" + username));
 
     // revealOutput
     revealOutput(receiveAddress, mix, confirmedInput);
@@ -55,20 +56,22 @@ public class RevealOutputService {
     if (mix.hasRevealedOutput(confirmedInput)) {
       log.warn("Rejecting already revealed input: " + confirmedInput);
       throw new IllegalInputException(
-          WhirlpoolErrorCode.INPUT_ALREADY_REGISTERED, "Output already revealed");
+          WhirlpoolErrorCode.INPUT_ALREADY_REGISTERED, "Output already revealed", confirmedInput);
     }
     // verify this receiveAddress was not already revealed (someone could try to register 2 inputs
     // and reveal same receiveAddress to block mix)
     if (mix.hasRevealedReceiveAddress(receiveAddress)) {
       log.warn("Rejecting already revealed receiveAddress: " + receiveAddress);
       throw new IllegalInputException(
-          WhirlpoolErrorCode.INPUT_ALREADY_REGISTERED, "ReceiveAddress already revealed");
+          WhirlpoolErrorCode.INPUT_ALREADY_REGISTERED,
+          "ReceiveAddress already revealed",
+          confirmedInput);
     }
 
     // verify an output was registered with this receiveAddress
     if (!mix.getReceiveAddresses().contains(receiveAddress)) {
       throw new IllegalInputException(
-          WhirlpoolErrorCode.INVALID_ARGUMENT, "Invalid receiveAddress");
+          WhirlpoolErrorCode.INVALID_ARGUMENT, "Invalid receiveAddress", confirmedInput);
     }
 
     mix.addRevealedOutput(confirmedInput, receiveAddress);

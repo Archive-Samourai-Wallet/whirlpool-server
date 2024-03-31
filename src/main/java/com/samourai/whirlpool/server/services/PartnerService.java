@@ -48,7 +48,7 @@ public class PartnerService {
     Partner partner = partnersById.get(partnerId);
     if (partner == null) {
       throw new IllegalInputException(
-          WhirlpoolErrorCode.INVALID_ARGUMENT, "Partner not found: partnerId=" + partnerId);
+          WhirlpoolErrorCode.INVALID_ARGUMENT, "Partner not found", "partnerId=" + partnerId);
     }
     return partner;
   }
@@ -58,7 +58,8 @@ public class PartnerService {
     if (partner == null) {
       throw new IllegalInputException(
           WhirlpoolErrorCode.INVALID_ARGUMENT,
-          "Partner not found: partnerPayload" + partnerPayload);
+          "Partner not found",
+          "partnerPayload=" + partnerPayload);
     }
     return partner;
   }

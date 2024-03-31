@@ -118,7 +118,8 @@ public class PoolService {
   public Pool getPool(String poolId) throws IllegalInputException {
     Pool pool = pools.get(poolId);
     if (pool == null) {
-      throw new IllegalInputException(WhirlpoolErrorCode.INVALID_ARGUMENT, "Pool not found");
+      throw new IllegalInputException(
+          WhirlpoolErrorCode.INVALID_ARGUMENT, "Pool not found", "poolId=" + poolId);
     }
     return pool;
   }

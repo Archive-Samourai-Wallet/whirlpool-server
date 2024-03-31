@@ -1,6 +1,5 @@
 package com.samourai.whirlpool.server.controllers.rest;
 
-import com.samourai.wallet.dexConfig.DexConfigProvider;
 import com.samourai.wallet.dexConfig.DexConfigResponse;
 import com.samourai.wallet.dexConfig.SamouraiConfig;
 import com.samourai.wallet.util.JSONUtils;
@@ -17,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class DexConfigController extends AbstractRestController {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-  public static final String ENDPOINT_DEXCONFIG = DexConfigProvider.ENDPOINT_DEXCONFIG;
+  @Deprecated public static final String ENDPOINT_DEXCONFIG = "/rest/dex-config";
 
   private WhirlpoolServerContext serverContext;
   private DexConfigResponse dexConfigResponse;
