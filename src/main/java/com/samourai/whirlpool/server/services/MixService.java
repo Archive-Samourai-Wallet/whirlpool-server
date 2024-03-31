@@ -117,7 +117,8 @@ public class MixService {
       whirlpoolServerConfig.checkFailMode(FailMode.CONFIRM_INPUT_BLAME);
     } catch (Exception e) {
       blameService.blame(registeredInput, BlameReason.DISCONNECT, mix);
-      throw new IllegalInputException(WhirlpoolErrorCode.INPUT_REJECTED, e.getMessage(), registeredInput);
+      throw new IllegalInputException(
+          WhirlpoolErrorCode.INPUT_REJECTED, e.getMessage(), registeredInput);
     }
 
     // check mix didn't start yet
@@ -498,7 +499,7 @@ public class MixService {
       if (mixOver) {
         try {
           // send mixResult to soroban (not blocking to avoid mixing issues on soroban downtimes)
-          whirlpoolApiCoordinator.mixResultSend(mixId, mixStatusNotificationSoroban);
+          whirlpoolApiCoordinator.mixResultSend(mixId, mixStatusNotificationSoroban).subscribe();
         } catch (Exception e) {
           log.error("mixResultSend failed", e);
         }
