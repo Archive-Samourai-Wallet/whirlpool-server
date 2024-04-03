@@ -1,5 +1,7 @@
 package com.samourai.whirlpool.server.controllers.rest;
 
+import com.samourai.javaserver.exceptions.NotifiableException;
+import com.samourai.whirlpool.protocol.WhirlpoolErrorCode;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
 import com.samourai.whirlpool.protocol.v0.WhirlpoolEndpointV0;
 import com.samourai.whirlpool.protocol.v0.rest.CheckOutputRequest;
@@ -57,9 +59,20 @@ public class RegisterOutputController extends AbstractRestController {
     }
 
     // find mix
-    Mix mix = mixService.getMixByInputsHash(payload.inputsHash, MixStatus.REGISTER_OUTPUT);
-    if (log.isDebugEnabled()) {
-      log.debug("(<) REGISTER_OUTPUT_CLASSIC " + mix.getMixId() + " " + payload.receiveAddress);
+    Mix mix;
+    try {
+      mix = mixService.getMixByInputsHash(payload.inputsHash, MixStatus.REGISTER_OUTPUT);
+      if (log.isDebugEnabled()) {
+        log.debug("(<) REGISTER_OUTPUT_CLASSIC " + mix.getMixId() + " " + payload.receiveAddress);
+      }
+    } catch (Exception e) {
+      // mix not found for inputsHash
+      log.warn(
+          "(<) REGISTER_OUTPUT_CLASSIC ERROR_MIX_OVER inputsHash="
+              + payload.inputsHash
+              + " "
+              + payload.receiveAddress);
+      throw new NotifiableException(WhirlpoolErrorCode.MIX_OVER, "Mix over");
     }
 
     registerOutputService.registerOutput(

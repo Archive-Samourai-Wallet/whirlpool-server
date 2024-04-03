@@ -8,6 +8,7 @@ import com.samourai.wallet.util.AsyncUtil;
 import com.samourai.wallet.util.RandomUtil;
 import com.samourai.whirlpool.protocol.soroban.WhirlpoolApiCoordinator;
 import com.samourai.whirlpool.protocol.soroban.payload.registerInput.RegisterInputRequest;
+import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import com.samourai.whirlpool.server.services.RegisterInputService;
 import com.samourai.whirlpool.server.utils.Utils;
 import java.lang.invoke.MethodHandles;
@@ -53,8 +54,18 @@ public class InputPoolQueue extends InputPool {
         RegisteredInput registeredInput =
             validateSorobanInput(sorobanItemTyped, registerInputService);
         freshSorobanInputs.add(registeredInput);
+      } catch (IllegalInputException e) {
+        log.info(
+            "REFRESH_SOROBAN_INPUT SKIP_IGNORED "
+                + e.getMessage()
+                + " sender="
+                + sorobanItemTyped.getMetaSender());
       } catch (Exception e) {
-        log.warn("Error reading soroban input: " + e.getMessage());
+        log.warn(
+            "REFRESH_SOROBAN_INPUT SKIP_ERROR"
+                + e.getMessage()
+                + " sender="
+                + sorobanItemTyped.getMetaSender());
       }
     }
     Collections.shuffle(freshSorobanInputs);
