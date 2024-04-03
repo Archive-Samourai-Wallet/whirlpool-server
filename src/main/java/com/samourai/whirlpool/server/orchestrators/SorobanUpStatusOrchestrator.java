@@ -2,6 +2,7 @@ package com.samourai.whirlpool.server.orchestrators;
 
 import com.samourai.soroban.client.endpoint.meta.typed.SorobanItemTyped;
 import com.samourai.soroban.client.rpc.RpcSession;
+import com.samourai.wallet.httpClient.HttpUsage;
 import com.samourai.wallet.sorobanClient.SorobanServerDex;
 import com.samourai.wallet.util.AbstractOrchestrator;
 import com.samourai.wallet.util.AsyncUtil;
@@ -11,11 +12,9 @@ import com.samourai.whirlpool.protocol.soroban.WhirlpoolApiCoordinator;
 import com.samourai.whirlpool.protocol.soroban.payload.upStatus.UpStatusMessage;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.services.monitoring.MonitoringService;
+import com.samourai.whirlpool.server.utils.Utils;
 import java.lang.invoke.MethodHandles;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import org.bitcoinj.core.NetworkParameters;
 import org.slf4j.Logger;
@@ -42,10 +41,12 @@ public class SorobanUpStatusOrchestrator extends AbstractOrchestrator {
   public SorobanUpStatusOrchestrator(
       WhirlpoolServerConfig serverConfig,
       WhirlpoolApiCoordinator whirlpoolApiCoordinator,
-      MonitoringService monitoringService) {
+      MonitoringService monitoringService)
+      throws Exception {
     super(LOOP_DELAY, 0, null);
     this.serverConfig = serverConfig;
-    this.whirlpoolApiCoordinator = whirlpoolApiCoordinator;
+    // use alternate identity to toggle Tor usage without affecting other connections
+    this.whirlpoolApiCoordinator = whirlpoolApiCoordinator.createNewIdentity();
     this.monitoringService = monitoringService;
 
     this.status = new LinkedHashMap<>();
@@ -71,25 +72,42 @@ public class SorobanUpStatusOrchestrator extends AbstractOrchestrator {
   }
 
   private void doRun(boolean onion) {
+    // toggle Tor usage
+    HttpUsage httpUsage = onion ? Utils.HTTPUSAGE_SOROBAN_ONION : HttpUsage.SOROBAN;
+    String clusterInfo = onion ? "ONION" : "CLEARNET";
+    whirlpoolApiCoordinator.getRpcSession().setHttpUsage(httpUsage);
+
     UpStatusPool upStatusPool = RpcSession.getUpStatusPool();
     long checkId = System.currentTimeMillis();
 
     // send one UpStatusMessage per soroban node
     Collection<String> sorobanUrls = computeSorobanUrls(onion);
-    for (String sorobanUrl : sorobanUrls) {
-      try {
-        asyncUtil.blockingAwait(
-            whirlpoolApiCoordinator
-                .getRpcSession()
-                .withSorobanClient(
-                    sorobanClient -> whirlpoolApiCoordinator.upStatusSend(sorobanClient, checkId),
-                    sorobanUrl));
-      } catch (Exception e) {
-        if (log.isTraceEnabled()) {
-          log.error("upStatusSend() failed: " + e.getMessage() + ", sorobanUrl=" + sorobanUrl);
-        }
-      }
-    }
+    List<Pair<String, Boolean>> sendResults =
+        sorobanUrls.parallelStream()
+            .map(
+                sorobanUrl -> { // use map to wait for each results
+                  try {
+                    asyncUtil.blockingAwait(
+                        whirlpoolApiCoordinator
+                            .getRpcSession()
+                            .withSorobanClient(
+                                sorobanClient ->
+                                    whirlpoolApiCoordinator.upStatusSend(sorobanClient, checkId),
+                                sorobanUrl));
+                    return Pair.of(sorobanUrl, true);
+                  } catch (Exception e) {
+                    if (log.isTraceEnabled()) {
+                      log.error(
+                          "upStatusSend() failed: "
+                              + e.getMessage()
+                              + ", sorobanUrl="
+                              + sorobanUrl);
+                    }
+                    return Pair.of(sorobanUrl, false);
+                  }
+                })
+            .collect(Collectors.toList());
+    // TODO use sendResults for skipping down nodes
 
     // wait for propagation delay
     sleepOrchestrator(PROPAGATION_DELAY, true);
@@ -106,7 +124,7 @@ public class SorobanUpStatusOrchestrator extends AbstractOrchestrator {
         resultsByNode.values().stream().mapToInt(list -> list.size()).max().getAsInt();
 
     // update UpStatus
-    int nbUp = 0;
+    List<Pair<String, String>> downUrls = new LinkedList<>();
     for (Map.Entry<String, Collection<SorobanItemTyped>> e : resultsByNode.entrySet()) {
       String sorobanUrl = e.getKey();
       Collection<SorobanItemTyped> messages = e.getValue();
@@ -128,10 +146,10 @@ public class SorobanUpStatusOrchestrator extends AbstractOrchestrator {
       if (messages.size() == maxPropagations && maxPropagations >= MIN_PROPAGATION) {
         // UP
         upStatusPool.setStatusUp(sorobanUrl, info);
-        nbUp++;
       } else {
         // DOWN
         upStatusPool.setStatusDown(sorobanUrl, info);
+        downUrls.add(Pair.of(sorobanUrl, info));
       }
     }
 
@@ -143,6 +161,7 @@ public class SorobanUpStatusOrchestrator extends AbstractOrchestrator {
     statusDegradedMode = null;
     statusNbUnsynchronized = 0;
 
+    int nbUp = sorobanUrls.size() - downUrls.size();
     if (nbUp == 0) {
       if (maxPropagations > 0) {
         // use degraded mode: pick one single node as up and route all traffic to it
@@ -158,12 +177,13 @@ public class SorobanUpStatusOrchestrator extends AbstractOrchestrator {
         // notify monitoring once
         if (!statusDegradedMode.equals(currentStatusDegradedMode)) {
           String info =
-              "Soroban cluster is KO (onion="
-                  + onion
-                  + "): 0/"
+              "Soroban cluster "
+                  + clusterInfo
+                  + " is DEGRADED: 0/"
                   + sorobanUrls.size()
-                  + " synchronized. Please check soroban cluster!";
-          if (!onion) monitoringService.notifyWarning(info);
+                  + " synchronized. Redirecting clients to a single node: "
+                  + statusDegradedMode;
+          monitoringService.notifyWarning(info);
         }
       } else {
         log.error("*** ALL SOROBAN NODES SEEMS DOWN, onion=" + onion);
@@ -172,16 +192,12 @@ public class SorobanUpStatusOrchestrator extends AbstractOrchestrator {
         // notify monitoring once
         if (!currentStatusAllDown) {
           String info =
-              "Soroban cluster is KO (onion="
-                  + onion
-                  + "): 0/"
+              "Soroban cluster "
+                  + clusterInfo
+                  + " is DOWN: 0/"
                   + sorobanUrls.size()
-                  + " synchronized. Redirecting clients to a single node: "
-                  + statusDegradedMode
-                  + " (onion="
-                  + onion
-                  + ")";
-          if (!onion) monitoringService.notifyError(info);
+                  + " synchronized. Please check soroban cluster!";
+          monitoringService.notifyError(info);
         }
       }
     } else {
@@ -193,57 +209,41 @@ public class SorobanUpStatusOrchestrator extends AbstractOrchestrator {
               + maxPropagations
               + ", onion="
               + onion);
-      statusNbUnsynchronized = sorobanUrls.size() - nbUp;
+      statusNbUnsynchronized = downUrls.size();
       if (currentStatusNbUnsynchronized != statusNbUnsynchronized) {
         if (statusNbUnsynchronized == 0) {
           // all up
           String info =
-              "Soroban cluster is OK (onion="
-                  + onion
-                  + "): "
+              "Soroban cluster "
+                  + clusterInfo
+                  + " is OK: "
                   + nbUp
                   + "/"
                   + sorobanUrls.size()
                   + " synchronized";
-          if (!onion) monitoringService.notifySuccess(info);
+          monitoringService.notifySuccess(info);
         } else {
           // partially up
+          String downUrlsStr =
+              "\n * "
+                  + downUrls.stream()
+                      .map(p -> p.getLeft() + ": " + p.getRight())
+                      .collect(Collectors.joining("\n * "));
           String info =
-              "Soroban cluster is partially OK (onion="
-                  + onion
-                  + "): "
+              "Soroban cluster "
+                  + clusterInfo
+                  + " is partially OK: "
                   + nbUp
                   + "/"
                   + sorobanUrls.size()
-                  + " synchronized";
-          if (!onion) monitoringService.notifyInfo(info);
+                  + " synchronized."
+                  + downUrlsStr;
+          monitoringService.notifyInfo(info);
         }
       }
     }
-    int nbDown = sorobanUrls.size() - nbUp;
+    int nbDown = downUrls.size();
     this.status.put(onion, Pair.of(nbUp, nbDown));
-  }
-
-  // TODO
-  private String computeResultId(Collection<SorobanItemTyped> items) {
-    try {
-      return items.stream()
-          .map(
-              i -> {
-                try {
-                  return i.read(UpStatusMessage.class).origin;
-                } catch (Exception e) {
-                  log.error("read(UpStatusMessage) failed", e);
-                  return null;
-                }
-              })
-          .filter(i -> i != null)
-          .sorted()
-          .collect(Collectors.joining("|"));
-    } catch (Exception e) {
-      log.error("computeResultId() failed", e);
-      return "null";
-    }
   }
 
   private Collection<SorobanItemTyped> fetchSorobanNode(String sorobanUrl, long checkId) {

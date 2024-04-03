@@ -28,7 +28,8 @@ public class SorobanCoordinatorService {
       WhirlpoolApiCoordinator whirlpoolApiCoordinator,
       MinerFeeService minerFeeService,
       MetricService metricService,
-      MonitoringService monitoringService) {
+      MonitoringService monitoringService)
+      throws Exception {
 
     // start publishing pools
     coordinatorOrchestrator =

@@ -29,6 +29,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
   private SamouraiFeeConfig samouraiFees;
   private PoolMinerFeeConfig minerFees; // default pools config
   private MinerFeePerBConfig feePerB; // for MinerFeeService
+  private TorProxyConfig torProxy;
   private boolean testMode;
   private FailMode failMode;
   private boolean testnet;
@@ -73,6 +74,14 @@ public class WhirlpoolServerConfig extends ServerConfig {
 
   public void setFeePerB(MinerFeePerBConfig feePerB) {
     this.feePerB = feePerB;
+  }
+
+  public TorProxyConfig getTorProxy() {
+    return torProxy;
+  }
+
+  public void setTorProxy(TorProxyConfig torProxy) {
+    this.torProxy = torProxy;
   }
 
   public boolean isTestMode() {
@@ -788,6 +797,36 @@ public class WhirlpoolServerConfig extends ServerConfig {
     }
   }
 
+  public static class TorProxyConfig {
+    private String host;
+    private int port;
+
+    public void validate() throws Exception {
+      if (StringUtils.isEmpty(host)) {
+        throw new Exception("Invalid TorProxyConfig.host");
+      }
+      if (port <= 0) {
+        throw new Exception("Invalid TorProxyConfig.port");
+      }
+    }
+
+    public String getHost() {
+      return host;
+    }
+
+    public void setHost(String host) {
+      this.host = host;
+    }
+
+    public int getPort() {
+      return port;
+    }
+
+    public void setPort(int port) {
+      this.port = port;
+    }
+  }
+
   public static class ScodeSamouraiFeeConfig {
     private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -905,6 +944,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
             + samouraiNetwork);
     configInfo.put("testMode", String.valueOf(testMode));
     configInfo.put("failMode", String.valueOf(failMode));
+    configInfo.put("torProxy", torProxy.getHost() + ":" + torProxy.getPort());
     configInfo.put(
         "metrics", "metricsUrlApp=" + metricsUrlApp + ", metricsUrlSystem=" + metricsUrlSystem);
     configInfo.put("monitoringHookUrl", monitoringHookUrl);

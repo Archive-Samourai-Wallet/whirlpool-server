@@ -8,6 +8,7 @@ import com.samourai.javawsserver.interceptors.JWSSIpHandshakeInterceptor;
 import com.samourai.soroban.protocol.payload.SorobanErrorMessage;
 import com.samourai.wallet.bipFormat.BIP_FORMAT;
 import com.samourai.wallet.hd.HD_Address;
+import com.samourai.wallet.httpClient.HttpUsage;
 import com.samourai.wallet.segwit.bech32.Bech32UtilGeneric;
 import com.samourai.wallet.util.MessageSignUtilGeneric;
 import com.samourai.whirlpool.protocol.WhirlpoolErrorCode;
@@ -41,6 +42,8 @@ public class Utils {
 
   private static int BTC_TO_SATOSHIS = 100000000;
   private static final String IP_TOR = "127.0.0.1";
+
+  public static final HttpUsage HTTPUSAGE_SOROBAN_ONION = new HttpUsage("SOROBAN_ONION");
 
   public static Boolean getTor(SimpMessageHeaderAccessor messageHeaderAccessor) {
     String ip = JWSSIpHandshakeInterceptor.getIp(messageHeaderAccessor);

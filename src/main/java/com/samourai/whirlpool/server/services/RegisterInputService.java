@@ -89,7 +89,7 @@ public class RegisterInputService {
     // verify UTXO not banned
     Optional<BanTO> banTO = banService.findActiveBan(utxoHash, utxoIndex);
     if (banTO.isPresent()) {
-      log.warn(
+      log.info(
           "Rejecting banned UTXO: ["
               + banTO.get()
               + "], tor="

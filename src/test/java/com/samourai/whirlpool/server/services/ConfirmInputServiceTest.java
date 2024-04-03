@@ -93,7 +93,8 @@ public class ConfirmInputServiceTest extends AbstractMixIntegrationTest {
                 () ->
                     new IllegalInputException(
                         WhirlpoolErrorCode.SERVER_ERROR,
-                        "Confirming input not found: sender=" + sender.toString()));
+                        "Confirming input not found",
+                        "sender=" + sender.toString()));
     confirmInputService.confirmInput(mix, registeredInput, blindedBordereau, "userHash");
 
     // get a valid signed blinded bordereau
