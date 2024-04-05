@@ -61,7 +61,7 @@ public class RegisterInputService {
       int blockHeight,
       SorobanInput sorobanInputOrNull)
       throws NotifiableException {
-    String utxoInfo = utxoHash + ":" + utxoIndex+" username="+username;
+    String utxoInfo = utxoHash + ":" + utxoIndex + " username=" + username;
 
     // check blockHeight
     if (blockHeight > 0) { // check disabled for protocol < 0.23.9
