@@ -9,7 +9,6 @@ import com.samourai.wallet.util.AsyncUtil;
 import com.samourai.wallet.util.Pair;
 import com.samourai.wallet.util.urlStatus.UpStatusPool;
 import com.samourai.whirlpool.protocol.soroban.WhirlpoolApiCoordinator;
-import com.samourai.whirlpool.protocol.soroban.payload.upStatus.UpStatusMessage;
 import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.services.monitoring.MonitoringService;
 import com.samourai.whirlpool.server.utils.Utils;
@@ -128,21 +127,20 @@ public class SorobanUpStatusOrchestrator extends AbstractOrchestrator {
     for (Map.Entry<String, Collection<SorobanItemTyped>> e : resultsByNode.entrySet()) {
       String sorobanUrl = e.getKey();
       Collection<SorobanItemTyped> messages = e.getValue();
-      String origins =
-          messages.stream()
-              .map(
-                  i -> {
-                    try {
-                      return i.read(UpStatusMessage.class).origin;
-                    } catch (Exception ee) {
-                      log.error("read(UpStatusMessage) failed", ee);
-                      return "null";
-                    }
-                  })
-              .collect(Collectors.joining(", "));
+      /*String origins =
+      messages.stream()
+          .map(
+              i -> {
+                try {
+                  return i.read(UpStatusMessage.class).origin;
+                } catch (Exception ee) {
+                  log.error("read(UpStatusMessage) failed", ee);
+                  return "null";
+                }
+              })
+          .collect(Collectors.joining(", "));*/
 
-      String info =
-          messages.size() > 0 ? messages.size() + " nodes found: " + origins : "No node found";
+      String info = messages.size() + "/" + sorobanUrls.size() + " synchronized";
       if (messages.size() == maxPropagations && maxPropagations >= MIN_PROPAGATION) {
         // UP
         upStatusPool.setStatusUp(sorobanUrl, info);

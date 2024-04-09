@@ -3,6 +3,7 @@ package com.samourai.whirlpool.server.config;
 import com.samourai.javaserver.config.ServerServicesConfig;
 import com.samourai.javaserver.utils.ServerUtils;
 import com.samourai.javawsserver.config.JWSSConfig;
+import com.samourai.soroban.client.SorobanConfig;
 import com.samourai.wallet.api.backend.seenBackend.ISeenBackend;
 import com.samourai.wallet.api.backend.seenBackend.SeenBackendWithFallback;
 import com.samourai.wallet.api.explorer.ExplorerApi;
@@ -14,10 +15,7 @@ import com.samourai.wallet.crypto.CryptoUtil;
 import com.samourai.wallet.hd.HD_WalletFactoryGeneric;
 import com.samourai.wallet.httpClient.HttpUsage;
 import com.samourai.wallet.segwit.bech32.Bech32UtilGeneric;
-import com.samourai.wallet.util.CryptoTestUtil;
-import com.samourai.wallet.util.FormatsUtilGeneric;
-import com.samourai.wallet.util.MessageSignUtilGeneric;
-import com.samourai.wallet.util.TxUtil;
+import com.samourai.wallet.util.*;
 import com.samourai.wallet.xmanagerClient.XManagerClient;
 import com.samourai.whirlpool.protocol.SorobanAppWhirlpool;
 import com.samourai.whirlpool.protocol.WhirlpoolProtocol;
@@ -30,6 +28,7 @@ import com.samourai.whirlpool.protocol.v0.WhirlpoolProtocolV0;
 import com.samourai.whirlpool.server.services.BackendService;
 import com.samourai.whirlpool.server.services.JavaHttpClientService;
 import java.lang.invoke.MethodHandles;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.EnableCaching;
@@ -145,11 +144,23 @@ public class ServicesConfig extends ServerServicesConfig {
   }
 
   @Bean
+  ExtLibJConfig extLibJConfig(
+      WhirlpoolServerConfig serverConfig, JavaHttpClientService httpClientService) {
+    return new ExtLibJConfig(
+        serverConfig.getSamouraiNetwork(), false, new BouncyCastleProvider(), httpClientService);
+  }
+
+  @Bean
+  SorobanConfig sorobanConfig(ExtLibJConfig extLibJConfig) {
+    return new SorobanConfig(extLibJConfig);
+  }
+
+  @Bean
   SorobanAppWhirlpool sorobanAppWhirlpool(
-      WhirlpoolServerConfig serverConfig, WhirlpoolServerContext serverContext) {
+      SorobanConfig sorobanConfig, WhirlpoolServerContext serverContext) {
     String senderSignedBySigningAddress =
         serverContext.getCoordinatorSenderSignedBySigningAddress();
-    return new SorobanAppWhirlpool(serverConfig.getSamouraiNetwork(), senderSignedBySigningAddress);
+    return new SorobanAppWhirlpool(sorobanConfig, senderSignedBySigningAddress);
   }
 
   @Bean
