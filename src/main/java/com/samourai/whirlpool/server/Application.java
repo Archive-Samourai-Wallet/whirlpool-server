@@ -69,18 +69,6 @@ public class Application extends ServerApplication {
     ActivityCsv activityCsv = new ActivityCsv("STARTUP", null, null, null, null, null);
     exportService.exportActivity(activityCsv);
 
-    /*
-    // force specific soroban node
-    NetworkParameters params = serverConfig.getNetworkParameters();
-    SorobanServerDex sorobanServerDex = SorobanServerDex.get(params);
-    Collection<String> sorobanUrlsClear =
-        Arrays.asList(sorobanServerDex.getSorobanUrls(false).iterator().next());
-    Collection<String> sorobanUrlsOnion =
-        Arrays.asList(sorobanServerDex.getSorobanUrls(true).iterator().next());
-
-    sorobanServerDex.setSorobanUrlsClear(sorobanUrlsClear);
-    sorobanServerDex.setSorobanUrlsOnion(sorobanUrlsOnion);*/
-
     // server starting...
   }
 

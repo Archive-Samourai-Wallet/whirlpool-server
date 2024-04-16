@@ -47,6 +47,7 @@ public class WhirlpoolServerConfig extends ServerConfig {
   private ExportConfig export;
   private PartnerConfig[] partners;
   private PoolConfig[] pools;
+  private String[] sorobanNodes;
   private long requestTimeout;
   private SecretWalletConfig signingWallet;
   private SecretWalletConfig coordinatorWallet;
@@ -211,6 +212,14 @@ public class WhirlpoolServerConfig extends ServerConfig {
 
   public void setPools(PoolConfig[] pools) {
     this.pools = pools;
+  }
+
+  public String[] getSorobanNodes() {
+    return sorobanNodes;
+  }
+
+  public void setSorobanNodes(String[] sorobanNodes) {
+    this.sorobanNodes = sorobanNodes;
   }
 
   public long getRequestTimeout() {

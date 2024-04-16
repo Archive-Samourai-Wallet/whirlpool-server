@@ -15,6 +15,7 @@ import com.samourai.whirlpool.server.utils.Utils;
 import java.lang.invoke.MethodHandles;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.StringUtils;
 import org.bitcoinj.core.NetworkParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +25,7 @@ public class SorobanUpStatusOrchestrator extends AbstractOrchestrator {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private static final AsyncUtil asyncUtil = AsyncUtil.getInstance();
 
-  private static final int LOOP_DELAY = 60000; // every 1min
+  private static final int LOOP_DELAY = 90000; // every 1min30 after last loop
   private static final int PROPAGATION_DELAY = 10000; // 10sec
   private static final int MIN_PROPAGATION = 2; // require at least 2 nodes synchronized
 
@@ -42,7 +43,7 @@ public class SorobanUpStatusOrchestrator extends AbstractOrchestrator {
       WhirlpoolApiCoordinator whirlpoolApiCoordinator,
       MonitoringService monitoringService)
       throws Exception {
-    super(LOOP_DELAY, 0, null);
+    super(LOOP_DELAY, 0, LOOP_DELAY / 1000);
     this.serverConfig = serverConfig;
     // use alternate identity to toggle Tor usage without affecting other connections
     this.whirlpoolApiCoordinator = whirlpoolApiCoordinator.createNewIdentity();
@@ -51,6 +52,45 @@ public class SorobanUpStatusOrchestrator extends AbstractOrchestrator {
     this.status = new LinkedHashMap<>();
     this.status.put(true, Pair.of(0, 0));
     this.status.put(false, Pair.of(0, 0));
+
+    // configure nodes from server config
+    configureSorobanNodes();
+  }
+
+  private void configureSorobanNodes() {
+    NetworkParameters params = serverConfig.getNetworkParameters();
+    SorobanServerDex sorobanServerDex = SorobanServerDex.get(params);
+
+    // read config
+    Set<String> sorobanUrls = new LinkedHashSet<>(Arrays.asList(serverConfig.getSorobanNodes()));
+    if (!sorobanUrls.isEmpty()) {
+      Collection<String> sorobanUrlsClear = new LinkedList<>();
+      Collection<String> sorobanUrlsOnion = new LinkedList<>();
+      for (String sorobanUrl : sorobanUrls) {
+        if (sorobanUrl.contains(".onion")) {
+          sorobanUrlsOnion.add(sorobanUrl);
+        } else {
+          sorobanUrlsClear.add(sorobanUrl);
+        }
+      }
+
+      // set active soroban nodes
+      sorobanServerDex.setSorobanUrlsClear(sorobanUrlsClear);
+      sorobanServerDex.setSorobanUrlsOnion(sorobanUrlsOnion);
+    }
+
+    Collection<String> sorobanUrlsClear = sorobanServerDex.getSorobanUrlsClear();
+    Collection<String> sorobanUrlsOnion = sorobanServerDex.getSorobanUrlsOnion();
+    log.info(
+        "Configured "
+            + sorobanUrlsClear.size()
+            + " Soroban nodes for clearnet:\n * "
+            + StringUtils.join(sorobanUrlsClear, "\n * "));
+    log.info(
+        "Configured "
+            + sorobanUrlsOnion.size()
+            + " Soroban nodes for onion:\n * "
+            + StringUtils.join(sorobanUrlsOnion, "\n * "));
   }
 
   private Collection<String> computeSorobanUrls(boolean onion) {
@@ -242,6 +282,8 @@ public class SorobanUpStatusOrchestrator extends AbstractOrchestrator {
     }
     int nbDown = downUrls.size();
     this.status.put(onion, Pair.of(nbUp, nbDown));
+
+    setLastRun();
   }
 
   private Collection<SorobanItemTyped> fetchSorobanNode(String sorobanUrl, long checkId) {
