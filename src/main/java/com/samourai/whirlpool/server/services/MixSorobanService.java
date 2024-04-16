@@ -21,6 +21,8 @@ public class MixSorobanService {
 
   private WhirlpoolServerContext serverContext;
   private SorobanAppWhirlpool sorobanAppWhirlpool;
+  private MixService mixService;
+  private MetricService metricService;
   private ConfirmInputService confirmInputService;
   private RegisterOutputService registerOutputService;
   private SigningService signingService;
@@ -30,6 +32,7 @@ public class MixSorobanService {
       WhirlpoolServerContext serverContext,
       SorobanAppWhirlpool sorobanAppWhirlpool,
       MixService mixService,
+      MetricService metricService,
       ConfirmInputService confirmInputService,
       RegisterOutputService registerOutputService,
       SigningService signingService,
@@ -38,6 +41,8 @@ public class MixSorobanService {
       Tx0Service tx0Service) {
     this.serverContext = serverContext;
     this.sorobanAppWhirlpool = sorobanAppWhirlpool;
+    this.mixService = mixService;
+    this.metricService = metricService;
     this.confirmInputService = confirmInputService;
     this.registerOutputService = registerOutputService;
     this.signingService = signingService;
@@ -140,13 +145,23 @@ public class MixSorobanService {
             serverContext, sorobanAppWhirlpool, confirmInputService, mix);
       case REGISTER_OUTPUT:
         return new RegisterOutputControllerSoroban(
-            serverContext, sorobanAppWhirlpool, registerOutputService, mix);
+            serverContext,
+            sorobanAppWhirlpool,
+            registerOutputService,
+            mixService,
+            metricService,
+            mix);
       case SIGNING:
         return new SigningControllerSoroban(
-            serverContext, sorobanAppWhirlpool, signingService, mix);
+            serverContext, sorobanAppWhirlpool, signingService, mixService, metricService, mix);
       case REVEAL_OUTPUT:
         return new RevealOutputControllerSoroban(
-            serverContext, sorobanAppWhirlpool, revealOutputService, mix);
+            serverContext,
+            sorobanAppWhirlpool,
+            revealOutputService,
+            mixService,
+            metricService,
+            mix);
       default:
         return null;
     }

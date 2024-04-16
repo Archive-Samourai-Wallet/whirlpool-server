@@ -8,6 +8,7 @@ import com.samourai.whirlpool.protocol.v0.rest.CheckOutputRequest;
 import com.samourai.whirlpool.protocol.v0.rest.RegisterOutputRequest;
 import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.beans.MixStatus;
+import com.samourai.whirlpool.server.services.MetricService;
 import com.samourai.whirlpool.server.services.MixService;
 import com.samourai.whirlpool.server.services.RegisterOutputService;
 import java.lang.invoke.MethodHandles;
@@ -26,12 +27,16 @@ public class RegisterOutputController extends AbstractRestController {
 
   private MixService mixService;
   private RegisterOutputService registerOutputService;
+  private MetricService metricService;
 
   @Autowired
   public RegisterOutputController(
-      MixService mixService, RegisterOutputService registerOutputService) {
+      MixService mixService,
+      RegisterOutputService registerOutputService,
+      MetricService metricService) {
     this.mixService = mixService;
     this.registerOutputService = registerOutputService;
+    this.metricService = metricService;
   }
 
   @RequestMapping(value = WhirlpoolEndpointV0.REST_CHECK_OUTPUT, method = RequestMethod.POST)
@@ -75,7 +80,12 @@ public class RegisterOutputController extends AbstractRestController {
       throw new NotifiableException(WhirlpoolErrorCode.MIX_OVER, "Mix over");
     }
 
+    Long mixStepElapsedTime = mixService.getMixStepElapsedTime(mix);
+    Long mixStepRemainingTime = mixService.getMixStepRemainingTime(mix);
+
     registerOutputService.registerOutput(
         mix, unblindedSignedBordereau, payload.receiveAddress, bordereau);
+
+    metricService.onClientRegisterOutput(mix, mixStepElapsedTime, mixStepRemainingTime, false);
   }
 }

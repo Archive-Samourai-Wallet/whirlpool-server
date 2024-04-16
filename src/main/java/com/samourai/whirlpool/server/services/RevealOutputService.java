@@ -2,7 +2,6 @@ package com.samourai.whirlpool.server.services;
 
 import com.samourai.whirlpool.protocol.WhirlpoolErrorCode;
 import com.samourai.whirlpool.server.beans.Mix;
-import com.samourai.whirlpool.server.beans.MixStatus;
 import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
 import java.lang.invoke.MethodHandles;
@@ -20,24 +19,6 @@ public class RevealOutputService {
   @Autowired
   public RevealOutputService(MixService mixService) {
     this.mixService = mixService;
-  }
-
-  public void revealOutput_webSocket(String mixId, String receiveAddress, String username)
-      throws Exception {
-    // find confirmed input
-    Mix mix = mixService.getMix(mixId, MixStatus.REVEAL_OUTPUT);
-    RegisteredInput confirmedInput =
-        mix.getInputs()
-            .findByUsername(username)
-            .orElseThrow(
-                () ->
-                    new IllegalInputException(
-                        WhirlpoolErrorCode.INPUT_REJECTED,
-                        "Mix input not found",
-                        "username=" + username));
-
-    // revealOutput
-    revealOutput(receiveAddress, mix, confirmedInput);
   }
 
   public synchronized void revealOutput(

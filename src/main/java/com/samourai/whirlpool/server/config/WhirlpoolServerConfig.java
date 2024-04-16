@@ -34,6 +34,9 @@ public class WhirlpoolServerConfig extends ServerConfig {
   private FailMode failMode;
   private boolean testnet;
   private boolean mixEnabled;
+
+  private int mixTimeoutExtend;
+  private int mixTimeoutExtendPerSurge;
   private String metricsUrlApp;
   private String metricsUrlSystem;
   private String monitoringHookUrl;
@@ -106,6 +109,22 @@ public class WhirlpoolServerConfig extends ServerConfig {
 
   public void setMixEnabled(boolean mixEnabled) {
     this.mixEnabled = mixEnabled;
+  }
+
+  public int getMixTimeoutExtend() {
+    return mixTimeoutExtend;
+  }
+
+  public void setMixTimeoutExtend(int mixTimeoutExtend) {
+    this.mixTimeoutExtend = mixTimeoutExtend;
+  }
+
+  public int getMixTimeoutExtendPerSurge() {
+    return mixTimeoutExtendPerSurge;
+  }
+
+  public void setMixTimeoutExtendPerSurge(int mixTimeoutExtendPerSurge) {
+    this.mixTimeoutExtendPerSurge = mixTimeoutExtendPerSurge;
   }
 
   public String getMetricsUrlApp() {

@@ -3,7 +3,6 @@ package com.samourai.whirlpool.server.services;
 import com.samourai.wallet.util.TxUtil;
 import com.samourai.whirlpool.protocol.WhirlpoolErrorCode;
 import com.samourai.whirlpool.server.beans.Mix;
-import com.samourai.whirlpool.server.beans.MixStatus;
 import com.samourai.whirlpool.server.beans.RegisteredInput;
 import com.samourai.whirlpool.server.beans.rpc.TxOutPoint;
 import com.samourai.whirlpool.server.exceptions.IllegalInputException;
@@ -27,24 +26,6 @@ public class SigningService {
   public SigningService(MixService mixService, TxUtil txUtil) {
     this.mixService = mixService;
     this.txUtil = txUtil;
-  }
-
-  public void signing_webSocket(String mixId, String[] witness64, String username)
-      throws Exception {
-    // find confirmed input
-    Mix mix = mixService.getMix(mixId, MixStatus.SIGNING);
-    RegisteredInput confirmedInput =
-        mix.getInputs()
-            .findByUsername(username)
-            .orElseThrow(
-                () ->
-                    new IllegalInputException(
-                        WhirlpoolErrorCode.INPUT_REJECTED,
-                        "Mix input not found",
-                        "username=" + username));
-
-    // signing
-    signing(witness64, mix, confirmedInput);
   }
 
   public synchronized void signing(String[] witness60, Mix mix, RegisteredInput confirmedInput)

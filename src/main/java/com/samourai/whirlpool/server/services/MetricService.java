@@ -1,6 +1,7 @@
 package com.samourai.whirlpool.server.services;
 
 import com.samourai.wallet.util.Pair;
+import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.beans.MixStatus;
 import com.samourai.whirlpool.server.beans.Pool;
 import com.samourai.whirlpool.server.beans.RegisteredInput;
@@ -40,6 +41,8 @@ public class MetricService {
   private static final String SUMMARY_MIX_SUCCESS_ANONYMITY_SET =
       "whirlpool_mix_success_anonymity_set";
   private static final String TIMER_MIX_SUCCESS_DURATION = "whirlpool_mix_success_duration";
+  private static final String TIMER_MIX_STEP_ELAPSED_TIME = "whirlpool_mix_step_elapsed_time";
+  private static final String TIMER_MIX_STEP_REMAINING_TIME = "whirlpool_mix_step_remaining_time";
   private static final String SUMMARY_MIX_SUCCESS_VOLUME = "whirlpool_mix_success_volume";
 
   private static final String GAUGE_POOL_QUEUE_MUSTMIX = "whirlpool_pool_queue_mustmix";
@@ -108,6 +111,117 @@ public class MetricService {
         tags.add(BooleanUtils.toStringTrueFalse(input.getTor()));
       }
       Metrics.counter(COUNTER_MIX_INPUT_TOTAL, tags.toArray(new String[] {})).increment();
+    }
+  }
+
+  public void onClientRegisterOutput(
+      Mix mix, Long mixStepElapsedTime, Long mixStepRemainingTime, boolean soroban) {
+    if (mixStepElapsedTime != null) {
+      Metrics.timer(
+              TIMER_MIX_STEP_ELAPSED_TIME,
+              "poolId",
+              mix.getPool().getPoolId(),
+              "soroban",
+              Boolean.toString(soroban),
+              "mixStatus",
+              MixStatus.REGISTER_OUTPUT.name())
+          .record(Duration.of(mixStepElapsedTime, ChronoUnit.MILLIS));
+    }
+    if (mixStepRemainingTime != null) {
+      Metrics.timer(
+              TIMER_MIX_STEP_REMAINING_TIME,
+              "poolId",
+              mix.getPool().getPoolId(),
+              "soroban",
+              Boolean.toString(soroban),
+              "mixStatus",
+              MixStatus.REGISTER_OUTPUT.name())
+          .record(Duration.of(mixStepRemainingTime, ChronoUnit.MILLIS));
+    }
+    if (log.isDebugEnabled()) {
+      log.debug(
+          "onClientProgress: mixStatus=REGISTER_OUTPUT, soroban="
+              + soroban
+              + ", mixStepElapsedTime="
+              + (mixStepElapsedTime != null ? mixStepElapsedTime : "null")
+              + ", mixStepRemainingTime="
+              + (mixStepRemainingTime != null ? mixStepRemainingTime : "null")
+              + ", mixId="
+              + mix.getMixId());
+    }
+  }
+
+  public void onClientSigning(
+      Mix mix, Long mixStepElapsedTime, Long mixStepRemainingTime, boolean soroban) {
+    if (mixStepElapsedTime != null) {
+      Metrics.timer(
+              TIMER_MIX_STEP_ELAPSED_TIME,
+              "poolId",
+              mix.getPool().getPoolId(),
+              "soroban",
+              Boolean.toString(soroban),
+              "mixStatus",
+              MixStatus.SIGNING.name())
+          .record(Duration.of(mixStepElapsedTime, ChronoUnit.MILLIS));
+    }
+    if (mixStepRemainingTime != null) {
+      Metrics.timer(
+              TIMER_MIX_STEP_REMAINING_TIME,
+              "poolId",
+              mix.getPool().getPoolId(),
+              "soroban",
+              Boolean.toString(soroban),
+              "mixStatus",
+              MixStatus.SIGNING.name())
+          .record(Duration.of(mixStepRemainingTime, ChronoUnit.MILLIS));
+    }
+    if (log.isDebugEnabled()) {
+      log.debug(
+          "onClientProgress: mixStatus=SIGNING, soroban="
+              + soroban
+              + ", mixStepElapsedTime="
+              + (mixStepElapsedTime != null ? mixStepElapsedTime : "null")
+              + ", mixStepRemainingTime="
+              + (mixStepRemainingTime != null ? mixStepRemainingTime : "null")
+              + ", mixId="
+              + mix.getMixId());
+    }
+  }
+
+  public void onClientRevealOutput(
+      Mix mix, Long mixStepElapsedTime, Long mixStepRemainingTime, boolean soroban) {
+    if (mixStepElapsedTime != null) {
+      Metrics.timer(
+              TIMER_MIX_STEP_ELAPSED_TIME,
+              "poolId",
+              mix.getPool().getPoolId(),
+              "soroban",
+              Boolean.toString(soroban),
+              "mixStatus",
+              MixStatus.REVEAL_OUTPUT.name())
+          .record(Duration.of(mixStepElapsedTime, ChronoUnit.MILLIS));
+    }
+    if (mixStepRemainingTime != null) {
+      Metrics.timer(
+              TIMER_MIX_STEP_REMAINING_TIME,
+              "poolId",
+              mix.getPool().getPoolId(),
+              "soroban",
+              Boolean.toString(soroban),
+              "mixStatus",
+              MixStatus.REVEAL_OUTPUT.name())
+          .record(Duration.of(mixStepRemainingTime, ChronoUnit.MILLIS));
+    }
+    if (log.isDebugEnabled()) {
+      log.debug(
+          "onClientProgress: mixStatus=REVEAL_OUTPUT, soroban="
+              + soroban
+              + ", mixStepElapsedTime="
+              + (mixStepElapsedTime != null ? mixStepElapsedTime : "null")
+              + ", mixStepRemainingTime="
+              + (mixStepRemainingTime != null ? mixStepRemainingTime : "null")
+              + ", mixId="
+              + mix.getMixId());
     }
   }
 

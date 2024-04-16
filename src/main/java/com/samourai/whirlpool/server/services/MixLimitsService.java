@@ -3,6 +3,7 @@ package com.samourai.whirlpool.server.services;
 import com.samourai.whirlpool.protocol.soroban.WhirlpoolApiClient;
 import com.samourai.whirlpool.protocol.soroban.payload.beans.MixStatus;
 import com.samourai.whirlpool.server.beans.Mix;
+import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.utils.timeout.ITimeoutWatcherListener;
 import com.samourai.whirlpool.server.utils.timeout.TimeoutWatcher;
 import java.lang.invoke.MethodHandles;
@@ -17,12 +18,14 @@ import org.springframework.stereotype.Service;
 public class MixLimitsService {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
+  private WhirlpoolServerConfig serverConfig;
   private MixService mixService;
 
   private Map<String, TimeoutWatcher> limitsWatchers;
 
   @Autowired
-  public MixLimitsService() {
+  public MixLimitsService(WhirlpoolServerConfig serverConfig) {
+    this.serverConfig = serverConfig;
     this.mixService = null;
 
     this.__reset();
@@ -70,6 +73,21 @@ public class MixLimitsService {
           @Override
           public Long computeTimeToWait(TimeoutWatcher timeoutWatcher) {
             long elapsedTime = timeoutWatcher.computeElapsedTime();
+            int mixTimeoutExtend = serverConfig.getMixTimeoutExtend();
+            int mixTimeoutExtendPerSurge = serverConfig.getMixTimeoutExtendPerSurge();
+            int mixTimeoutExtendTotal =
+                mixTimeoutExtend + (mix.getSurge() * mixTimeoutExtendPerSurge);
+            if (log.isDebugEnabled()) {
+              log.debug(
+                  "["
+                      + mix.getMixId()
+                      + "] limitsWatcher.computeTimeToWait: mixStatus="
+                      + mix.getMixStatus()
+                      + ", surge="
+                      + mix.getSurge()
+                      + ", mixTimeoutExtendTotal="
+                      + mixTimeoutExtendTotal);
+            }
 
             Long timeToWait = null;
             switch (mix.getMixStatus()) {
@@ -80,15 +98,17 @@ public class MixLimitsService {
                 break;
 
               case REGISTER_OUTPUT:
-                timeToWait = MixStatus.REGISTER_OUTPUT.getTimeoutMs() - elapsedTime;
+                timeToWait =
+                    MixStatus.REGISTER_OUTPUT.getTimeoutMs() + mixTimeoutExtendTotal - elapsedTime;
                 break;
 
               case SIGNING:
-                timeToWait = MixStatus.SIGNING.getTimeoutMs() - elapsedTime;
+                timeToWait = MixStatus.SIGNING.getTimeoutMs() + mixTimeoutExtendTotal - elapsedTime;
                 break;
 
               case REVEAL_OUTPUT:
-                timeToWait = MixStatus.REVEAL_OUTPUT.getTimeoutMs() - elapsedTime;
+                timeToWait =
+                    MixStatus.REVEAL_OUTPUT.getTimeoutMs() + mixTimeoutExtendTotal - elapsedTime;
                 break;
 
               default:

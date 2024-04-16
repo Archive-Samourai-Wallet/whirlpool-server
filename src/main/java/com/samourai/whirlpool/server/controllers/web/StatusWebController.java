@@ -6,7 +6,6 @@ import com.samourai.whirlpool.server.config.WhirlpoolServerConfig;
 import com.samourai.whirlpool.server.controllers.web.beans.WhirlpoolDashboardTemplateModel;
 import com.samourai.whirlpool.server.services.MixLimitsService;
 import com.samourai.whirlpool.server.services.PoolService;
-import com.samourai.whirlpool.server.services.RegisterInputService;
 import java.lang.invoke.MethodHandles;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -34,8 +33,7 @@ public class StatusWebController {
   public StatusWebController(
       WhirlpoolServerConfig serverConfig,
       PoolService poolService,
-      MixLimitsService mixLimitsService,
-      RegisterInputService registerInputService) {
+      MixLimitsService mixLimitsService) {
     this.serverConfig = serverConfig;
     this.poolService = poolService;
     this.mixLimitsService = mixLimitsService;

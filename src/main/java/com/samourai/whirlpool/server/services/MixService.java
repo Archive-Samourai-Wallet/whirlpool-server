@@ -838,6 +838,14 @@ public class MixService {
     }
   }
 
+  public Long getMixStepElapsedTime(Mix mix) {
+    return mixLimitsService.getLimitsWatcherElapsedTime(mix);
+  }
+
+  public Long getMixStepRemainingTime(Mix mix) {
+    return mixLimitsService.getLimitsWatcherTimeToWait(mix);
+  }
+
   private Collection<Mix> getCurrentMixs() {
     return currentMixs.values();
   }

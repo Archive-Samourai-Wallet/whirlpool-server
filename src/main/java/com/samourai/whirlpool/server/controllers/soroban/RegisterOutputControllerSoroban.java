@@ -9,6 +9,8 @@ import com.samourai.whirlpool.protocol.soroban.payload.mix.RegisterOutputRequest
 import com.samourai.whirlpool.server.beans.Mix;
 import com.samourai.whirlpool.server.config.WhirlpoolServerContext;
 import com.samourai.whirlpool.server.exceptions.MixException;
+import com.samourai.whirlpool.server.services.MetricService;
+import com.samourai.whirlpool.server.services.MixService;
 import com.samourai.whirlpool.server.services.RegisterOutputService;
 import java.lang.invoke.MethodHandles;
 import org.slf4j.Logger;
@@ -17,11 +19,15 @@ import org.slf4j.LoggerFactory;
 public class RegisterOutputControllerSoroban extends AbstractPerMixControllerSoroban {
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
   private RegisterOutputService registerOutputService;
+  private MixService mixService;
+  private MetricService metricService;
 
   public RegisterOutputControllerSoroban(
       WhirlpoolServerContext serverContext,
       SorobanAppWhirlpool sorobanAppWhirlpool,
       RegisterOutputService registerOutputService,
+      MixService mixService,
+      MetricService metricService,
       Mix mix) {
     super(
         serverContext,
@@ -30,6 +36,8 @@ public class RegisterOutputControllerSoroban extends AbstractPerMixControllerSor
         mix,
         "REGISTER_OUTPUT");
     this.registerOutputService = registerOutputService;
+    this.mixService = mixService;
+    this.metricService = metricService;
   }
 
   // RegisterOutputRequest can be cached as we use .distinctByUniqueId()
@@ -50,6 +58,9 @@ public class RegisterOutputControllerSoroban extends AbstractPerMixControllerSor
       throw new MixException("Mix not found");
     }
 
+    Long mixStepElapsedTime = mixService.getMixStepElapsedTime(mix);
+    Long mixStepRemainingTime = mixService.getMixStepRemainingTime(mix);
+
     byte[] bordereau = WhirlpoolProtocol.decodeBytes(payload.bordereau64);
     if (!mix.hasBordereau(bordereau)) { // ignore duplicate requests
       if (log.isDebugEnabled()) {
@@ -60,6 +71,8 @@ public class RegisterOutputControllerSoroban extends AbstractPerMixControllerSor
           WhirlpoolProtocol.decodeBytes(payload.unblindedSignedBordereau64);
       registerOutputService.registerOutput(
           mix, unblindedSignedBordereau, payload.receiveAddress, bordereau);
+
+      metricService.onClientRegisterOutput(mix, mixStepElapsedTime, mixStepRemainingTime, true);
     }
 
     // reply ACK
