@@ -25,6 +25,7 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.CharacterPredicates;
 import org.apache.commons.text.RandomStringGenerator;
 import org.bitcoinj.core.*;
@@ -256,5 +257,26 @@ public class Utils {
       log.error("SOROBAN_REPLY_ERROR SERVER_ERROR -> " + message, e);
     }
     return new SorobanErrorMessage(errorCode, message);
+  }
+
+  public static void checkBlockedThreads() {
+    ThreadGroup tg = Thread.currentThread().getThreadGroup();
+    Collection<Thread> threadSet =
+        Thread.getAllStackTraces().keySet().stream()
+            // .filter(t -> t.getThreadGroup() == tg)
+            .sorted(Comparator.comparing(o -> o.getName().toLowerCase()))
+            .collect(Collectors.toList());
+    log.info("⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿");
+    log.info("⣿ SYSTEM THREADS:");
+    int i = 0;
+    for (Thread t : threadSet) {
+      log.info("#" + i + " " + t + ":" + "" + t.getState());
+      // show trace for BLOCKED
+      if (Thread.State.BLOCKED.equals(t.getState())) {
+        log.error("### BLOCKED THREAD DETECTED !!! ###");
+        log.error(StringUtils.join(t.getStackTrace(), "\n"));
+      }
+      i++;
+    }
   }
 }

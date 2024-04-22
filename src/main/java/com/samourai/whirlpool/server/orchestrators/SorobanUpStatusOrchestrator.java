@@ -15,6 +15,7 @@ import com.samourai.whirlpool.server.utils.Utils;
 import java.lang.invoke.MethodHandles;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bitcoinj.core.NetworkParameters;
 import org.slf4j.Logger;
@@ -62,8 +63,9 @@ public class SorobanUpStatusOrchestrator extends AbstractOrchestrator {
     SorobanServerDex sorobanServerDex = SorobanServerDex.get(params);
 
     // read config
-    Set<String> sorobanUrls = new LinkedHashSet<>(Arrays.asList(serverConfig.getSorobanNodes()));
-    if (!sorobanUrls.isEmpty()) {
+    String[] sorobanNodes = serverConfig.getSorobanNodes();
+    if (!ArrayUtils.isEmpty(sorobanNodes)) {
+      Set<String> sorobanUrls = new LinkedHashSet<>(Arrays.asList(sorobanNodes));
       Collection<String> sorobanUrlsClear = new LinkedList<>();
       Collection<String> sorobanUrlsOnion = new LinkedList<>();
       for (String sorobanUrl : sorobanUrls) {
@@ -111,6 +113,8 @@ public class SorobanUpStatusOrchestrator extends AbstractOrchestrator {
   }
 
   private void doRun(boolean onion) {
+    Utils.checkBlockedThreads();
+
     // toggle Tor usage
     HttpUsage httpUsage = onion ? Utils.HTTPUSAGE_SOROBAN_ONION : HttpUsage.SOROBAN;
     String clusterInfo = onion ? "ONION" : "CLEARNET";
