@@ -58,7 +58,7 @@ public class Application extends ServerApplication {
 
     // check XM connectivity
     AddressIndexResponse addressIndexResponse =
-        xManagerClient.getAddressIndexOrDefault(XManagerService.WHIRLPOOL);
+        xManagerClient.getAddressIndexOrDefault(XManagerService.XM000);
     log.info("XM index: " + addressIndexResponse.index);
 
     // check backend connectivity

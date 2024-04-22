@@ -288,7 +288,7 @@ public class Tx0Service {
     if (feeValue > 0) {
       // fees
       AddressIndexResponse addressIndexResponse =
-          xManagerClient.getAddressIndexOrDefault(XManagerService.WHIRLPOOL);
+          xManagerClient.getAddressIndexOrDefault(XManagerService.XM000);
       feeIndex = addressIndexResponse.index;
       feeAddress = addressIndexResponse.address;
       feeChange = 0;

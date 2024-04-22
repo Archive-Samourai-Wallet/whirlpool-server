@@ -224,7 +224,7 @@ public class Tx0ValidationServiceV0Test extends AbstractIntegrationTest {
       throws Exception {
     PoolFee poolFee = new PoolFee(minFees, feeAccept);
     return tx0ValidationService.findValidFeeOutput(
-        getTx(txid), txTime, xpubIndice, poolFee, feeValuePercent, XManagerService.WHIRLPOOL);
+        getTx(txid), txTime, xpubIndice, poolFee, feeValuePercent, XManagerService.XM000);
   }
 
   private Transaction getTx(String txid) {
